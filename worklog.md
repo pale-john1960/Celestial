@@ -25,3 +25,25 @@ Stage Summary:
   6. **Android** (`android/` dir, Kotlin + Compose Material3): same design language; `android.icu.util.PersianCalendar` + `IslamicCalendar` for engine; home-screen widgets (RemoteViews); persistent notification = status-bar date; low-power (no continuous animations).
   7. State: Zustand + persist (localStorage) for settings; TanStack Query for events; Prisma only for imported events.
 - Design tokens: primary #C2185B (magenta), bg #FDFBF7 cream, card #FFF, text #1A1A1A, no indigo/blue.
+
+---
+Task ID: 2
+Agent: Main Coordinator (Z.ai Code)
+Task: Core engine — calendar conversions, i18n, events system
+
+Work Log:
+- Built `src/lib/calendar/`: jdn.ts (Fourmilab g2d/d2g), jalali.ts (pure-JS 33-year cycle), imperial.ts (Zoroastrian day names + Andarjah), hijri.ts (ICU umalqura), index.ts (facade: monthGrid/shiftMonth/yearMonths/buildDayCell)
+- `scripts/validate-calendar.ts`: 432/432 checks passed (Jalali == ICU persian 1930-2090, Nowruz anchors, Hijri spots, Imperial roundtrips). Run: `bun scripts/validate-calendar.ts`
+- `src/lib/i18n/`: en/ja/fa dictionaries + month/weekday names + num() (fa→Persian digits). fa = RTL.
+- `src/lib/events/`: 6 datasets (~45 rules, 3 languages each), expand.ts (day-scan matcher, cached per year), index.ts (aggregateEvents with SourceSettings + online nager.at layer + holidayOnly flag), import/parse.ts (JSON/TXT/CSV with Jalali auto-detect)
+- Data fixes after cross-verification: Yalda = Azar 30 (month 9), Sepandarmazgan = Bahman 29 (month 11)
+- Verified: Nowruz 2026-03-21, Eid al-Fitr 2026-03-20, Charshanbe Suri 2026-03-17 (last Tue of Esfand 1404), Sadeh Jan 30, Cyrus Day Oct 29, Sports Day Oct 12
+- Prisma: ImportedEvent model (iso + jalaliIso + title + isHoliday + sourceName), db pushed
+- Committed 9575bb4, pushed to GitHub
+
+Stage Summary:
+- Engine API for UI agents: monthGrid(system, y, m, weekStart, today) → DayCell[]; shiftMonth; yearMonths; imperialDayName(locale, imp); i18n: getDict(locale), gregorianMonthName/jalaliMonthName/weekdayShort/Long, num()
+- Events API: aggregateEvents(fromIso, toIso, SourceSettings, imported[]) → { events, usOnline, japanOnline } (SERVER-ONLY due to nager fetch)
+- holidayOnly instance = category hidden but legal holiday → render as day-off only
+- Import parser: parseAuto(fileName, text) → { events: ImportedEventInput[], errors }
+- Design tokens for UI: primary #C2185B, bg #FDFBF7, card #FFF, text #1A1A1A; NO indigo/blue
