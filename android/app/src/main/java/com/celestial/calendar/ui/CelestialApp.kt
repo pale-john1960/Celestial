@@ -149,7 +149,15 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                     eventsByIso = eventsByIso,
                                     selectedIso = viewModel.selectedIso,
                                     strings = strings,
-                                    onSelectDay = { viewModel.selectDay(it) },
+                                    // 1st tap selects (TodayStrip), 2nd tap on the same
+                                    // day opens the Day view — same UX as the web app
+                                    onSelectDay = { iso ->
+                                        when (iso) {
+                                            null -> viewModel.selectDay(null)
+                                            viewModel.selectedIso -> viewModel.openDay(iso)
+                                            else -> viewModel.selectDay(iso)
+                                        }
+                                    },
                                 )
 
                                 ViewKind.YEAR -> YearView(
@@ -161,6 +169,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                     eventsByIso = eventsByIso,
                                     strings = strings,
                                     onOpenMonth = { m -> viewModel.goToSystemMonth(viewModel.navYear, m) },
+                                    onShiftYear = { d -> viewModel.shiftYear(d) },
                                 )
 
                                 ViewKind.DAY -> {

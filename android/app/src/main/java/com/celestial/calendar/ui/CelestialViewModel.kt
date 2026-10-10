@@ -183,6 +183,15 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
         ensureYears(gregorianYearsAround(s, next.year, next.month))
     }
 
+    /** Year navigation for the Year view (stays in system space). */
+    fun shiftYear(delta: Int) {
+        val s = settings.value ?: return
+        if (delta == 0 || navYear + delta < 1) return
+        navYear += delta
+        selectedIso = null
+        ensureYears(gregorianYearsAround(s, navYear, navMonth))
+    }
+
     fun goToday() {
         val s = settings.value ?: return
         val sd = CalendarFacade.systemDateOf(s.system, todayGregorian())

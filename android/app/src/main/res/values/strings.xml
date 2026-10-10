@@ -136,5 +136,7 @@
     <string name="go_today">Go to today</string>
     <string name="prev_month">Previous month</string>
     <string name="next_month">Next month</string>
+    <string name="prev_year">Previous year</string>
+    <string name="next_year">Next year</string>
     <string name="select_date">Select date</string>
 </resources>

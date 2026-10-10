@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# Celestial — gradlew STUB (the real wrapper jar is intentionally not committed).
+#
+# Generate the actual Gradle wrapper once, from this directory:
+#     gradle wrapper --gradle-version 8.9
+# (or simply open the `android/` folder in Android Studio, which offers to do it)
+# Afterwards this stub is replaced by the generated script and `./gradlew` works
+# as usual — e.g. `./gradlew assembleDebug`.
+#
+# See android/README.md §1 for details.
+echo "Celestial: Gradle wrapper not generated yet." >&2
+echo "Run this once from the android/ directory:  gradle wrapper --gradle-version 8.9" >&2
+echo "Then use ./gradlew (e.g. ./gradlew assembleDebug)." >&2
+exit 1

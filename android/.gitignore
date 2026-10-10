@@ -8,4 +8,5 @@ captures/
 .DS_Store
 *.keystore
 *.jks
-!gradle/wrapper/gradle-wrapper.jar
+# wrapper jar is intentionally NOT committed — run `gradle wrapper --gradle-version 8.9`
+gradle/wrapper/gradle-wrapper.jar

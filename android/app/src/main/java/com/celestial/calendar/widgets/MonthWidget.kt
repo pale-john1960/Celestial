@@ -13,6 +13,7 @@ import com.celestial.calendar.R
 import com.celestial.calendar.data.Settings
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarFacade
+import com.celestial.calendar.engine.DateFormats
 import com.celestial.calendar.engine.I18n
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -94,7 +95,7 @@ class MonthWidget : AppWidgetProvider() {
                 com.celestial.calendar.engine.CalendarSystem.IMPERIAL ->
                     today.imperial.year to today.imperial.month
             }
-            val monthName = I18n.monthNameOf(settings.system, settings.locale, y, m)
+            val monthName = DateFormats.monthNameOf(settings.system, settings.locale, y, m)
             return "$monthName ${I18n.num(settings.locale, y)}"
         }
 

@@ -15,6 +15,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CalendarSystem
+import com.celestial.calendar.engine.DateFormats
 import com.celestial.calendar.engine.DayCell
 import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.WeekStart
@@ -38,7 +44,8 @@ import com.celestial.calendar.events.EventInstance
 
 /**
  * Celestial — year overview: 12 (13 in Imperial mode, incl. Andarjah) month
- * cards with mini month grids + event dots. Tapping a card opens that month.
+ * cards with mini month grids + event dots. A compact year switcher on top;
+ * tapping a card opens that month.
  */
 @Composable
 fun YearView(
@@ -50,31 +57,57 @@ fun YearView(
     eventsByIso: Map<String, List<EventInstance>>,
     strings: LocalStrings,
     onOpenMonth: (Int) -> Unit,
+    onShiftYear: (Int) -> Unit,
 ) {
     val today = remember(todayIso) { CalendarFacade.todayGregorian() }
     val months = remember(system, navYear) { CalendarFacade.yearMonths(system, navYear) }
     val order = remember(weekStart) { CalendarFacade.weekdayOrder(weekStart) }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        items(months) { (monthIndex, firstG) ->
-            MiniMonthCard(
-                monthIndex = monthIndex,
-                firstG = firstG,
-                system = system,
-                locale = locale,
-                weekStart = weekStart,
-                order = order,
-                today = today,
-                eventsByIso = eventsByIso,
-                onOpenMonth = { onOpenMonth(monthIndex) },
+    Column(Modifier.fillMaxWidth()) {
+        // year switcher (‹ 1405 ›) — mirrors the web year stepper
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            IconButton(onClick = { onShiftYear(-1) }) {
+                Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = strings.prevYear)
+            }
+            Text(
+                I18n.num(locale, navYear),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 12.dp),
             )
+            IconButton(onClick = { onShiftYear(1) }) {
+                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = strings.nextYear)
+            }
+        }
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items(months) { (monthIndex, firstG) ->
+                MiniMonthCard(
+                    monthIndex = monthIndex,
+                    firstG = firstG,
+                    system = system,
+                    locale = locale,
+                    weekStart = weekStart,
+                    order = order,
+                    today = today,
+                    eventsByIso = eventsByIso,
+                    onOpenMonth = { onOpenMonth(monthIndex) },
+                )
+            }
         }
     }
 }
@@ -97,7 +130,7 @@ private fun MiniMonthCard(
     val cells: List<DayCell> = remember(system, year, monthIndex, weekStart, today) {
         CalendarFacade.monthGrid(system, year, monthIndex, weekStart, today)
     }
-    val monthName = I18n.monthNameOf(system, locale, year, monthIndex)
+    val monthName = DateFormats.monthNameOf(system, locale, year, monthIndex)
 
     Surface(
         shape = RoundedCornerShape(14.dp),

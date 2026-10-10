@@ -150,6 +150,8 @@ class LocalStrings(private val res: Resources) {
     val goToday get() = res.getString(R.string.go_today)
     val prevMonth get() = res.getString(R.string.prev_month)
     val nextMonth get() = res.getString(R.string.next_month)
+    val prevYear get() = res.getString(R.string.prev_year)
+    val nextYear get() = res.getString(R.string.next_year)
     val selectDate get() = res.getString(R.string.select_date)
 
     fun seasonName(season: Season): String = when (season) {

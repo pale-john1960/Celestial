@@ -142,13 +142,11 @@ private fun AllSystemsCard(
                 value = DateFormats.fullImperial(locale, date),
                 active = system == CalendarSystem.IMPERIAL,
             )
-            if (system == CalendarSystem.IMPERIAL || date.imperial.month == 13) {
-                SystemLine(
-                    label = strings.dayNameLabel,
-                    value = CalendarFacade.imperialDayName(locale, date.imperial),
-                    active = false,
-                )
-            }
+            SystemLine(
+                label = strings.dayNameLabel,
+                value = CalendarFacade.imperialDayName(locale, date.imperial),
+                active = system == CalendarSystem.IMPERIAL,
+            )
             SystemLine(
                 label = strings.hijriLabel,
                 value = DateFormats.fullHijri(locale, date),

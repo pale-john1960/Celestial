@@ -136,5 +136,7 @@
     <string name="go_today">برو به امروز</string>
     <string name="prev_month">ماه پیشین</string>
     <string name="next_month">ماه بعد</string>
+    <string name="prev_year">سال پیشین</string>
+    <string name="next_year">سال بعد</string>
     <string name="select_date">انتخاب تاریخ</string>
 </resources>

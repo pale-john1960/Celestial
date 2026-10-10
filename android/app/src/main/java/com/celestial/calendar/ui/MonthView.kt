@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +35,6 @@ import com.celestial.calendar.engine.DayCell
 import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.WeekStart
 import com.celestial.calendar.events.EventInstance
-import com.celestial.calendar.ui.theme.categoryColor
 
 /**
  * Celestial — month view: 7-column grid, weekday header per weekStart,
@@ -111,9 +109,9 @@ fun MonthView(
                             weekendDays = weekendDays,
                             events = eventsByIso[cell.date.iso] ?: emptyList(),
                             isSelected = selectedIso == cell.date.iso,
-                            onClick = {
-                                onSelectDay(if (selectedIso == cell.date.iso) null else cell.date.iso)
-                            },
+                            // always reports the tapped day — the parent decides
+                            // select vs. open-day (2nd tap opens the Day view)
+                            onClick = { onSelectDay(cell.date.iso) },
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight(),

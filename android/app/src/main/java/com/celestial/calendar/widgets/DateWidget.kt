@@ -11,8 +11,6 @@ import com.celestial.calendar.MainActivity
 import com.celestial.calendar.R
 import com.celestial.calendar.data.AppDatabase
 import com.celestial.calendar.data.Settings
-import com.celestial.calendar.engine.AppLocale
-import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.DateFormats
 import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.Jdn
