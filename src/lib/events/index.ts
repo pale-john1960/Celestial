@@ -160,6 +160,12 @@ export async function aggregateEvents(
 
   for (const y of years) {
     const builtin = expandBuiltinYear(y);
+    // Per-year online availability (fetched once per year, used at most once)
+    const onlineUs = settings.online ? (onlineByYear.get(y)?.us ?? []) : [];
+    const onlineJp = settings.online ? (onlineByYear.get(y)?.japan ?? []) : [];
+    if (onlineUs.length) usOnline = true;
+    if (onlineJp.length) japanOnline = true;
+
     for (const inst of builtin) {
       if (inst.iso < fromIso || inst.iso > toIso) continue;
       switch (inst.category) {
@@ -176,31 +182,24 @@ export async function aggregateEvents(
           if (settings.persianReligious) all.push(inst);
           else if (inst.isHoliday) all.push({ ...inst, holidayOnly: true });
           break;
-        case 'us': {
-          const online = onlineByYear.get(y)?.us ?? [];
-          const fromOnline = settings.online && online.length > 0;
-          if (fromOnline) {
-            if (settings.us) all.push(...online.filter((e) => e.iso >= fromIso && e.iso <= toIso));
-            usOnline = usOnline || fromOnline;
-          } else if (settings.us) {
-            all.push(inst);
-          }
+        case 'us':
+          // builtin US only used when the online layer has nothing for this year
+          if (!onlineUs.length && settings.us) all.push(inst);
           break;
-        }
-        case 'japan': {
-          const online = onlineByYear.get(y)?.japan ?? [];
-          const fromOnline = settings.online && online.length > 0;
-          if (fromOnline) {
-            if (settings.japan) all.push(...online.filter((e) => e.iso >= fromIso && e.iso <= toIso));
-            japanOnline = japanOnline || fromOnline;
-          } else if (settings.japan) {
-            all.push(inst);
-          }
+        case 'japan':
+          if (!onlineJp.length && settings.japan) all.push(inst);
           break;
-        }
         default:
           break;
       }
+    }
+
+    // online events for this year (pushed once per year, not per instance)
+    if (settings.us && onlineUs.length) {
+      all.push(...onlineUs.filter((e) => e.iso >= fromIso && e.iso <= toIso));
+    }
+    if (settings.japan && onlineJp.length) {
+      all.push(...onlineJp.filter((e) => e.iso >= fromIso && e.iso <= toIso));
     }
   }
 

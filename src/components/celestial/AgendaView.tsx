@@ -1,0 +1,190 @@
+// Celestial — agenda view: next 90 days grouped by date
+"use client";
+
+import { useMemo } from "react";
+import { AlertTriangle, CalendarClock } from "lucide-react";
+import {
+  buildDayCell,
+  isoDate,
+  todayGregorian,
+} from "@/lib/calendar";
+import { fromJdn, toJdn } from "@/lib/calendar/jdn";
+import { getDict, num, weekdayShort } from "@/lib/i18n";
+import type { EventInstance } from "@/lib/events";
+import { useSettings } from "@/store/settings";
+import { useUi } from "@/store/ui";
+import { useEvents } from "@/lib/client/api";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { categoryColor } from "./CategoryLegend";
+import {
+  formatGregorianDate,
+  formatImperialDate,
+  formatJalaliDate,
+} from "./HeroHeader";
+
+const DAYS_AHEAD = 90;
+
+export function AgendaView() {
+  const locale = useSettings((s) => s.locale);
+  const system = useSettings((s) => s.system);
+  const sources = useSettings((s) => s.sources);
+  const dict = getDict(locale);
+  const setEventDialog = useUi((s) => s.setEventDialog);
+
+  const today = todayGregorian();
+  const todayJdn = toJdn(today);
+  const from = isoDate(today);
+  const to = isoDate(fromJdn(todayJdn + DAYS_AHEAD - 1));
+
+  const { data, isLoading, isError, refetch } = useEvents(from, to, sources);
+
+  const groups = useMemo(() => {
+    const map = new Map<string, EventInstance[]>();
+    for (const e of data?.events ?? []) {
+      if (e.holidayOnly) continue; // hidden category — day-off only
+      const list = map.get(e.iso);
+      if (list) list.push(e);
+      else map.set(e.iso, [e]);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([iso, events]) => ({ iso, events }));
+  }, [data]);
+
+  const dayOffIsos = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of data?.events ?? []) {
+      if (e.isHoliday) set.add(e.iso);
+    }
+    return set;
+  }, [data]);
+
+  const rtf = useMemo(
+    () => new Intl.RelativeTimeFormat(locale, { numeric: "auto" }),
+    [locale],
+  );
+
+  return (
+    <section aria-label={dict.viewAgenda} className="flex flex-col gap-3">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <CalendarClock className="size-4" aria-hidden />
+        <span>
+          {dict.upcoming} · {num(locale, DAYS_AHEAD)} {dict.days}
+        </span>
+      </div>
+
+      {isLoading && (
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-14 rounded-xl" />
+          <Skeleton className="h-14 rounded-xl" />
+          <Skeleton className="h-14 rounded-xl" />
+        </div>
+      )}
+      {isError && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+        >
+          <AlertTriangle className="size-4 shrink-0" aria-hidden />
+          <span className="flex-1">{dict.error}</span>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            {dict.retry}
+          </Button>
+        </div>
+      )}
+      {!isLoading && !isError && groups.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+          {dict.noEvents}
+        </div>
+      )}
+
+      {groups.length > 0 && (
+        <div className="max-h-[70vh] overflow-y-auto rounded-2xl border border-border bg-card p-2 sm:p-3">
+          {groups.map(({ iso, events }) => {
+            const g = {
+              year: Number(iso.slice(0, 4)),
+              month: Number(iso.slice(5, 7)),
+              day: Number(iso.slice(8, 10)),
+            };
+            const cell = buildDayCell(g, today, iso === from);
+            const diffDays = cell.jdn - todayJdn;
+            const relative = rtf.format(diffDays, "day");
+
+            const activeDateText =
+              system === "gregorian"
+                ? formatGregorianDate(locale, cell.gregorian, dict)
+                : system === "jalali"
+                  ? formatJalaliDate(locale, cell.jalali, dict)
+                  : formatImperialDate(locale, cell.imperial, dict);
+            const secondaryText =
+              system === "gregorian"
+                ? formatJalaliDate(locale, cell.jalali, dict)
+                : formatGregorianDate(locale, cell.gregorian, dict);
+            const isDayOff = dayOffIsos.has(iso);
+
+            return (
+              <div key={iso} className="mb-2 last:mb-0">
+                <div className="sticky top-0 z-10 -mx-1 bg-card/95 px-1 py-1.5 backdrop-blur-sm">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <span className="text-sm font-bold">
+                      {weekdayShort(locale, cell.weekday)} · {activeDateText}
+                    </span>
+                    <span className="text-xs text-muted-foreground" dir="auto">
+                      {secondaryText}
+                    </span>
+                    <span className="text-xs font-medium text-primary">
+                      {relative}
+                    </span>
+                    {isDayOff && (
+                      <Badge
+                        variant="outline"
+                        className="border-red-300 bg-red-50 text-[10px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                      >
+                        {dict.dayOff}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-1.5 flex flex-col gap-1.5">
+                  {events.map((e) => (
+                    <button
+                      key={e.id}
+                      type="button"
+                      onClick={() => setEventDialog(e)}
+                      className={cn(
+                        "flex w-full items-center gap-3 border border-border bg-background p-3 text-start rounded-e-xl rounded-s-sm transition-colors hover:bg-accent",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      )}
+                      style={{
+                        borderInlineStartWidth: "3px",
+                        borderInlineStartColor: categoryColor(e.category),
+                      }}
+                    >
+                      <span className="text-xl leading-none" aria-hidden>
+                        {e.emoji}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {e.names[locale]}
+                      </span>
+                      {e.isHoliday && (
+                        <Badge
+                          variant="outline"
+                          className="shrink-0 border-red-300 bg-red-50 text-[10px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                        >
+                          {dict.holidayBadge}
+                        </Badge>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}

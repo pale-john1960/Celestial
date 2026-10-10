@@ -1,0 +1,429 @@
+package com.celestial.calendar.ui
+
+import android.Manifest
+
+
+import android.net.Uri
+import android.os.Build
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+
+import androidx.compose.foundation.layout.fillMaxWidth
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.celestial.calendar.data.ThemeMode
+import com.celestial.calendar.engine.AppLocale
+import com.celestial.calendar.engine.CalendarSystem
+import com.celestial.calendar.engine.WeekStart
+import com.celestial.calendar.events.SourceSettings
+import com.celestial.calendar.statusbar.StatusBarDate
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+/**
+ * Celestial — settings bottom sheet: calendar system, language, week start,
+ * theme, source toggles (with the religious-off note), status-bar date
+ * toggle, NTP panel, import panel and the imported events list.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsSheet(
+    viewModel: CelestialViewModel,
+    settings: com.celestial.calendar.data.Settings,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    val locale = settings.locale
+    val strings = rememberStrings(locale)
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 18.dp)
+                .padding(bottom = 32.dp)
+        ) {
+
+            // ---------------------------------------------------- system
+            CommonUi.SectionLabel(strings.calendarSystem)
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                val entries = listOf(
+                    CalendarSystem.GREGORIAN to strings.systemGregorian,
+                    CalendarSystem.JALALI to strings.systemJalali,
+                    CalendarSystem.IMPERIAL to strings.systemImperial,
+                )
+                entries.forEachIndexed { i, (sys, label) ->
+                    SegmentedButton(
+                        selected = settings.system == sys,
+                        onClick = { viewModel.setSystem(sys) },
+                        shape = SegmentedButtonDefaults.itemShape(i, entries.size),
+                    ) { Text(label, maxLines = 1) }
+                }
+            }
+            if (settings.system == CalendarSystem.IMPERIAL) {
+                Text(
+                    strings.systemImperialHint,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+
+            // ---------------------------------------------------- language
+            CommonUi.SectionLabel(strings.language)
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                val entries = listOf(
+                    AppLocale.EN to "English",
+                    AppLocale.JA to "日本語",
+                    AppLocale.FA to "فارسی",
+                )
+                entries.forEachIndexed { i, (loc, label) ->
+                    SegmentedButton(
+                        selected = locale == loc,
+                        onClick = { viewModel.setLocale(loc) },
+                        shape = SegmentedButtonDefaults.itemShape(i, entries.size),
+                    ) { Text(label, maxLines = 1) }
+                }
+            }
+
+            // ---------------------------------------------------- week start
+            CommonUi.SectionLabel(strings.weekStartLabel)
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                val entries = listOf(
+                    WeekStart.SAT to strings.weekStartSat,
+                    WeekStart.SUN to strings.weekStartSun,
+                    WeekStart.MON to strings.weekStartMon,
+                )
+                entries.forEachIndexed { i, (ws, label) ->
+                    SegmentedButton(
+                        selected = settings.weekStart == ws,
+                        onClick = { viewModel.setWeekStart(ws) },
+                        shape = SegmentedButtonDefaults.itemShape(i, entries.size),
+                    ) { Text(label, maxLines = 1) }
+                }
+            }
+
+            // ---------------------------------------------------- theme
+            CommonUi.SectionLabel(strings.themeLabel)
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                val entries = listOf(
+                    ThemeMode.SYSTEM to strings.themeSystem,
+                    ThemeMode.LIGHT to strings.themeLight,
+                    ThemeMode.DARK to strings.themeDark,
+                )
+                entries.forEachIndexed { i, (mode, label) ->
+                    SegmentedButton(
+                        selected = settings.themeMode == mode,
+                        onClick = { viewModel.setThemeMode(mode) },
+                        shape = SegmentedButtonDefaults.itemShape(i, entries.size),
+                    ) { Text(label, maxLines = 1) }
+                }
+            }
+
+            // ---------------------------------------------------- sources
+            CommonUi.SectionLabel(strings.eventSources)
+            val src = settings.sources
+            ToggleRow(strings.srcInternational, src.international) { on ->
+                viewModel.setSource { it.copy(international = on) }
+            }
+            ToggleRow(strings.srcUs, src.us) { on ->
+                viewModel.setSource { it.copy(us = on) }
+            }
+            ToggleRow(strings.srcJapan, src.japan) { on ->
+                viewModel.setSource { it.copy(japan = on) }
+            }
+            ToggleRow(strings.srcPersianCultural, src.persianCultural) { on ->
+                viewModel.setSource { it.copy(persianCultural = on) }
+            }
+            ToggleRow(strings.srcPersianNational, src.persianNational) { on ->
+                viewModel.setSource { it.copy(persianNational = on) }
+            }
+            ToggleRow(strings.srcPersianReligious, src.persianReligious) { on ->
+                viewModel.setSource { it.copy(persianReligious = on) }
+            }
+            if (!src.persianReligious) {
+                Text(
+                    strings.religiousHiddenHolidayNote,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            ToggleRow(strings.srcImported, src.imported) { on ->
+                viewModel.setSource { it.copy(imported = on) }
+            }
+
+            // ---------------------------------------------------- status bar date
+            CommonUi.SectionLabel(strings.statusBarDate)
+            var pendingEnable by remember { mutableStateOf(false) }
+            val permLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                if (granted || Build.VERSION.SDK_INT < 33) {
+                    viewModel.setStatusBarDate(true)
+                } else {
+                    viewModel.setStatusBarDate(false)
+                }
+                pendingEnable = false
+            }
+            ToggleRow(
+                strings.statusBarDate,
+                settings.statusBarDate,
+                subtitle = strings.statusBarDateDesc,
+            ) { on ->
+                if (on && Build.VERSION.SDK_INT >= 33 &&
+                    !StatusBarDate.hasNotificationPermission(context)
+                ) {
+                    pendingEnable = true
+                    permLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    viewModel.setStatusBarDate(on)
+                }
+            }
+            if (pendingEnable) {
+                Text(
+                    strings.notifPermRationale,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            // ---------------------------------------------------- NTP
+            CommonUi.SectionLabel(strings.timeSync)
+            val ntpSyncing by viewModel.ntpSyncing.collectAsState()
+            val timeFmt = remember { SimpleDateFormat("HH:mm:ss", Locale.US) }
+            val deviceTime = remember { timeFmt.format(Date()) }
+            val offset = settings.ntpOffsetMs
+            val celestialTime = remember(offset) {
+                offset?.let { timeFmt.format(Date(System.currentTimeMillis() + it)) } ?: deviceTime
+            }
+            val offsetText = when {
+                ntpSyncing -> strings.timeSyncChecking
+                offset == null -> strings.timeSyncOff
+                else -> strings.offsetMs(offset.toString())
+            }
+            NtpRow(strings.deviceClock, deviceTime)
+            NtpRow(strings.serverClock, celestialTime)
+            NtpRow(strings.offset, offsetText)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 6.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                OutlinedButton(
+                    onClick = { viewModel.syncNtp() },
+                    enabled = !ntpSyncing,
+                ) {
+                    Text(if (ntpSyncing) strings.timeSyncChecking else strings.syncNow)
+                }
+            }
+
+            // ---------------------------------------------------- import
+            CommonUi.SectionLabel(strings.importTitle)
+            Text(
+                strings.importHint,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            var importResult by remember {
+                mutableStateOf<CelestialViewModel.ImportOutcome?>(null)
+            }
+            var importError by remember { mutableStateOf<String?>(null) }
+            val filePicker = rememberLauncherForActivityResult(
+                ActivityResultContracts.OpenDocument()
+            ) { uri: Uri? ->
+                if (uri != null) {
+                    try {
+                        val resolver = context.contentResolver
+                        val name = queryDisplayName(resolver, uri) ?: "events.txt"
+                        val text = resolver.openInputStream(uri)?.use { ins ->
+                            ins.readBytes().toString(Charsets.UTF_8)
+                        } ?: throw IllegalStateException("empty stream")
+                        val outcome = viewModel.importFromText(name, text)
+                        importResult = outcome
+                        importError = if (!outcome.ok) strings.importInvalid else null
+                    } catch (e: Exception) {
+                        importError = strings.errorGeneric
+                    }
+                }
+            }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Button(onClick = {
+                    filePicker.launch(arrayOf("application/json", "text/*", "application/octet-stream"))
+                }) {
+                    Text(strings.importChooseFile)
+                }
+            }
+            importResult?.let { outcome ->
+                if (outcome.ok) {
+                    Text(
+                        strings.importResult(outcome.imported) +
+                                (if (outcome.skipped > 0) " · " + strings.importErrors(outcome.skipped) else ""),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
+            importError?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+
+            // imported events list
+            val imported by viewModel.importedEvents.collectAsState()
+            Text(
+                strings.importedEventsList,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
+            )
+            if (imported.isEmpty()) {
+                Text(
+                    strings.noImportedEvents,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                imported.take(12).forEach { ev ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            if (ev.isHoliday) "🌙 ${ev.jalaliIso}" else ev.jalaliIso,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            "  ${ev.title}",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+                if (imported.size > 12) {
+                    Text(
+                        "+ ${imported.size - 12}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                TextButton(
+                    onClick = { viewModel.clearImported() },
+                    modifier = Modifier.padding(top = 4.dp),
+                ) {
+                    Text(strings.deleteImported, color = MaterialTheme.colorScheme.error)
+                }
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+            Text(
+                strings.footerNote,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ToggleRow(
+    label: String,
+    checked: Boolean,
+    subtitle: String? = null,
+    onChange: (Boolean) -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyLarge)
+            if (subtitle != null) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Switch(checked = checked, onCheckedChange = onChange)
+    }
+}
+
+@Composable
+private fun NtpRow(label: String, value: String) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+private fun queryDisplayName(resolver: android.content.ContentResolver, uri: Uri): String? =
+    try {
+        resolver.query(uri, null, null, null, null)?.use { cursor ->
+            val idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (idx >= 0 && cursor.moveToFirst()) cursor.getString(idx) else null
+        }
+    } catch (_: Exception) {
+        null
+    }

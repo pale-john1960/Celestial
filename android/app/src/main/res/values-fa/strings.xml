@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Celestial — Persian (Farsi) strings (ported from src/lib/i18n/fa.ts + Android extras). RTL. -->
+<resources>
+    <string name="app_name">Celestial</string>
+    <string name="tagline">سفری در زمان</string>
+
+    <!-- Views / navigation -->
+    <string name="view_month">ماه</string>
+    <string name="view_year">سال</string>
+    <string name="view_day">روز</string>
+    <string name="view_agenda">دستور کار</string>
+    <string name="today">امروز</string>
+    <string name="search">جستجو</string>
+    <string name="settings">تنظیمات</string>
+    <string name="close">بستن</string>
+    <string name="save">ذخیره</string>
+    <string name="cancel">لغو</string>
+    <string name="remove">حذف</string>
+    <string name="retry">تلاش دوباره</string>
+    <string name="clear_all">حذف همه</string>
+    <string name="download">دانلود</string>
+    <string name="import_label">درج</string>
+    <string name="import_events">درج رویدادها</string>
+    <string name="imported">درج‌شده</string>
+    <string name="loading">در حال بارگذاری…</string>
+    <string name="error_generic">خطایی رخ داد</string>
+    <string name="no_events">رویدادی در این روز نیست</string>
+    <string name="upcoming">رویدادهای پیش رو</string>
+    <string name="past">گذشته</string>
+    <string name="all_day">تمام‌روز</string>
+    <string name="day_off">روز تعطیل</string>
+    <string name="day_off_notice">تعطیل رسمی — روز مرخصی</string>
+    <string name="weekend">آخر هفته</string>
+    <string name="open_day">نمایش روز</string>
+    <string name="next_event">رویداد بعدی</string>
+    <string name="in_days">%1$d روز دیگر</string>
+
+    <!-- Systems -->
+    <string name="system_gregorian">میلادی</string>
+    <string name="system_jalali">شمسی (جلالی)</string>
+    <string name="system_imperial">شاهنشاهی ایران</string>
+    <string name="system_imperial_hint">گاه‌شماری باستانی — ماه‌های ۳۰روزه، ۵ روز اندارج و نام روزهای نیایشی</string>
+    <string name="calendar_system">نوع گاه‌شماری</string>
+    <string name="language">زبان</string>
+    <string name="week_start">شروع هفته</string>
+    <string name="week_start_sat">شنبه</string>
+    <string name="week_start_sun">یکشنبه</string>
+    <string name="week_start_mon">دوشنبه</string>
+    <string name="theme_label">پوسته</string>
+    <string name="theme_light">روشن</string>
+    <string name="theme_dark">تاریک</string>
+    <string name="theme_system">سیستم</string>
+
+    <!-- Event sources -->
+    <string name="event_sources">منابع رویدادها و تعطیلات</string>
+    <string name="src_international">رویدادهای جهانی</string>
+    <string name="src_us">تعطیلات آمریکا</string>
+    <string name="src_japan">تعطیلات ژاپن</string>
+    <string name="src_persian_cultural">رویدادهای فرهنگی ایرانی</string>
+    <string name="src_persian_religious">رویدادهای مذهبی ایرانی</string>
+    <string name="src_persian_national">تعطیلات رسمی ایران</string>
+    <string name="src_imported">رویدادهای درج‌شده</string>
+    <string name="online_sources">منابع برخط</string>
+    <string name="online_hint">دریافت زنده تعطیلات از اینترنت (Nager.Date). در حالت آفلاین از دادهٔ داخلی استفاده می‌شود.</string>
+    <string name="religious_hidden_holiday_note">رویدادهای مذهبی پنهان شده‌اند، اما تعطیلات رسمی همچنان به‌عنوان روز مرخصی نمایش داده می‌شوند.</string>
+
+    <!-- Import -->
+    <string name="import_title">درج رویدادها</string>
+    <string name="import_hint">یک فایل JSON، TXT یا CSV بارگذاری کنید. تاریخ‌های شمسی (مثل ۱۴۰۵-۰۷-۰۱) و میلادی (۲۰۲۶-۱۰-۰۱) خودکار تشخیص داده می‌شوند.</string>
+    <string name="import_choose_file">انتخاب فایل</string>
+    <string name="import_parsing">در حال تحلیل فایل…</string>
+    <string name="import_result">%1$d رویداد درج شد</string>
+    <string name="import_invalid">رویداد معتبری در فایل یافت نشد</string>
+    <string name="import_errors">%1$d سطر نادیده گرفته شد</string>
+    <string name="sample_files">فایل‌های نمونه</string>
+    <string name="import_format_json">قالب JSON</string>
+    <string name="import_format_txt">قالب TXT</string>
+    <string name="import_format_csv">قالب CSV</string>
+    <string name="imported_events_list">رویدادهای درج‌شده</string>
+    <string name="no_imported_events">هنوز رویدادی درج نشده است</string>
+    <string name="delete_imported">حذف رویدادهای درج‌شده</string>
+    <string name="event_title">عنوان</string>
+    <string name="event_description">توضیحات</string>
+    <string name="event_date">تاریخ</string>
+
+    <!-- Time sync -->
+    <string name="time_sync">هم‌زمانی (NTP)</string>
+    <string name="time_sync_ok">هم‌زمان است</string>
+    <string name="time_sync_off">ساعت دستگاه</string>
+    <string name="time_sync_checking">در حال هم‌زمانی…</string>
+    <string name="time_sync_failed">هم‌زمانی ناموفق</string>
+    <string name="ntp_server">سرور NTP</string>
+    <string name="offset">اختلاف</string>
+    <string name="offset_ms">%1$s ms</string>
+    <string name="sync_now">هم‌زمانی کن</string>
+    <string name="device_clock">ساعت دستگاه</string>
+    <string name="server_clock">زمان سلستیش</string>
+
+    <!-- Status bar date / notifications -->
+    <string name="status_bar_date">تاریخ در نوار وضعیت</string>
+    <string name="status_bar_date_desc">نمایش تاریخ امروز در ناحیهٔ اعلان‌ها (دائمی و بی‌صدا)</string>
+    <string name="notif_perm_rationale">برای نمایش تاریخ در نوار وضعیت، اجازهٔ اعلان‌ها را بدهید.</string>
+    <string name="notif_channel_name">تاریخ در نوار وضعیت</string>
+    <string name="notif_channel_desc">اعلان بی‌صدا و دائمی با تاریخ امروز در گاه‌شماری انتخابی.</string>
+
+    <!-- Widgets -->
+    <string name="widget_date_desc">امروز (سلستیش)</string>
+    <string name="widget_month_desc">این ماه (سلستیش)</string>
+
+    <!-- Footer / misc -->
+    <string name="footer_note">سلستیش — میلادی · شمسی · شاهنشاهی؛ با عشق برای همهٔ گاه‌شماری‌ها.</string>
+    <string name="season_spring">بهار</string>
+    <string name="season_summer">تابستان</string>
+    <string name="season_autumn">پاییز</string>
+    <string name="season_winter">زمستان</string>
+    <string name="era_gregorian">میلادی</string>
+    <string name="era_jalali">هجری شمسی</string>
+    <string name="era_imperial">شاهنشاهی</string>
+    <string name="hijri_label">هجری قمری</string>
+    <string name="secondary_date">تاریخ فرعی</string>
+    <string name="events_count">%1$d رویداد</string>
+    <string name="holiday_badge">تعطیل</string>
+    <string name="religious_badge">مذهبی</string>
+    <string name="cultural_badge">فرهنگی</string>
+    <string name="national_badge">ملی</string>
+    <string name="category_label">دسته</string>
+    <string name="today_is">امروز</string>
+    <string name="quick_add">افزودن سریع</string>
+    <string name="none_label">هیچ</string>
+    <string name="days">روز</string>
+    <string name="months">ماه</string>
+    <string name="years">سال</string>
+    <string name="andarjah">اندارج</string>
+    <string name="day_name_label">روز نیایشی</string>
+    <string name="year_overview">نمای سال</string>
+    <string name="go_today">برو به امروز</string>
+    <string name="prev_month">ماه پیشین</string>
+    <string name="next_month">ماه بعد</string>
+    <string name="select_date">انتخاب تاریخ</string>
+</resources>

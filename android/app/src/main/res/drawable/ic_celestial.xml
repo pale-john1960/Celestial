@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Celestial — app mark: crescent + star in #C2185B -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#C2185B"
+        android:pathData="M30.5,6a17,17 0 1,0 0,36 19.5,19.5 0 0,1 0,-36z" />
+    <path
+        android:fillColor="#C2185B"
+        android:pathData="M36,14l1.6,4.1 4.1,1.6 -4.1,1.6L36,25.4l-1.6,-4.1 -4.1,-1.6 4.1,-1.6z" />
+</vector>

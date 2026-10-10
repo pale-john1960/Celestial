@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="celestial_primary">#C2185B</color>
+    <color name="celestial_background">#FDFBF7</color>
+    <color name="celestial_background_dark">#181315</color>
+    <color name="celestial_surface">#FFFFFF</color>
+    <color name="celestial_surface_dark">#201A1C</color>
+    <color name="celestial_text">#1A1A1A</color>
+    <color name="celestial_text_dark">#F0E8E4</color>
+    <color name="widget_accent">#FF7BA9</color>
+    <color name="ic_launcher_background">#FDFBF7</color>
+</resources>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Celestial — English strings (ported from src/lib/i18n/en.ts + Android extras) -->
+<resources>
+    <string name="app_name">Celestial</string>
+    <string name="tagline">A journey through time</string>
+
+    <!-- Views / navigation -->
+    <string name="view_month">Month</string>
+    <string name="view_year">Year</string>
+    <string name="view_day">Day</string>
+    <string name="view_agenda">Agenda</string>
+    <string name="today">Today</string>
+    <string name="search">Search</string>
+    <string name="settings">Settings</string>
+    <string name="close">Close</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="remove">Remove</string>
+    <string name="retry">Retry</string>
+    <string name="clear_all">Clear all</string>
+    <string name="download">Download</string>
+    <string name="import_label">Import</string>
+    <string name="import_events">Import events</string>
+    <string name="imported">Imported</string>
+    <string name="loading">Loading…</string>
+    <string name="error_generic">Something went wrong</string>
+    <string name="no_events">No events on this day</string>
+    <string name="upcoming">Upcoming</string>
+    <string name="past">Past</string>
+    <string name="all_day">All day</string>
+    <string name="day_off">Day off</string>
+    <string name="day_off_notice">Official holiday — day off</string>
+    <string name="weekend">Weekend</string>
+    <string name="open_day">Open day</string>
+    <string name="next_event">Next event</string>
+    <string name="in_days">in %1$d days</string>
+
+    <!-- Systems -->
+    <string name="system_gregorian">Gregorian</string>
+    <string name="system_jalali">Shamsi (Jalali)</string>
+    <string name="system_imperial">Persian Imperial</string>
+    <string name="system_imperial_hint">Ancient royal calendar — 30-day months, 5 Andarjah days, devotional day names</string>
+    <string name="calendar_system">Calendar system</string>
+    <string name="language">Language</string>
+    <string name="week_start">Week starts on</string>
+    <string name="week_start_sat">Saturday</string>
+    <string name="week_start_sun">Sunday</string>
+    <string name="week_start_mon">Monday</string>
+    <string name="theme_label">Theme</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">System</string>
+
+    <!-- Event sources -->
+    <string name="event_sources">Event &amp; holiday sources</string>
+    <string name="src_international">International events</string>
+    <string name="src_us">United States holidays</string>
+    <string name="src_japan">Japan holidays</string>
+    <string name="src_persian_cultural">Persian cultural events</string>
+    <string name="src_persian_religious">Persian religious events</string>
+    <string name="src_persian_national">Iranian national holidays</string>
+    <string name="src_imported">Imported events</string>
+    <string name="online_sources">Online sources</string>
+    <string name="online_hint">Fetch public holidays live from the internet (Nager.Date). Falls back to the built-in dataset offline.</string>
+    <string name="religious_hidden_holiday_note">Religious events are hidden, but official holidays still appear as days off.</string>
+
+    <!-- Import -->
+    <string name="import_title">Import events</string>
+    <string name="import_hint">Upload a JSON, TXT or CSV file with your events. Jalali (e.g. 1405-07-01) and Gregorian (2026-10-01) dates are auto-detected.</string>
+    <string name="import_choose_file">Choose file</string>
+    <string name="import_parsing">Parsing file…</string>
+    <string name="import_result">%1$d events imported</string>
+    <string name="import_invalid">No valid events found in the file</string>
+    <string name="import_errors">%1$d lines skipped</string>
+    <string name="sample_files">Sample files</string>
+    <string name="import_format_json">JSON format</string>
+    <string name="import_format_txt">TXT format</string>
+    <string name="import_format_csv">CSV format</string>
+    <string name="imported_events_list">Imported events</string>
+    <string name="no_imported_events">No imported events yet</string>
+    <string name="delete_imported">Delete imported events</string>
+    <string name="event_title">Title</string>
+    <string name="event_description">Description</string>
+    <string name="event_date">Date</string>
+
+    <!-- Time sync -->
+    <string name="time_sync">Time sync (NTP)</string>
+    <string name="time_sync_ok">In sync</string>
+    <string name="time_sync_off">Device clock</string>
+    <string name="time_sync_checking">Syncing…</string>
+    <string name="time_sync_failed">Sync failed</string>
+    <string name="ntp_server">NTP server</string>
+    <string name="offset">Offset</string>
+    <string name="offset_ms">%1$s ms</string>
+    <string name="sync_now">Sync now</string>
+    <string name="device_clock">Device time</string>
+    <string name="server_clock">Celestial time</string>
+
+    <!-- Status bar date / notifications -->
+    <string name="status_bar_date">Status bar date</string>
+    <string name="status_bar_date_desc">Show today\'s date in the notification area (ongoing, silent)</string>
+    <string name="notif_perm_rationale">Allow notifications so Celestial can show the status-bar date.</string>
+    <string name="notif_channel_name">Status bar date</string>
+    <string name="notif_channel_desc">Ongoing silent notification with today\'s date in your calendar system.</string>
+
+    <!-- Widgets -->
+    <string name="widget_date_desc">Today (Celestial)</string>
+    <string name="widget_month_desc">This month (Celestial)</string>
+
+    <!-- Footer / misc -->
+    <string name="footer_note">Celestial — Gregorian · Shamsi · Persian Imperial, with love for all calendars.</string>
+    <string name="season_spring">Spring</string>
+    <string name="season_summer">Summer</string>
+    <string name="season_autumn">Autumn</string>
+    <string name="season_winter">Winter</string>
+    <string name="era_gregorian">CE</string>
+    <string name="era_jalali">SH</string>
+    <string name="era_imperial">Imperial</string>
+    <string name="hijri_label">AH</string>
+    <string name="secondary_date">Secondary date</string>
+    <string name="events_count">%1$d events</string>
+    <string name="holiday_badge">Holiday</string>
+    <string name="religious_badge">Religious</string>
+    <string name="cultural_badge">Cultural</string>
+    <string name="national_badge">National</string>
+    <string name="category_label">Category</string>
+    <string name="today_is">Today is</string>
+    <string name="quick_add">Quick add</string>
+    <string name="none_label">None</string>
+    <string name="days">days</string>
+    <string name="months">months</string>
+    <string name="years">years</string>
+    <string name="andarjah">Andarjah</string>
+    <string name="day_name_label">Devotional day</string>
+    <string name="year_overview">Year overview</string>
+    <string name="go_today">Go to today</string>
+    <string name="prev_month">Previous month</string>
+    <string name="next_month">Next month</string>
+    <string name="select_date">Select date</string>
+</resources>

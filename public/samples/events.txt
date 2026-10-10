@@ -1,0 +1,11 @@
+# Celestial sample events (TXT format)
+# Lines starting with # are comments. Format:
+# date | title [| description] [| holiday]
+# Dates: Gregorian (2026-10-29) or Jalali (1405-07-13) — auto-detected.
+
+2026-10-29 | Cyrus the Great Day | Commemorating the founder of the Achaemenid Empire
+2026-11-01 | Authors' Day | روز نویسنده — sample imported event
+1405-07-13 | جشن میانه پاییز | Mehregan season midpoint | holiday
+2026-12-25 | Christmas Day | Sample holiday imported from a TXT file | holiday
+2027-03-21 | Nowruz 1406 | Persian New Year | holiday
+2026-06-21 | Summer Solstice | The longest day of the year

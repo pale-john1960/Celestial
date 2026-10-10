@@ -1,0 +1,32 @@
+[
+  {
+    "date": "2026-10-29",
+    "title": "Cyrus the Great Day",
+    "description": "Commemorating the founding of the Achaemenid Empire by Cyrus the Great.",
+    "isHoliday": false
+  },
+  {
+    "date": "1405-07-13",
+    "title": "جشن میانه پاییز",
+    "description": "Mehregan season midpoint — a sample imported event with a Jalali date.",
+    "isHoliday": false
+  },
+  {
+    "date": "2026-12-25",
+    "title": "Christmas Day",
+    "description": "Sample holiday imported from a JSON file.",
+    "isHoliday": true
+  },
+  {
+    "date": "2027-03-21",
+    "title": "Nowruz 1406",
+    "description": "Persian New Year — imported sample.",
+    "isHoliday": true
+  },
+  {
+    "date": "2026-06-21",
+    "title": "Summer Solstice",
+    "description": "The longest day of the year.",
+    "isHoliday": false
+  }
+]

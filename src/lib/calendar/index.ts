@@ -43,7 +43,10 @@ export function systemMonthLength(system: CalendarSystem, y: number, m: number):
 export function systemToGregorian(system: CalendarSystem, y: number, m: number, d: number): SimpleDate {
   if (system === 'gregorian') return { year: y, month: m, day: d };
   if (system === 'jalali') return jalaliToGregorian({ year: y, month: m, day: d });
-  return imperialToGregorian({ year: y, month: m, day });
+  // BUGFIX (task 3-a): was `{ year: y, month: m, day }` — invalid shorthand
+  // (param is `d`) → ReferenceError at runtime for the imperial system.
+  // Single-token fix, no behaviour change for gregorian/jalali.
+  return imperialToGregorian({ year: y, month: m, day: d });
 }
 
 /** Build a full DayCell from a Gregorian date */

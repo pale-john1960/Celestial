@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Celestial — seasonal hero banner placeholder (seasonal_summer_2).
+     Simple gradient illustration; replace with real artwork later
+     (keep the same resource names). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="412dp"
+    android:height="160dp"
+    android:viewportWidth="412"
+    android:viewportHeight="160">
+
+  <path android:pathData="M0,0h412v160h-412z">
+    <aapt:attr name="android:fillColor">
+      <gradient android:type="linear" android:startX="0" android:startY="0"
+          android:endX="0" android:endY="160"
+          android:startColor="#E9F4DA" android:endColor="#FDFBF7" />
+    </aapt:attr>
+  </path>
+
+  <path android:fillColor="#EFc95c"
+      android:pathData="M100,34 m-20,0 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0z"/>
+
+  <path android:fillColor="#A9D08E"
+      android:pathData="M0,118 C70,96 130,108 200,100 C280,90 340,104 412,94 L412,160 L0,160 Z"/>
+  <path android:fillColor="#7DB767"
+      android:pathData="M0,136 C90,118 170,132 260,124 C330,118 380,130 412,124 L412,160 L0,160 Z"/>
+
+  <path android:fillColor="#F9E27D" android:pathData="M170,48 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0z"/>
+  <path android:fillColor="#F9E27D" android:pathData="M240,70 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0z"/>
+  <path android:fillColor="#F9E27D" android:pathData="M320,44 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0z"/>
+  <path android:fillColor="#F9E27D" android:pathData="M370,90 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0z"/>
+  <path android:fillColor="#F9E27D" android:pathData="M140,96 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0z"/>
+</vector>
