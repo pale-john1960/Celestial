@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import {
   gregorianToJalali,
+  isoWeekNumber,
   monthGrid,
   shiftMonth,
   systemMonthLength,
@@ -93,6 +94,7 @@ export function MonthView() {
   const locale = useSettings((s) => s.locale);
   const system = useSettings((s) => s.system);
   const weekStart = useSettings((s) => s.weekStart);
+  const showWeekNumbers = useSettings((s) => s.showWeekNumbers);
   const sources = useSettings((s) => s.sources);
   const dict = getDict(locale);
 
@@ -109,6 +111,18 @@ export function MonthView() {
     () => monthGrid(system, cursor.year, cursor.month, weekStart, today),
     [system, cursor, weekStart, today],
   );
+  // ISO week number per grid row (0-5) — ISO 8601 semantics regardless of the
+  // weekStart setting: the row's number is the ISO week of the row's
+  // THURSDAY (JS weekday 4), whose column position shifts with weekStart.
+  // Null when the column is off so the OFF render path stays untouched.
+  const weekNums = useMemo(() => {
+    if (!showWeekNumbers) return null;
+    const thuCol = (4 - weekStart + 7) % 7;
+    return Array.from(
+      { length: 6 },
+      (_, w) => isoWeekNumber(cells[w * 7 + thuCol].gregorian),
+    );
+  }, [showWeekNumbers, weekStart, cells]);
   const from = cells[0].iso;
   const to = cells[cells.length - 1].iso;
   const { data, isLoading, isError, refetch } = useEvents(from, to, sources);
@@ -195,6 +209,44 @@ export function MonthView() {
   };
 
   const selectedCell = cells.find((c) => c.iso === selectedIso) ?? null;
+
+  // one row's 7 day cells — shared by both render paths (week numbers ON/OFF)
+  // so the OFF branch renders byte-identical DOM to the pre-12-a structure
+  const rowCells = (week: number) =>
+    cells.slice(week * 7, week * 7 + 7).map((cell, col) => (
+      <DayCellButton
+        key={cell.iso}
+        index={week * 7 + col}
+        cell={cell}
+        dict={dict}
+        locale={locale}
+        system={system}
+        selected={cell.iso === selectedIso}
+        events={eventsByIso.get(cell.iso)}
+        moon={moonByIso.get(cell.iso) ?? null}
+        season={seasonByIso.get(cell.iso) ?? null}
+        hoverCapable={hoverCapable}
+        onClick={onCellClick}
+      />
+    ));
+
+  const weekdayHeaderCells = weekdayOrder(weekStart).map((w) => {
+    const isWeekend =
+      locale === "fa" ? w === 4 || w === 5 : w === 0 || w === 6;
+    return (
+      <div
+        key={w}
+        className={cn(
+          "py-1 text-center text-xs font-semibold",
+          isWeekend
+            ? "text-red-600/90 dark:text-red-400/90"
+            : "text-muted-foreground",
+        )}
+      >
+        {weekdayShort(locale, w)}
+      </div>
+    );
+  });
 
   return (
     <section aria-label={dict.viewMonth} className="flex flex-col gap-3">
@@ -348,58 +400,70 @@ export function MonthView() {
         </div>
       )}
 
-      {/* weekday header */}
-      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
-        {weekdayOrder(weekStart).map((w) => {
-          const isWeekend =
-            locale === "fa" ? w === 4 || w === 5 : w === 0 || w === 6;
-          return (
-            <div
-              key={w}
-              className={cn(
-                "py-1 text-center text-xs font-semibold",
-                isWeekend
-                  ? "text-red-600/90 dark:text-red-400/90"
-                  : "text-muted-foreground",
-              )}
-            >
-              {weekdayShort(locale, w)}
-            </div>
-          );
-        })}
-      </div>
+      {/* weekday header — with week numbers on, a matching prefix cell
+          (dict.weekNumCol) leads the row; flex order follows document
+          direction so RTL keeps it on the start (right) side. w-6 = min-w-6,
+          fixed so the header prefix can never drift out of alignment with
+          the week cells below */}
+      {showWeekNumbers ? (
+        <div className="flex items-stretch gap-0.5 sm:gap-1">
+          <div className="flex w-6 shrink-0 items-center justify-center rounded py-1 text-[10px] font-medium text-muted-foreground/70">
+            {dict.weekNumCol}
+          </div>
+          <div className="grid flex-1 grid-cols-7 gap-0.5 sm:gap-1">
+            {weekdayHeaderCells}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+          {weekdayHeaderCells}
+        </div>
+      )}
 
-      {/* day grid — keyed by month so the entrance stagger replays on navigation */}
+      {/* day grid — keyed by month so the entrance stagger replays on
+          navigation. Week numbers ON: each role=row becomes a flex row
+          (rowheader cell + the 7-cell inner grid) — flex order follows
+          document direction, so the column sits on the right under fa/RTL.
+          OFF: the exact pre-12-a structure renders (no extra DOM, no shift) */}
       <div
         key={`${cursor.year}-${cursor.month}`}
         role="grid"
         aria-label={monthLabel}
         className="grid grid-cols-7 gap-0.5 sm:gap-1"
       >
-        {Array.from({ length: 6 }, (_, week) => (
-          <div
-            key={week}
-            role="row"
-            className="col-span-7 grid grid-cols-7 gap-0.5 sm:gap-1"
-          >
-            {cells.slice(week * 7, week * 7 + 7).map((cell, col) => (
-              <DayCellButton
-                key={cell.iso}
-                index={week * 7 + col}
-                cell={cell}
-                dict={dict}
-                locale={locale}
-                system={system}
-                selected={cell.iso === selectedIso}
-                events={eventsByIso.get(cell.iso)}
-                moon={moonByIso.get(cell.iso) ?? null}
-                season={seasonByIso.get(cell.iso) ?? null}
-                hoverCapable={hoverCapable}
-                onClick={onCellClick}
-              />
-            ))}
-          </div>
-        ))}
+        {Array.from({ length: 6 }, (_, week) =>
+          showWeekNumbers && weekNums ? (
+            <div
+              key={week}
+              role="row"
+              className="col-span-7 flex items-stretch gap-0.5 sm:gap-1"
+            >
+              {/* non-interactive week number — no touch target needed;
+                  stays visible in print (useful on paper) */}
+              <div
+                role="rowheader"
+                aria-label={dict.weekNumLabel.replace(
+                  "{n}",
+                  num(locale, weekNums[week]),
+                )}
+                className="flex w-6 shrink-0 items-center justify-center rounded text-[10px] font-medium text-muted-foreground/70 tabular-nums"
+              >
+                {num(locale, weekNums[week])}
+              </div>
+              <div className="grid flex-1 grid-cols-7 gap-0.5 sm:gap-1">
+                {rowCells(week)}
+              </div>
+            </div>
+          ) : (
+            <div
+              key={week}
+              role="row"
+              className="col-span-7 grid grid-cols-7 gap-0.5 sm:gap-1"
+            >
+              {rowCells(week)}
+            </div>
+          ),
+        )}
       </div>
 
       {/* selected day summary */}

@@ -9,7 +9,7 @@ import { gregorianToHijri } from './hijri';
 import type { CalendarSystem, DayCell, ImperialDate, SimpleDate, WeekStart } from './types';
 
 export * from './types';
-export { isoDate, parseIso, daysInMonth } from './jdn';
+export { isoDate, parseIso, daysInMonth, isoWeekNumber } from './jdn';
 export {
   gregorianToJalali, jalaliToGregorian, jalaliMonthLength, jalaliMonthLengths,
   farvardin1Jdn, jalaliYearLength, isJalaliLeap,

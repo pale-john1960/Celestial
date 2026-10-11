@@ -31,12 +31,15 @@ interface SettingsState {
   theme: ThemeCode;
   /** event notifications (opt-in) — daily "today's events" browser notification */
   notifyEvents: boolean;
+  /** show the ISO week-number column in the month grid (off by default) */
+  showWeekNumbers: boolean;
   setLocale: (locale: Locale) => void;
   setSystem: (system: SystemCode) => void;
   setWeekStart: (weekStart: WeekStartCode) => void;
   setSource: (key: keyof SourceFlags, value: boolean) => void;
   setTheme: (theme: ThemeCode) => void;
   setNotifyEvents: (value: boolean) => void;
+  setShowWeekNumbers: (value: boolean) => void;
 }
 
 const allSources: SourceFlags = {
@@ -62,6 +65,10 @@ export const useSettings = create<SettingsState>()(
       // stored state over these defaults, so existing users simply gain the
       // new `notifyEvents: false` key without any migration
       notifyEvents: false,
+      // persisted version stays 1 — zustand's persist default-merges the
+      // stored state over these defaults, so existing users simply gain the
+      // new `showWeekNumbers: false` key without any migration
+      showWeekNumbers: false,
       setLocale: (locale) => {
         const prev = get().locale;
         const prevDefault = defaultWeekStartFor(prev);
@@ -77,6 +84,7 @@ export const useSettings = create<SettingsState>()(
         set((s) => ({ sources: { ...s.sources, [key]: value } })),
       setTheme: (theme) => set({ theme }),
       setNotifyEvents: (value) => set({ notifyEvents: value }),
+      setShowWeekNumbers: (value) => set({ showWeekNumbers: value }),
     }),
     {
       name: "celestial-settings",

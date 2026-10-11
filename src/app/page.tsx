@@ -21,6 +21,7 @@ import { SearchDialog } from "@/components/celestial/SearchDialog";
 import { ImportDialog } from "@/components/celestial/ImportDialog";
 import { AddEventDialog } from "@/components/celestial/AddEventDialog";
 import { ShortcutsDialog } from "@/components/celestial/ShortcutsDialog";
+import { DateConverterDialog } from "@/components/celestial/DateConverterDialog";
 import { EventDialog } from "@/components/celestial/EventDialog";
 import { SettingsSheet } from "@/components/celestial/SettingsSheet";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -81,6 +82,7 @@ function anyDialogOpen(): boolean {
     ui.addEventOpen ||
     ui.editEvent !== null ||
     ui.shortcutsOpen ||
+    ui.converterOpen ||
     ui.activeEvent !== null
   );
 }
@@ -200,6 +202,9 @@ function CelestialApp() {
       } else if (k === "s") {
         e.preventDefault();
         ui.setSettingsOpen(true);
+      } else if (k === "c") {
+        e.preventDefault();
+        ui.setConverterOpen(true);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -247,6 +252,7 @@ function CelestialApp() {
         <ImportDialog />
         <AddEventDialog />
         <ShortcutsDialog />
+        <DateConverterDialog />
         <EventDialog />
 
         <Toaster position="top-center" closeButton dir={dict.dir} />

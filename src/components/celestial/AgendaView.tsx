@@ -2,7 +2,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { motion } from "framer-motion";
 import { AlertTriangle, CalendarClock, CalendarOff, Download, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -192,10 +191,24 @@ export function AgendaView() {
       </div>
 
       {isLoading && (
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-14 rounded-xl" />
-          <Skeleton className="h-14 rounded-xl" />
-          <Skeleton className="h-14 rounded-xl" />
+        <div
+          aria-hidden
+          className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 sm:p-3 dark:border-white/10"
+        >
+          {/* skeleton month header */}
+          <Skeleton className="h-5 w-32 rounded-md" />
+          {Array.from({ length: 4 }, (_, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 border border-border bg-background p-3 rounded-e-xl rounded-s-sm"
+            >
+              <Skeleton className="size-9 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-2/5" />
+                <Skeleton className="h-3 w-1/4" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
       {isError && (
@@ -268,7 +281,7 @@ export function AgendaView() {
                         <span className="text-sm font-bold tabular-nums">
                           {weekdayShort(locale, cell.weekday)} · {activeDateText}
                         </span>
-                        <span className="text-xs text-muted-foreground" dir="auto">
+                        <span className="text-xs tabular-nums text-muted-foreground" dir="auto">
                           {secondaryText}
                         </span>
                         <span className="text-xs font-medium text-primary">
@@ -286,14 +299,12 @@ export function AgendaView() {
                     </div>
                     <div className="mt-1.5 flex flex-col gap-1.5">
                       {events.map((e) => (
-                        <motion.button
+                        <button
                           key={e.id}
                           type="button"
-                          whileHover={{ y: -2 }}
-                          transition={{ duration: 0.15 }}
                           onClick={() => setEventDialog(e)}
                           className={cn(
-                            "flex w-full cursor-pointer items-center gap-3 border border-border bg-background p-3 text-start rounded-e-xl rounded-s-sm transition-colors hover:bg-accent dark:border-white/10 dark:shadow-sm",
+                            "flex w-full cursor-pointer items-center gap-3 border border-border bg-background p-3 text-start rounded-e-xl rounded-s-sm transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-accent/60 hover:shadow-sm active:scale-[0.99] motion-reduce:hover:translate-y-0 dark:border-white/10 dark:shadow-sm",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                           )}
                           style={{
@@ -324,7 +335,7 @@ export function AgendaView() {
                               {dict.holidayBadge}
                             </Badge>
                           )}
-                        </motion.button>
+                        </button>
                       ))}
                     </div>
                   </div>

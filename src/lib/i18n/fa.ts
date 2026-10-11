@@ -56,6 +56,23 @@ export const fa: LocaleDict = {
   weekStartSat: 'شنبه',
   weekStartSun: 'یکشنبه',
   weekStartMon: 'دوشنبه',
+  showWeekNumbers: 'شماره هفته',
+
+  // مبدل تاریخ
+  converter: 'تبدیل تاریخ',
+  converterDesc: 'تبدیل هر تاریخی میان تقویم‌های میلادی، شمسی و شاهنشاهی.',
+  converterOpen: 'باز کردن مبدل تاریخ',
+  converterToday: 'امروز',
+  converterGo: 'نمایش در تقویم',
+  converterInvalid: 'تاریخ نامعتبر است',
+  shortcutConverter: 'مبدل تاریخ',
+
+  // راهنمای نصب در iOS
+  iosInstallHint: 'نصب: اشتراک ← افزودن به صفحه اصلی',
+
+  // برچسب ستون شماره هفته
+  weekNumCol: 'هفته',
+  weekNumLabel: 'هفته {n}',
 
   eventSources: 'منابع رویدادها و تعطیلات',
   srcInternational: 'رویدادهای جهانی',

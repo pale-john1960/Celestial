@@ -40,6 +40,8 @@ interface UiState {
   editEvent: EditEventTarget | null;
   /** keyboard shortcuts help dialog */
   shortcutsOpen: boolean;
+  /** trilingual date converter dialog */
+  converterOpen: boolean;
   /** event shown in the detail dialog */
   activeEvent: EventInstance | null;
   setView: (view: ViewMode) => void;
@@ -65,6 +67,7 @@ interface UiState {
   /** close the add/edit dialog in either mode */
   closeEventEditor: () => void;
   setShortcutsOpen: (open: boolean) => void;
+  setConverterOpen: (open: boolean) => void;
   setEventDialog: (inst: EventInstance | null) => void;
 }
 
@@ -83,6 +86,7 @@ export const useUi = create<UiState>()((set, get) => ({
   addEventOpen: false,
   editEvent: null,
   shortcutsOpen: false,
+  converterOpen: false,
   activeEvent: null,
 
   setView: (view) => set({ view }),
@@ -120,6 +124,7 @@ export const useUi = create<UiState>()((set, get) => ({
   openEditDialog: (evt) => set({ editEvent: evt, addEventOpen: false }),
   closeEventEditor: () => set({ addEventOpen: false, editEvent: null }),
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen }),
+  setConverterOpen: (converterOpen) => set({ converterOpen }),
   setEventDialog: (activeEvent) => set({ activeEvent }),
 }));
 

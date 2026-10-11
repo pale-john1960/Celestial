@@ -82,7 +82,11 @@ export function EventDialog() {
               <DialogTitle className="flex items-start gap-2.5 text-start">
                 <span
                   aria-hidden
-                  className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-2xl"
+                  className="grid size-12 shrink-0 place-items-center rounded-2xl text-2xl ring-1 ring-border/60"
+                  style={{
+                    // soft tinted icon chip — the event's own dot color at ~8%
+                    backgroundColor: `${eventColor(activeEvent)}14`,
+                  }}
                 >
                   {activeEvent.emoji}
                 </span>
@@ -134,7 +138,7 @@ export function EventDialog() {
               />
             </div>
 
-            <div className="space-y-1.5 rounded-xl bg-muted/60 p-3 text-sm">
+            <div className="space-y-2 rounded-xl bg-muted/60 p-3.5 text-sm">
               <DateRow label={dict.systemGregorian}>
                 {formatGregorianDate(locale, cell.gregorian, dict)}
               </DateRow>
@@ -162,7 +166,7 @@ export function EventDialog() {
               </p>
             )}
 
-            <p className="text-xs text-muted-foreground">
+            <p className="border-t border-border pt-3 text-xs text-muted-foreground">
               {activeEvent.source === "manual"
                 ? `✍️ ${dict.sourceManual}`
                 : sourceBadgeText(dict, locale)}
@@ -175,7 +179,7 @@ export function EventDialog() {
               <Button
                 variant="outline"
                 onClick={onEdit}
-                className="ms-auto rounded-xl font-semibold"
+                className="ms-auto rounded-xl font-semibold transition-transform active:scale-95"
               >
                 <Pencil className="size-4" aria-hidden />
                 {dict.editEvent}

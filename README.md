@@ -34,9 +34,12 @@
 - **Persian zodiac chips** ♎ — month view (zodiac of the month) and Day view (zodiac of the day), all languages incl. RTL
 - **Seasonal artwork** — 2 illustrations per season with gentle CSS animations (spring cherry petals, summer fireflies, autumn leaves, winter snow); respects `prefers-reduced-motion`
 - **Views**: Month (dual-date cells: big Shamsi + small Gregorian), **Week** (7 day-cards), Year, Day (all systems at once), Agenda (90 days)
-- **Keyboard navigation** — arrows to move, `T` today, `M/W/Y/D/A` views, `/` search, `?` shortcut help (works in RTL too)
+- **Keyboard navigation** — arrows to move, `T` today, `M/W/Y/D/A` views, `C` date converter, `/` search, `?` shortcut help (works in RTL too)
+- **Date converter** ⭄ — press `C` (or the hero toolbar button) to convert any date between Gregorian, Jalali and Imperial side-by-side, with live weekday / moon-phase / zodiac chips, "use today" and "show in calendar" jumps; accepts Persian digits ۱۴۰۵
+- **ISO week numbers** — optional left-edge week column in the month grid (settings toggle; ISO 8601 Thursday rule, verified 47,847 days 1970–2100), also on paper when printing
+- **iOS install hint** — iPhone/iPad users get a footer "Share → Add to Home Screen" chip (dismissable) since iOS Safari never offers the standard install prompt
 - **Flexible settings**: week start (Sat/Sun/Mon), theme (light/dark), per-source toggles, online mode
-- **Motion & polish** — Framer Motion view transitions, staggered month-cell entrance, card hover lifts, dark-mode hero starfield (all killed under `prefers-reduced-motion`); print-friendly month grid via `Ctrl+P`
+- **Motion & polish** — Framer Motion view transitions, staggered cell entrances, card hover lifts, structured loading skeletons (week/day/agenda), thin custom scrollbars, print mastheads on Month/Week/Day/Agenda, dark-mode hero starfield + moonlight halo (all motion killed under `prefers-reduced-motion`)
 - Android: home-screen **widgets** (date 4×2 + month grid 4×5), **status-bar date** via persistent notification, **manual events + .ics export**, low-power design (no continuous animations)
 
 ## Repository layout
@@ -64,6 +67,10 @@ bun run db:push     # SQLite + Prisma client
 bun run dev         # http://localhost:3000
 bun scripts/validate-calendar.ts   # 432/432 checks
 ```
+
+### E2E smoke test
+
+With the dev server running, `bun run smoke` (see `scripts/smoke.ts`) drives the app through the `agent-browser` CLI in its default session and exits 0/1 with a `SMOKE: PASS` / `SMOKE: FAIL (n)` summary. It covers: page title + hero, month grid (≥ 28 cells + today ring), all five views (Month/Week/Year/Day/Agenda), the settings sheet (`S`), search (`Ctrl+K`), the trilingual date converter (`C`, three calendar rows), a locale switch to 日本語 and back to English (the store is left in EN), and `/api/time/ntp` health from inside the page. Any console error or uncaught page error fails the run. Steps are best-effort (failures are reported and the run continues); per-step waits are ~15 s and every CLI call is hard-capped, so it never hangs.
 
 ## Accuracy notes
 

@@ -56,6 +56,23 @@ export const ja: LocaleDict = {
   weekStartSat: '土曜日',
   weekStartSun: '日曜日',
   weekStartMon: '月曜日',
+  showWeekNumbers: '週番号',
+
+  // 日付コンバーター
+  converter: '日付を変換',
+  converterDesc: 'グレゴリオ暦・ジャラリ暦・ペルシア帝国暦の間で任意の日付を変換します。',
+  converterOpen: '日付コンバーターを開く',
+  converterToday: '今日に設定',
+  converterGo: 'カレンダーで表示',
+  converterInvalid: '無効な日付です',
+  shortcutConverter: '日付コンバーター',
+
+  // iOS ホーム画面追加ヒント
+  iosInstallHint: 'インストール：共有 → ホーム画面に追加',
+
+  // 週番号列ラベル
+  weekNumCol: '週',
+  weekNumLabel: '第{n}週',
 
   eventSources: 'イベント・祝日のソース',
   srcInternational: '国際的なイベント',

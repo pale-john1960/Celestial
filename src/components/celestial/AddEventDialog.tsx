@@ -189,12 +189,17 @@ export function AddEventDialog() {
     >
       <DialogContent closeLabel={dict.close} className="max-h-[85vh] max-w-lg overflow-y-auto rounded-2xl">
         <DialogHeader className="text-start">
-          <DialogTitle className="flex items-center gap-2">
-            {editing ? (
-              <Pencil className="size-5 text-primary" aria-hidden />
-            ) : (
-              <CalendarPlus className="size-5 text-primary" aria-hidden />
-            )}
+          <DialogTitle className="flex items-center gap-2.5">
+            <span
+              aria-hidden
+              className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"
+            >
+              {editing ? (
+                <Pencil className="size-5" aria-hidden />
+              ) : (
+                <CalendarPlus className="size-5" aria-hidden />
+              )}
+            </span>
             {editing ? dict.editEvent : dict.addEventTitle}
           </DialogTitle>
           <DialogDescription>
@@ -374,7 +379,7 @@ export function AddEventDialog() {
                 <Button
                   variant="outline"
                   disabled={saving || deleting}
-                  className="rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  className="rounded-xl border-destructive/40 text-destructive transition-[color,background-color,border-color,transform] duration-150 hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive active:scale-95"
                 >
                   <Trash2 className="size-4" aria-hidden />
                   {dict.deleteEvent}
@@ -403,12 +408,14 @@ export function AddEventDialog() {
             variant="outline"
             onClick={() => closeEventEditor()}
             disabled={saving}
+            className="transition-transform active:scale-95"
           >
             {dict.cancel}
           </Button>
           <Button
             onClick={() => void submit()}
             disabled={saving || deleting || !title.trim()}
+            className="transition-transform active:scale-95"
           >
             {saving ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />

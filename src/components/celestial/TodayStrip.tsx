@@ -61,11 +61,14 @@ export function TodayStrip({
         <Button
           size="sm"
           variant="outline"
-          className="rounded-lg font-semibold print:hidden"
+          className="group rounded-lg font-semibold transition-transform active:scale-95 print:hidden"
           onClick={onOpenDay}
         >
           {dict.viewDay}
-          <ArrowRight className="size-4 rtl:-scale-x-100" aria-hidden />
+          <ArrowRight
+            className="size-4 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5 motion-reduce:group-hover:translate-x-0"
+            aria-hidden
+          />
         </Button>
       </div>
 
@@ -77,7 +80,7 @@ export function TodayStrip({
               type="button"
               onClick={() => setEventDialog(e)}
               className={cn(
-                "inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs transition-colors hover:bg-accent",
+                "inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs transition-[background-color,transform] duration-150 hover:bg-accent/60 active:scale-95 motion-reduce:active:scale-100",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               )}
             >

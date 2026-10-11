@@ -44,6 +44,7 @@ function shortcutRows(dict: LocaleDict): { keys: string[]; label: string }[] {
     { keys: ["/", "Ctrl", "K"], label: dict.search },
     { keys: ["Ctrl", "P"], label: dict.shortcutPrint },
     { keys: ["S"], label: dict.settings },
+    { keys: ["C"], label: dict.shortcutConverter },
     { keys: ["?"], label: dict.shortcuts },
   ];
 }

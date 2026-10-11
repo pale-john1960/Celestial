@@ -7,6 +7,7 @@ import { useSettings } from "@/store/settings";
 import { useNtpSync } from "@/lib/client/api";
 import { HeroHeader } from "./HeroHeader";
 import { InstallChip } from "./InstallChip";
+import { IosInstallChip } from "./IosInstallChip";
 import { OfflineChip } from "./OfflineChip";
 
 function useLiveClock() {
@@ -75,6 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {ntpLabel}
             </span>
             <InstallChip />
+            <IosInstallChip />
             <OfflineChip />
           </div>
         </div>

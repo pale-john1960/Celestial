@@ -56,6 +56,23 @@ export const en: LocaleDict = {
   weekStartSat: 'Saturday',
   weekStartSun: 'Sunday',
   weekStartMon: 'Monday',
+  showWeekNumbers: 'Week numbers',
+
+  // Date converter dialog
+  converter: 'Convert date',
+  converterDesc: 'Convert any date between the Gregorian, Jalali and Imperial calendars.',
+  converterOpen: 'Open date converter',
+  converterToday: 'Use today',
+  converterGo: 'Show in calendar',
+  converterInvalid: 'Invalid date',
+  shortcutConverter: 'Date converter',
+
+  // iOS Add-to-Home-Screen hint
+  iosInstallHint: 'Install: Share → Add to Home Screen',
+
+  // week-number column labels
+  weekNumCol: 'Wk',
+  weekNumLabel: 'Week {n}',
 
   eventSources: 'Event & holiday sources',
   srcInternational: 'International events',

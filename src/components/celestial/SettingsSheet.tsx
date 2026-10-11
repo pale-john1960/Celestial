@@ -517,6 +517,25 @@ export function SettingsSheet() {
             {radioRow("1", "ws-1", dict.weekStartMon)}
           </RadioGroup>
 
+          {/* ISO week-number column in the month grid (task 12-a) —
+              same Switch row pattern as the notifications toggle */}
+          <div className="mt-1.5 flex items-start justify-between gap-3 rounded-xl p-2.5 hover:bg-accent">
+            <div className="min-w-0">
+              <Label
+                htmlFor="show-week-numbers"
+                className="cursor-pointer text-sm font-medium leading-tight"
+              >
+                {dict.showWeekNumbers}
+              </Label>
+            </div>
+            <Switch
+              id="show-week-numbers"
+              checked={settings.showWeekNumbers}
+              onCheckedChange={(v) => settings.setShowWeekNumbers(v)}
+              className="mt-0.5 shrink-0"
+            />
+          </div>
+
           <Separator className="my-4" />
 
           {/* event sources */}

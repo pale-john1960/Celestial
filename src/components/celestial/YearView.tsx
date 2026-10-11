@@ -327,12 +327,20 @@ function MonthCard({
     system === "gregorian"
       ? gregorianMonthName(locale, monthIndex)
       : jalaliMonthName(locale, monthIndex);
+  // the month containing today gets a card-level ring (the today DAY cell
+  // already carries the solid primary fill — this emphasizes the month itself)
+  const hasToday = cells.some((c) => c.inMonth && c.isToday);
 
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="group overflow-hidden rounded-2xl border border-border bg-card text-start shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className={cn(
+        "group cursor-pointer overflow-hidden rounded-2xl border border-border bg-card text-start shadow-sm",
+        "transition-[box-shadow,transform,border-color] duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg motion-reduce:hover:translate-y-0",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        hasToday && "ring-1 ring-primary/40",
+      )}
     >
       <div className="relative h-16 overflow-hidden">
         {imgFailed ? (
@@ -343,7 +351,7 @@ function MonthCard({
             alt=""
             loading="lazy"
             onError={() => setImgFailed(true)}
-            className="absolute inset-0 size-full object-cover object-[50%_35%] transition-transform duration-500 group-hover:scale-105"
+            className="absolute inset-0 size-full object-cover object-[50%_35%] transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
           />
         )}
         <div

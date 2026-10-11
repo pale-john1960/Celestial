@@ -129,7 +129,12 @@ export function DayView() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {dict.appName} · {dict.tagline}
         </p>
-        <h2 className="mt-1 text-2xl font-bold">{activeDateText}</h2>
+        <h2 className="mt-1 text-2xl font-bold">
+          <span className="text-base font-semibold text-muted-foreground">
+            {dict.viewDay}{" · "}
+          </span>
+          {activeDateText}
+        </h2>
       </div>
 
       {/* date hero */}
@@ -159,7 +164,7 @@ export function DayView() {
                 <span
                   title={zodiacLabel}
                   aria-label={zodiacLabel}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-transform duration-150 hover:scale-105 motion-reduce:hover:scale-100"
                 >
                   <span
                     aria-hidden
@@ -223,9 +228,14 @@ export function DayView() {
         )}
       </div>
 
-      {/* moon phase card (every day) */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm dark:border-white/10">
-        <div className="flex items-center gap-3.5">
+      {/* moon phase card (every day) — subtle ring + dark-only radial
+          moonlight halo behind the glyph (light mode keeps the plain card) */}
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm ring-1 ring-border/60 dark:border-white/10">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 hidden dark:block dark:bg-[radial-gradient(60%_100%_at_15%_50%,rgba(245,242,236,0.07),transparent_70%)]"
+        />
+        <div className="relative flex items-center gap-3.5">
           <span aria-hidden className="text-3xl leading-none">
             {MOON_EMOJI[moon.phaseIndex]}
           </span>
@@ -280,9 +290,9 @@ export function DayView() {
 
       {/* loading / error / events */}
       {isLoading && (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-20 rounded-2xl" />
-          <Skeleton className="h-20 rounded-2xl" />
+        <div aria-hidden className="flex flex-col gap-3">
+          <EventCardSkeleton />
+          <EventCardSkeleton />
         </div>
       )}
       {isError && (
@@ -306,9 +316,10 @@ export function DayView() {
       )}
       {events.length > 0 && (
         <div className="flex flex-col gap-3">
-          {events.map((e) => (
+          {events.map((e, i) => (
             <EventCard
               key={e.id}
+              index={i}
               event={e}
               dict={dict}
               locale={locale}
@@ -321,13 +332,30 @@ export function DayView() {
   );
 }
 
+/** loading placeholder shaped like an EventCard (icon chip + title /
+ *  description lines + badge pill) */
+function EventCardSkeleton() {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <Skeleton className="size-8 shrink-0 rounded-xl" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-2/5" />
+        <Skeleton className="h-3 w-3/4" />
+        <Skeleton className="h-5 w-24 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
 function EventCard({
   event,
+  index,
   dict,
   locale,
   onOpen,
 }: {
   event: EventInstance;
+  index: number;
   dict: ReturnType<typeof getDict>;
   locale: "en" | "ja" | "fa";
   onOpen: () => void;
@@ -336,9 +364,10 @@ function EventCard({
     <motion.button
       type="button"
       onClick={onOpen}
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.15 }}
-      className="w-full cursor-pointer rounded-2xl border border-border bg-card p-4 text-start shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background dark:border-white/10"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, delay: Math.min(index * 0.04, 0.2) }}
+      className="w-full cursor-pointer rounded-2xl border border-border bg-card p-4 text-start shadow-sm transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-accent/60 hover:shadow-md motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background dark:border-white/10"
       style={{
         borderInlineStartWidth: "3px",
         borderInlineStartColor: eventColor(event),

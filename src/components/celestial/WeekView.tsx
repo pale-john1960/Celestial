@@ -137,7 +137,12 @@ export function WeekView() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {dict.appName} · {dict.tagline}
         </p>
-        <h2 className="mt-1 text-2xl font-bold">{weekLabel}</h2>
+        <h2 className="mt-1 text-2xl font-bold">
+          <span className="text-base font-semibold text-muted-foreground">
+            {dict.viewWeek}{" · "}
+          </span>
+          {weekLabel}
+        </h2>
       </div>
 
       {/* week navigation */}
@@ -195,17 +200,23 @@ export function WeekView() {
         </div>
       )}
 
-      {/* day cards */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        {cells.map((cell) => (
+      {/* day cards — keyed by week so the entrance stagger replays on
+          navigation (MonthView's grid-key convention) */}
+      <div
+        key={firstJdn}
+        className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7"
+      >
+        {cells.map((cell, i) => (
           <WeekDayCard
             key={cell.iso}
+            index={i}
             cell={cell}
             dict={dict}
             locale={locale}
             system={system}
             selected={cell.iso === selectedIso}
             events={eventsByIso.get(cell.iso)}
+            loading={isLoading}
             moon={moons.get(cell.iso)?.major ?? null}
             season={seasons.get(cell.iso) ?? null}
             onSelect={() => {
@@ -231,22 +242,27 @@ function systemOfCell(
 
 function WeekDayCard({
   cell,
+  index,
   dict,
   locale,
   system,
   selected,
   events,
+  loading,
   moon,
   season,
   onSelect,
   onOpenDay,
 }: {
   cell: DayCell;
+  index: number;
   dict: ReturnType<typeof getDict>;
   locale: "en" | "ja" | "fa";
   system: "gregorian" | "jalali" | "imperial";
   selected: boolean;
   events: EventInstance[] | undefined;
+  /** events query in flight — the event area shows skeleton rows */
+  loading: boolean;
   moon: "new" | "firstQ" | "full" | "lastQ" | null;
   season: SeasonEvent | null;
   onSelect: () => void;
@@ -279,10 +295,11 @@ function WeekDayCard({
 
   return (
     <motion.article
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.15 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, delay: Math.min(index * 0.03, 0.2) }}
       className={cn(
-        "flex flex-col rounded-2xl border bg-card shadow-sm dark:border-white/10",
+        "flex flex-col rounded-2xl border bg-card shadow-sm transition-[box-shadow,transform,border-color] duration-150 hover:-translate-y-px hover:shadow-md motion-reduce:hover:translate-y-0 dark:border-white/10",
         cell.isToday && "ring-2 ring-primary",
         selected ? "border-primary/60" : "border-border",
       )}
@@ -361,9 +378,14 @@ function WeekDayCard({
         </span>
       </button>
 
-      {/* event list */}
+      {/* event list — skeleton rows while the events query is in flight */}
       <div className="flex flex-1 flex-col gap-1.5 p-2.5">
-        {visible.length === 0 ? (
+        {loading ? (
+          <div aria-hidden className="flex flex-col gap-1.5">
+            <Skeleton className="h-11 rounded-xl" />
+            <Skeleton className="h-11 rounded-xl" />
+          </div>
+        ) : visible.length === 0 ? (
           <p className="m-auto rounded-lg border border-dashed border-border px-2 py-2.5 text-center text-[11px] text-muted-foreground">
             {dict.noEvents}
           </p>
@@ -374,7 +396,7 @@ function WeekDayCard({
               type="button"
               onClick={() => setEventDialog(e)}
               className={cn(
-                "flex w-full items-start gap-2 rounded-xl border border-border bg-background p-2 text-start transition-colors hover:bg-accent dark:border-white/10",
+                "flex w-full cursor-pointer items-start gap-2 rounded-xl border border-border bg-background p-2 text-start transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-accent/60 hover:shadow-sm active:scale-[0.99] motion-reduce:hover:translate-y-0 dark:border-white/10",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               )}
             >
@@ -439,7 +461,7 @@ function WeekDayCard({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 rounded-lg text-xs font-semibold text-primary transition-transform active:scale-95"
+            className="h-7 rounded-lg text-xs font-semibold text-primary transition-transform active:scale-95 print:hidden"
             onClick={onOpenDay}
           >
             {dict.viewDay}

@@ -63,4 +63,22 @@ export function parseIso(s: string): SimpleDate | null {
   return { year: y, month: mo, day: d };
 }
 
+/** ISO-8601 week number (1-53) of a Gregorian date — the "Thursday rule":
+ *  a date belongs to the ISO year/week of its Thursday, and week 1 of a year
+ *  is the Mon-Sun week containing that year's first Thursday. Year boundaries
+ *  fall out naturally: Jan 1-3 can be week 52/53 of the previous year and
+ *  Dec 29-31 can be week 1 of the next one (the ISO year is simply read off
+ *  the Thursday's Gregorian year). Verified against Python's isocalendar()
+ *  for every day 1970-2100 (see task 12-a worklog). */
+export function isoWeekNumber(d: SimpleDate): number {
+  const jdn = g2d(d.year, d.month, d.day);
+  // Thursday of d's Mon-Sun week (jdnWeekday: 0=Sunday)
+  const jdnThursday = jdn + 3 - ((jdnWeekday(jdn) + 6) % 7);
+  // the ISO year is the Gregorian year of that Thursday
+  const isoYear = d2g(jdnThursday).year;
+  const jan1 = g2d(isoYear, 1, 1);
+  const firstThursday = jan1 + ((4 - jdnWeekday(jan1) + 7) % 7);
+  return div(jdnThursday - firstThursday, 7) + 1;
+}
+
 export { div, mod };

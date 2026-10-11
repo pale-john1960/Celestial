@@ -59,6 +59,25 @@ export interface LocaleDict {
   weekStartSat: string;
   weekStartSun: string;
   weekStartMon: string;
+  /** settings toggle — ISO week-number column in the month grid */
+  showWeekNumbers: string;
+
+  // Date converter dialog (C key / hero button)
+  converter: string;
+  converterDesc: string;
+  converterOpen: string;
+  converterToday: string;
+  converterGo: string;
+  converterInvalid: string;
+  shortcutConverter: string;
+
+  // iOS Add-to-Home-Screen hint chip
+  iosInstallHint: string;
+
+  // week-number column labels
+  weekNumCol: string;
+  /** aria-label per week row — "{n}" = ISO week number */
+  weekNumLabel: string;
 
   // event sources
   eventSources: string;

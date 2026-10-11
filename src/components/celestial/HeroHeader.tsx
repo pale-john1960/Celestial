@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarSearch, Keyboard, Plus, Search, Settings2 } from "lucide-react";
+import { ArrowLeftRight, CalendarSearch, Keyboard, Plus, Search, Settings2 } from "lucide-react";
 import {
   gregorianMonthName,
   getDict,
@@ -215,6 +215,7 @@ export function HeroHeader() {
   const setSearchOpen = useUi((s) => s.setSearchOpen);
   const setSettingsOpen = useUi((s) => s.setSettingsOpen);
   const setShortcutsOpen = useUi((s) => s.setShortcutsOpen);
+  const setConverterOpen = useUi((s) => s.setConverterOpen);
   const openAddDialog = useUi((s) => s.openAddDialog);
   const goToday = useUi((s) => s.goToday);
 
@@ -352,6 +353,15 @@ export function HeroHeader() {
           >
             <Keyboard className="size-4" aria-hidden />
             <span className="sr-only">{dict.shortcuts}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setConverterOpen(true)}
+            aria-label={dict.converterOpen}
+            className="flex size-9 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+          >
+            <ArrowLeftRight className="size-4 rtl:-scale-x-100" aria-hidden />
+            <span className="sr-only">{dict.converterOpen}</span>
           </button>
           <button
             type="button"
