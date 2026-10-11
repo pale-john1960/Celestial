@@ -66,7 +66,7 @@ export const en: LocaleDict = {
   religiousHiddenHolidayNote: 'Religious events are hidden, but official holidays still appear as days off.',
 
   importTitle: 'Import events',
-  importHint: 'Upload a JSON, TXT or CSV file with your events. Jalali (e.g. 1405-07-01) and Gregorian (2026-10-01) dates are auto-detected.',
+  importHint: 'Upload a JSON, TXT, CSV or iCalendar (.ics) file with your events. Jalali (e.g. 1405-07-01) and Gregorian (2026-10-01) dates are auto-detected. ICS has no day-off flag — mark day-offs after import.',
   importChooseFile: 'Choose file',
   importParsing: 'Parsing file…',
   importResult: 'events imported',
@@ -152,6 +152,29 @@ export const en: LocaleDict = {
 
   exportIcs: 'Export .ics',
   exportIcsDone: 'Exported {n} events',
+
+  seasonMarEquinox: 'March equinox',
+  seasonJunSolstice: 'June solstice',
+  seasonSepEquinox: 'September equinox',
+  seasonDecSolstice: 'December solstice',
+  seasonOccursAt: 'Occurs at {t}',
+  seasonNoteEqual: 'Day and night are about equal',
+  seasonNoteLongest: 'Longest day of the year (N. hemisphere)',
+  seasonNoteShortest: 'Shortest day of the year (N. hemisphere)',
+
+  importFormatIcs: 'Calendar file (.ics) — Google/Apple/Outlook exports; yearly RRULE and multi-day events supported',
+
+  addEventYearly: 'Repeats every year',
+  addEventYearlyHint: 'Birthdays, anniversaries',
+  recurringYearly: 'Repeats yearly',
+
+  editEvent: 'Edit event',
+  eventUpdated: 'Event updated',
+  deleteEvent: 'Delete event',
+  saveChanges: 'Save changes',
+
+  nextDayOff: 'Next day off: {name} · in {n} days',
+  nextDayOffToday: 'Next day off today: {name}',
 };
 
 // Gregorian month names (en)

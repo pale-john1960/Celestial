@@ -135,7 +135,7 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
                     m.getOrPut(inst.iso) { ArrayList() }.add(inst)
                 }
                 if (s.sources.imported) {
-                    for (inst in repo.importedInstances(imported)) {
+                    for (inst in repo.importedInstances(imported, loadedYears)) {
                         m.getOrPut(inst.iso) { ArrayList() }.add(inst)
                     }
                 }
@@ -295,7 +295,12 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- import -------------------------------------------------------------
 
-    data class ImportOutcome(val imported: Int, val skipped: Int, val ok: Boolean)
+    data class ImportOutcome(
+        val imported: Int,
+        val skipped: Int,
+        val warnings: Int = 0,
+        val ok: Boolean,
+    )
 
     fun importFromText(fileName: String, text: String): ImportOutcome {
         val parsed = ImportParser.parseAuto(fileName, text, sourceName = fileName)
@@ -307,12 +312,13 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
                 description = it.description,
                 isHoliday = it.isHoliday,
                 sourceName = it.sourceName,
+                recurYearly = it.recurYearly,
             )
         }
         if (events.isNotEmpty()) {
             viewModelScope.launch { dao.insertAll(events) }
         }
-        return ImportOutcome(events.size, parsed.errors.size, events.isNotEmpty())
+        return ImportOutcome(events.size, parsed.errors.size, parsed.warnings.size, events.isNotEmpty())
     }
 
     fun clearImported() {
@@ -324,11 +330,54 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { dao.deleteById(id) }
     }
 
+    // ---- manual events + editing -------------------------------------------
+
+    /** Row currently open in the edit dialog (null = closed). */
+    private val _editingEvent = MutableStateFlow<ImportedEvent?>(null)
+    val editingEvent: StateFlow<ImportedEvent?> = _editingEvent.asStateFlow()
+
+    /** Open the edit dialog for a Room row (imported-events manager rows). */
+    fun beginEdit(row: ImportedEvent) {
+        _editingEvent.value = row
+    }
+
+    /** Open the edit dialog from an event card (Room row id). */
+    fun beginEditImported(dbId: Long) {
+        _editingEvent.value = importedEvents.value.firstOrNull { it.id == dbId }
+    }
+
+    fun cancelEdit() {
+        _editingEvent.value = null
+    }
+
+    /**
+     * Persist an edited row (Room update; the importedEvents flow refreshes
+     * the event map automatically). The Jalali display date is recomputed
+     * for the (possibly changed) Gregorian date. Editing the anchor of a
+     * yearly series edits the whole series.
+     */
+    fun updateImported(row: ImportedEvent) {
+        _editingEvent.value = null
+        viewModelScope.launch {
+            val g = Jdn.parseIso(row.iso)
+            val fixed = if (g != null) {
+                row.copy(jalaliIso = Jdn.isoDate(JalaliEngine.gregorianToJalali(g)))
+            } else row
+            dao.update(fixed)
+        }
+    }
+
     /**
      * Persist a user-created event (sourceName = "manual"). The imported-events
      * flow triggers the existing event refresh automatically.
      */
-    fun addManualEvent(title: String, description: String, isHoliday: Boolean, iso: String) {
+    fun addManualEvent(
+        title: String,
+        description: String,
+        isHoliday: Boolean,
+        iso: String,
+        recurYearly: Boolean = false,
+    ) {
         val g = Jdn.parseIso(iso) ?: return
         viewModelScope.launch {
             dao.insertAll(
@@ -340,6 +389,7 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
                         description = description.ifBlank { null },
                         isHoliday = isHoliday,
                         sourceName = "manual",
+                        recurYearly = recurYearly,
                     )
                 )
             )
@@ -347,14 +397,21 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * Visible events in the next 90 days for the ICS export. holidayOnly
-     * instances are excluded — their text must never leave the app.
+     * Visible events in the next 90 days for the ICS export, plus the ANCHOR
+     * instance of every yearly series (any year — the RRULE line makes the
+     * consuming calendar repeat it). Expanded series instances are excluded
+     * (each series exports exactly once); holidayOnly instances are excluded
+     * — their text must never leave the app.
      */
     fun exportableEvents(): List<EventInstance> {
         val s = settings.value ?: return emptyList()
         val from = todayIso()
         val to = Jdn.isoDate(Jdn.d2g(Jdn.toJdn(todayGregorian()) + 90))
-        return repo.aggregate(from, to, s.sources, importedEvents.value)
-            .filter { !it.holidayOnly }
+        val inWindow = repo.aggregate(from, to, s.sources, importedEvents.value)
+            .filter { !it.holidayOnly && !it.recurring }
+        val anchors = if (s.sources.imported) {
+            repo.importedInstances(importedEvents.value.filter { it.recurYearly })
+        } else emptyList()
+        return inWindow + anchors
     }
 }

@@ -66,7 +66,7 @@
 
     <!-- Import -->
     <string name="import_title">イベントのインポート</string>
-    <string name="import_hint">JSON・TXT・CSVファイルをアップロード。ジャラリ暦（例: 1405-07-01）とグレゴリオ暦（2026-10-01）の日付を自動判定します。</string>
+    <string name="import_hint">JSON・TXT・CSV・ICSファイルをアップロード。ジャラリ暦（例: 1405-07-01）とグレゴリオ暦（2026-10-01）の日付を自動判定します。</string>
     <string name="import_choose_file">ファイルを選択</string>
     <string name="import_parsing">解析中…</string>
     <string name="import_result">%1$d件をインポートしました</string>
@@ -173,4 +173,26 @@
     <!-- ICS export (Task 6-b) -->
     <string name="export_ics">イベントを書き出す (.ics)</string>
     <string name="export_ics_done">%1$d件のイベントを書き出しました</string>
+
+    <!-- Solstice and equinox (Task 8-b) -->
+    <string name="season_mar_equinox">春分</string>
+    <string name="season_jun_solstice">夏至</string>
+    <string name="season_sep_equinox">秋分</string>
+    <string name="season_dec_solstice">冬至</string>
+    <string name="season_occurs_at">%1$s に起こる</string>
+    <string name="season_note_equal">昼と夜の長さがほぼ等しい</string>
+    <string name="season_note_longest">北半球で一年で最も昼が長い</string>
+    <string name="season_note_shortest">北半球で一年で最も昼が短い</string>
+    <string name="season_glyph_desc">季節マーカー: %1$s</string>
+
+    <!-- Recurring annual events (Task 8-b) -->
+    <string name="recurring_yearly">毎年繰り返す</string>
+    <string name="add_event_yearly">毎年繰り返す</string>
+    <string name="add_event_yearly_hint">誕生日や記念日</string>
+    <string name="import_warnings">%1$d件の警告</string>
+
+    <!-- Event editing (Task 8-b) -->
+    <string name="edit_event">イベントを編集</string>
+    <string name="event_updated">イベントを更新しました</string>
+    <string name="delete_event">イベントを削除</string>
 </resources>

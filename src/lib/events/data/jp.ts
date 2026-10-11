@@ -24,7 +24,10 @@ export const jpRules: EventRule[] = [
     descriptions: { en: 'Birthday of the reigning Emperor Naruhito.', ja: '今上天皇の誕生日。', fa: 'زادروز امپراتور Naruhito.' },
   },
   {
-    id: 'jp-vernal-equinox', category: 'japan', kind: 'gregorian-fixed', month: 3, day: 20, isHoliday: true, emoji: '🌼',
+    // 春分の日 — astronomically determined: the JST day containing the March
+    // equinox (fixed Sep/Mar dates drift ±1 day; e.g. 2027 → March 21).
+    id: 'jp-vernal-equinox', category: 'japan', kind: 'season-event', seasonTarget: 0, tzOffsetMin: 540,
+    month: 3, day: 20, isHoliday: true, emoji: '🌼',
     names: { en: 'Vernal Equinox Day (春分の日)', ja: '春分の日', fa: 'روز اعتدال بهاری' },
     descriptions: { en: 'A day for embracing nature and living beings.', ja: '自然をいつくしみ、生き物をたたえる日。', fa: 'روز دل‌بستن به طبیعت و ستایش جانداران.' },
   },
@@ -64,7 +67,10 @@ export const jpRules: EventRule[] = [
     descriptions: { en: 'Honoring elderly citizens.', ja: '長寿を祝う日。', fa: 'احترام به کهنسالان.' },
   },
   {
-    id: 'jp-autumn-equinox', category: 'japan', kind: 'gregorian-fixed', month: 9, day: 22, isHoliday: true, emoji: '🌕',
+    // 秋分の日 — astronomically determined: the JST day containing the September
+    // equinox (fixed Sep 22 was wrong for 2025/2026 — actual: Sep 23).
+    id: 'jp-autumn-equinox', category: 'japan', kind: 'season-event', seasonTarget: 180, tzOffsetMin: 540,
+    month: 9, day: 22, isHoliday: true, emoji: '🌕',
     names: { en: 'Autumnal Equinox Day (秋分の日)', ja: '秋分の日', fa: 'روز اعتدال پاییزی' },
     descriptions: { en: 'Honoring ancestors and the dead.', ja: '祖先をうやまう日。', fa: 'روز بزرگداشت نیاکان.' },
   },

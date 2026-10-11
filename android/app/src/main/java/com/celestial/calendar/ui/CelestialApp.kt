@@ -214,6 +214,10 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                             strings = strings,
                                             onPrevDay = { viewModel.shiftDay(-1) },
                                             onNextDay = { viewModel.shiftDay(1) },
+                                            // ✎ on imported/manual cards opens the edit dialog
+                                            onEditEvent = { ev ->
+                                                ev.dbId?.let { viewModel.beginEditImported(it) }
+                                            },
                                         )
                                     }
                                 }
@@ -259,12 +263,41 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                     locale = s.locale,
                     selectedIso = viewModel.selectedIso ?: todayIso,
                     strings = strings,
-                    onSave = { title, description, isHoliday, iso ->
-                        viewModel.addManualEvent(title, description, isHoliday, iso)
+                    onSave = { title, description, isHoliday, iso, recurYearly ->
+                        viewModel.addManualEvent(title, description, isHoliday, iso, recurYearly)
                         showAddEvent = false
                         Toast.makeText(context, strings.addEventSaved, Toast.LENGTH_SHORT).show()
                     },
                     onDismiss = { showAddEvent = false },
+                )
+            }
+
+            // edit dialog (settings rows + ✎ on imported/manual event cards)
+            val editingEvent by viewModel.editingEvent.collectAsState()
+            editingEvent?.let { row ->
+                AddEventDialog(
+                    system = s.system,
+                    locale = s.locale,
+                    selectedIso = row.iso,
+                    strings = strings,
+                    editing = row,
+                    onSave = { title, description, isHoliday, iso, recurYearly ->
+                        viewModel.updateImported(
+                            row.copy(
+                                iso = iso,
+                                title = title,
+                                description = description.ifBlank { null },
+                                isHoliday = isHoliday,
+                                recurYearly = recurYearly,
+                            )
+                        )
+                        Toast.makeText(context, strings.eventUpdated, Toast.LENGTH_SHORT).show()
+                    },
+                    onDelete = {
+                        viewModel.deleteImported(row.id)
+                        viewModel.cancelEdit()
+                    },
+                    onDismiss = { viewModel.cancelEdit() },
                 )
             }
         }

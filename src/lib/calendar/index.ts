@@ -18,6 +18,11 @@ export { gregorianToImperial, imperialToGregorian, IMPERIAL_DAY_NAMES, ANDARJAH_
 export { gregorianToHijri, hijriToGregorian, hijriMode } from './hijri';
 export { moonInfo, moonPhaseName, MOON_EMOJI, MOON_MAJOR_EMOJI } from './moon';
 export type { MoonInfo, MoonMajor } from './moon';
+export {
+  seasonEventOn, seasonEventsOfYear, sunLon,
+  SEASON_EVENT_EMOJI, seasonEventName, seasonEventNote,
+} from './solstice';
+export type { SeasonEvent, SolsticeInfo } from './solstice';
 
 /** Position of a date in "system space" — year/month in the ACTIVE system. */
 export interface SystemDate {

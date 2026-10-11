@@ -1,7 +1,8 @@
-date,title,description,holiday,calendar
+date,title,description,holiday,calendar,yearly
 2026-10-29,Cyrus the Great Day,Commemorating the founder of the Achaemenid Empire,false,
 1405-07-13,جشن میانه پاییز,Mehregan season midpoint sample,true,jalali
 2026-12-25,Christmas Day,Sample holiday imported from a CSV file,true,
 2027-03-21,Nowruz 1406,Persian New Year sample,true,
 2026-06-21,Summer Solstice,The longest day of the year,false,
 2026-02-14,Valentine's Day,A sample non-holiday observance,false,
+1990-06-14,Amir's birthday,Sample yearly recurring event,false,,yearly

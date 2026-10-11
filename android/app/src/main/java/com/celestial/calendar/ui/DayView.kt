@@ -28,14 +28,17 @@ import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CalendarSystem
 import com.celestial.calendar.engine.CelestialDate
 import com.celestial.calendar.engine.DateFormats
+import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.MoonEngine
+import com.celestial.calendar.engine.SeasonInfo
+import com.celestial.calendar.engine.SolsticeEngine
 import com.celestial.calendar.events.EventInstance
 import kotlin.math.roundToInt
 
 /**
  * Celestial — day view: full date in all systems + hijri + (imperial:
- * devotional day name), "Day off" banner for holidays, the moon phase card
- * and the event list.
+ * devotional day name), "Day off" banner for holidays, the astronomy card
+ * (moon phase + solstice/equinox row) and the event list.
  */
 @Composable
 fun DayView(
@@ -46,6 +49,7 @@ fun DayView(
     strings: LocalStrings,
     onPrevDay: () -> Unit,
     onNextDay: () -> Unit,
+    onEditEvent: (EventInstance) -> Unit = {},
 ) {
     val isHoliday = events.any { it.isHoliday || it.holidayOnly }
     val visibleEvents = remember(events) { events.filter { !it.holidayOnly } }
@@ -99,7 +103,7 @@ fun DayView(
         }
 
         item {
-            MoonCard(date, strings)
+            MoonCard(date, locale, strings)
         }
 
         item {
@@ -112,7 +116,14 @@ fun DayView(
         }
 
         items(visibleEvents, key = { it.id }) { event ->
-            CommonUi.EventCard(event, locale, strings)
+            CommonUi.EventCard(
+                event = event,
+                locale = locale,
+                strings = strings,
+                onEdit = if (event.dbId != null) {
+                    { onEditEvent(event) }
+                } else null,
+            )
         }
 
         item { Spacer(Modifier.height(24.dp)) }
@@ -187,10 +198,15 @@ private fun SystemLine(label: String, value: String, active: Boolean) {
     }
 }
 
-/** Moon phase card: emoji, localized phase name, illumination % and moon age. */
+/**
+ * Astronomy card: moon phase (emoji, localized name, illumination % and
+ * moon age) plus the season row on solstice/equinox days — zodiac glyph,
+ * localized name, local "Occurs at HH:MM" and the day-length note.
+ */
 @Composable
-private fun MoonCard(date: CelestialDate, strings: LocalStrings) {
+private fun MoonCard(date: CelestialDate, locale: AppLocale, strings: LocalStrings) {
     val moon = remember(date.iso) { MoonEngine.infoFor(date.gregorian) }
+    val season = remember(date.iso) { SolsticeEngine.eventOn(date.gregorian) }
     val illum = (moon.illum * 100).roundToInt()
     val age = moon.ageDays.roundToInt()
     androidx.compose.material3.Surface(
@@ -200,30 +216,67 @@ private fun MoonCard(date: CelestialDate, strings: LocalStrings) {
             .fillMaxWidth()
             .padding(top = 8.dp),
     ) {
-        Row(
-            Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(MoonEngine.PHASE_EMOJI[moon.phaseIndex], fontSize = 22.sp)
-            Column {
-                Text(
-                    strings.moonPhaseTitle,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    strings.moonPhaseName(moon.phaseIndex),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    "${strings.moonIllumination(illum)} · ${strings.moonAge(age)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        Column(Modifier.padding(14.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(MoonEngine.PHASE_EMOJI[moon.phaseIndex], fontSize = 22.sp)
+                Column {
+                    Text(
+                        strings.moonPhaseTitle,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        strings.moonPhaseName(moon.phaseIndex),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "${strings.moonIllumination(illum)} · ${strings.moonAge(age)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
+            if (season != null) {
+                SeasonRow(date, locale, season, strings)
+            }
+        }
+    }
+}
+
+/** Solstice/equinox row appended to the moon card. */
+@Composable
+private fun SeasonRow(
+    date: CelestialDate,
+    locale: AppLocale,
+    season: SeasonInfo,
+    strings: LocalStrings,
+) {
+    val hhmm = remember(date.iso, season) {
+        SolsticeEngine.localTimeOf(date.gregorian, season)
+    }
+    Row(
+        Modifier.padding(top = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(SolsticeEngine.glyphOf(season.event), fontSize = 22.sp)
+        Column {
+            Text(
+                strings.seasonEventName(season.event),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                strings.seasonOccursAt(I18n.num(locale, hhmm)) + " · " +
+                        strings.seasonEventNote(season.event),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

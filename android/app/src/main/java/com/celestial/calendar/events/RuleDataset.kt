@@ -276,8 +276,9 @@ object RuleDataset {
             ),
         ),
         EventRule(
-            "jp-vernal-equinox", EventCategory.JAPAN, RuleKind.GREGORIAN_FIXED,
-            month = 3, day = 20, isHoliday = true, emoji = "🌼",
+            "jp-vernal-equinox", EventCategory.JAPAN, RuleKind.SEASON_EVENT,
+            month = 3, day = 20, seasonTarget = 0, tzOffsetMin = 540,
+            isHoliday = true, emoji = "🌼",
             names = L10n("Vernal Equinox Day (春分の日)", "春分の日", "روز اعتدال بهاری"),
             descriptions = L10n(
                 "A day for embracing nature and living beings.",
@@ -356,8 +357,9 @@ object RuleDataset {
             ),
         ),
         EventRule(
-            "jp-autumn-equinox", EventCategory.JAPAN, RuleKind.GREGORIAN_FIXED,
-            month = 9, day = 22, isHoliday = true, emoji = "🌕",
+            "jp-autumn-equinox", EventCategory.JAPAN, RuleKind.SEASON_EVENT,
+            month = 9, day = 22, seasonTarget = 180, tzOffsetMin = 540,
+            isHoliday = true, emoji = "🌕",
             names = L10n("Autumnal Equinox Day (秋分の日)", "秋分の日", "روز اعتدال پاییزی"),
             descriptions = L10n(
                 "Honoring ancestors and the dead.",

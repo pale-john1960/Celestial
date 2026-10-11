@@ -66,7 +66,7 @@
 
     <!-- Import -->
     <string name="import_title">درج رویدادها</string>
-    <string name="import_hint">یک فایل JSON، TXT یا CSV بارگذاری کنید. تاریخ‌های شمسی (مثل ۱۴۰۵-۰۷-۰۱) و میلادی (۲۰۲۶-۱۰-۰۱) خودکار تشخیص داده می‌شوند.</string>
+    <string name="import_hint">یک فایل JSON، TXT، CSV یا ICS بارگذاری کنید. تاریخ‌های شمسی (مثل ۱۴۰۵-۰۷-۰۱) و میلادی (۲۰۲۶-۱۰-۰۱) خودکار تشخیص داده می‌شوند.</string>
     <string name="import_choose_file">انتخاب فایل</string>
     <string name="import_parsing">در حال تحلیل فایل…</string>
     <string name="import_result">%1$d رویداد درج شد</string>
@@ -173,4 +173,26 @@
     <!-- ICS export (Task 6-b) -->
     <string name="export_ics">خروجی رویدادها (.ics)</string>
     <string name="export_ics_done">%1$d رویداد صادر شد</string>
+
+    <!-- Solstice and equinox (Task 8-b) -->
+    <string name="season_mar_equinox">اعتدال بهاری</string>
+    <string name="season_jun_solstice">انقلاب تابستانی</string>
+    <string name="season_sep_equinox">اعتدال پاییزی</string>
+    <string name="season_dec_solstice">انقلاب زمستانی</string>
+    <string name="season_occurs_at">رخداد در ساعت %1$s</string>
+    <string name="season_note_equal">طول روز و شب تقریباً برابر است</string>
+    <string name="season_note_longest">بلندترین روز سال (نیمکره شمالی)</string>
+    <string name="season_note_shortest">کوتاه‌ترین روز سال (نیمکره شمالی)</string>
+    <string name="season_glyph_desc">نشانگر فصل: %1$s</string>
+
+    <!-- Recurring annual events (Task 8-b) -->
+    <string name="recurring_yearly">هر سال تکرار می‌شود</string>
+    <string name="add_event_yearly">هر سال تکرار می‌شود</string>
+    <string name="add_event_yearly_hint">تولدها و سالگردها</string>
+    <string name="import_warnings">%1$d هشدار</string>
+
+    <!-- Event editing (Task 8-b) -->
+    <string name="edit_event">ویرایش رویداد</string>
+    <string name="event_updated">رویداد به‌روزرسانی شد</string>
+    <string name="delete_event">حذف رویداد</string>
 </resources>

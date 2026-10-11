@@ -20,6 +20,12 @@ import {
 import { fromJdn, jdnWeekday, toJdn } from "@/lib/calendar/jdn";
 import { moonInfo, MOON_MAJOR_EMOJI } from "@/lib/calendar/moon";
 import {
+  SEASON_EVENT_EMOJI,
+  seasonEventName,
+  seasonEventOn,
+} from "@/lib/calendar/solstice";
+import type { SeasonEvent } from "@/lib/calendar/solstice";
+import {
   getDict,
   gregorianMonthName,
   jalaliMonthName,
@@ -89,6 +95,17 @@ export function WeekView() {
   const moons = useMemo(
     () =>
       new Map(cells.map((c) => [c.iso, moonInfo(c.gregorian)] as const)),
+    [cells],
+  );
+
+  // solstice/equinox markers (end-corner glyph cluster together with moon)
+  const seasons = useMemo(
+    () =>
+      new Map(
+        cells.map(
+          (c) => [c.iso, seasonEventOn(c.gregorian)?.event ?? null] as const,
+        ),
+      ),
     [cells],
   );
 
@@ -181,6 +198,7 @@ export function WeekView() {
             selected={cell.iso === selectedIso}
             events={eventsByIso.get(cell.iso)}
             moon={moons.get(cell.iso)?.major ?? null}
+            season={seasons.get(cell.iso) ?? null}
             onSelect={() => {
               if (selectedIso === cell.iso) gotoDay(cell.iso);
               else selectDaySync(cell.iso);
@@ -210,6 +228,7 @@ function WeekDayCard({
   selected,
   events,
   moon,
+  season,
   onSelect,
   onOpenDay,
 }: {
@@ -220,6 +239,7 @@ function WeekDayCard({
   selected: boolean;
   events: EventInstance[] | undefined;
   moon: "new" | "firstQ" | "full" | "lastQ" | null;
+  season: SeasonEvent | null;
   onSelect: () => void;
   onOpenDay: () => void;
 }) {
@@ -253,7 +273,7 @@ function WeekDayCard({
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15 }}
       className={cn(
-        "flex flex-col rounded-2xl border bg-card shadow-sm",
+        "flex flex-col rounded-2xl border bg-card shadow-sm dark:border-white/10",
         cell.isToday && "ring-2 ring-primary",
         selected ? "border-primary/60" : "border-border",
       )}
@@ -273,13 +293,21 @@ function WeekDayCard({
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {weekdayLong(locale, cell.weekday)}
           </span>
-          {moon && (
+          {(moon || season) && (
             <span
               aria-hidden
-              title={dict.moonPhaseTitle}
-              className="text-[11px] leading-none opacity-60"
+              className="flex items-center gap-0.5 text-[11px] leading-none opacity-60"
             >
-              {MOON_MAJOR_EMOJI[moon]}
+              {moon && (
+                <span title={dict.moonPhaseTitle}>
+                  {MOON_MAJOR_EMOJI[moon]}
+                </span>
+              )}
+              {season && (
+                <span title={seasonEventName(dict, season)}>
+                  {SEASON_EVENT_EMOJI[season]}
+                </span>
+              )}
             </span>
           )}
         </span>
@@ -337,7 +365,7 @@ function WeekDayCard({
               type="button"
               onClick={() => setEventDialog(e)}
               className={cn(
-                "flex w-full items-start gap-2 rounded-xl border border-border bg-background p-2 text-start transition-colors hover:bg-accent",
+                "flex w-full items-start gap-2 rounded-xl border border-border bg-background p-2 text-start transition-colors hover:bg-accent dark:border-white/10",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               )}
             >
@@ -364,14 +392,25 @@ function WeekDayCard({
                   </span>
                 )}
               </span>
-              {e.isHoliday && (
-                <Badge
-                  variant="outline"
-                  className="shrink-0 border-red-300 bg-red-50 px-1.5 py-0 text-[9px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
-                >
-                  {dict.dayOff}
-                </Badge>
-              )}
+              <span className="flex shrink-0 flex-col items-end gap-1">
+                {e.recurring && (
+                  <Badge
+                    variant="outline"
+                    title={dict.recurringYearly}
+                    className="border-primary/40 bg-primary/5 px-1.5 py-0 text-[9px] text-primary"
+                  >
+                    🔁
+                  </Badge>
+                )}
+                {e.isHoliday && (
+                  <Badge
+                    variant="outline"
+                    className="border-red-300 bg-red-50 px-1.5 py-0 text-[9px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                  >
+                    {dict.dayOff}
+                  </Badge>
+                )}
+              </span>
             </button>
           ))
         )}

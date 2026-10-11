@@ -1,5 +1,6 @@
 package com.celestial.calendar.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -120,6 +125,25 @@ object CommonUi {
         }
     }
 
+    /** Outlined "🔁 Repeats yearly" chip for recurring annual events. */
+    @Composable
+    fun RecurringChip(strings: LocalStrings, modifier: Modifier = Modifier) {
+        Surface(
+            shape = RoundedCornerShape(50),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+            color = androidx.compose.ui.graphics.Color.Transparent,
+            modifier = modifier,
+        ) {
+            Text(
+                "🔁 " + strings.recurringYearly,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            )
+        }
+    }
+
     /** Full event card for the Day view. */
     @Composable
     fun EventCard(
@@ -127,11 +151,12 @@ object CommonUi {
         locale: AppLocale,
         strings: LocalStrings,
         onClick: () -> Unit = {},
+        onEdit: (() -> Unit)? = null,
     ) {
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = MaterialTheme.colorScheme.surface,
-            border = androidx.compose.foundation.BorderStroke(
+            border = BorderStroke(
                 1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
             ),
             modifier = Modifier
@@ -149,8 +174,23 @@ object CommonUi {
                         event.localName(locale.code),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
-                    Box(Modifier.weight(1f))
+                    if (event.recurring) {
+                        RecurringChip(strings)
+                    }
+                    if (onEdit != null) {
+                        IconButton(
+                            onClick = onEdit,
+                            modifier = Modifier.size(30.dp),
+                        ) {
+                            Icon(
+                                Icons.Filled.Edit,
+                                contentDescription = strings.editEvent,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
                     CategoryChip(event.category, locale, strings, manual = event.manual)
                 }
                 val desc = event.localDescription(locale.code)

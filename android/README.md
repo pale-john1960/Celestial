@@ -45,15 +45,18 @@ No API keys, no secrets — the app is fully offline-capable by design.
 | Calendar engine | Pure-Kotlin 33-year-cycle Jalali (epoch Farvardin 1 1386 = 2007-03-21), Fourmilab JDN g2d/d2g, Persian Imperial (12 × 30-day months + 5/6 Andarjah + 30 trilingual devotional day names), Hijri via `android.icu.util.IslamicCalendar` |
 | Event datasets | All 66 web rules ported **verbatim** (international, US, JP, Persian cultural / national / religious) — names, descriptions and emoji in en/ja/fa, incl. the Yalda = Azar 30 and Sepandarmazgan = Bahman 29 data fixes |
 | Religious toggle | Hiding *Persian religious events* keeps legal holidays as red day-off cells (`holidayOnly`) — the event text is never shown, matching the web rule |
-| Views | Month (7-col grid, week-start aware, weekend red — fa: Thu/Fri, else Sat/Sun; red tint + 🌙 holidays, today ring, secondary date number, category dots, moon-phase glyphs) · **Week** (7 day-cards in a vertical list, week-start aware, ‹ › ±7 d + “This week”, per-day: weekday, big active-system number, secondary + Hijri tiny, events in Day-view card style) · Year (12/13 cards + year switcher) · Day (all four systems + devotional name + day-off banner + moon card) · Agenda (next 90 days grouped) |
+| Views | Month (7-col grid, week-start aware, weekend red — fa: Thu/Fri, else Sat/Sun; red tint + 🌙 holidays, today ring, secondary date number, category dots, bottom-end moon/season glyph cluster) · **Week** (7 day-cards in a vertical list, week-start aware, ‹ › ±7 d + “This week”, per-day: weekday, big active-system number, secondary + Hijri tiny, events in Day-view card style) · Year (12/13 cards + year switcher) · Day (all four systems + devotional name + day-off banner + astronomy card: moon phase + solstice/equinox row) · Agenda (next 90 days grouped) |
 | Moon phases | `MoonEngine` — Meeus ch. 49-derived mean-lunation algorithm, **constants identical to the web `moon.ts`** (SYNODIC 29.530588853, BASE 2451550.09766, quarter positions 7.38264721/14.76529443/22.14794164, two-term anomaly correction): per-day age / phase / illumination / 8-phase emoji (🌑🌒🌓🌔🌕🌖🌗🌘) + localized names; major-phase day glyph (🌑🌓🌕🌗) in month cells, week cards and a Day-view card. Accuracy: new/full ±5 min, quarters ±2 h; day-markers match the live reference 149/153 |
-| Manual events | ✛ button in the hero header → AddEventDialog (title 1–120, description ≤500, “day off” switch, Gregorian `yyyy-mm-dd` field pre-filled with the selected day + live active-system conversion + validation) → Room `ImportedEvent` with sourceName `"manual"`, ✍️ badge everywhere (📥 for file imports); managed + **per-row delete** in Settings |
-| ICS export | Settings → “Export events (.ics)” — SAF `CreateDocument("text/calendar")`, next 90 days of events (`holidayOnly` text never exported), RFC 5545 escaping (`\ ; ,` + newlines), 74-char line folding, CRLF endings, `DTEND` exclusive |
+| Solstice & equinox | `SolsticeEngine` — low-precision solar apparent-longitude series (Meeus ch. 25 truncated: mean longitude 280.46646 + 0.9856474°/d + equation of centre 1.914602/0.019993/0.000289), Newton ×6 solve per event seeded at 12:00 UTC on the canonical date, residual guard 0.5°. **Constants identical to the web `solstice.ts`** — validated 8/8 anchors (2024 + 2026) within ±17 min. Day-marker convention = the moon engine's local-day window. Day view: ♈♋♎♑ row on the astronomy card (localized name, “Occurs at HH:MM” device-local, day/night note); month cells + week cards: glyph in the bottom-end cluster (9/14 sp, α 0.6) |
+| Manual events | ✛ button in the hero header → AddEventDialog (title 1–120, description ≤500, “day off” switch, “Repeats yearly” switch, Gregorian `yyyy-mm-dd` field pre-filled with the selected day + live active-system conversion + validation) → Room `ImportedEvent` with sourceName `"manual"`, ✍️ badge everywhere (📥 for file imports); **editable** — ✎ pencil on every imported/manual event card (Day view) and on the settings manager rows, with a destructive Delete in edit mode; jalaliIso recomputed on date change |
+| Recurring annual events | Rows flagged `recurYearly` (Room schema **v2**, non-destructive `ALTER TABLE … ADD COLUMN recurYearly INTEGER NOT NULL DEFAULT 0` migration) expand like the web: anchor instance `imp-{id}` + synthetic `imp-{id}-y{y}` per year in view (same month/day, **Feb 29 → Feb 28** in non-leap years) — 🔁 outlined chip on the cards, 🔁 badge in the manager; delete-row kills the whole series. ICS export writes only the anchor + `RRULE:FREQ=YEARLY` |
+| ICS import | `parseIcs` (port of the web 8-a parser): continuation-line unfolding, VEVENT DTSTART/DTEND (`VALUE=DATE` or date-part; exclusive end), multi-day expansion ≤30 days, TEXT unescaping (`,`, `;`, `\`, `\n`), `RRULE:FREQ=YEARLY` → recurring row, other FREQ → single event + warning count in the result line. SAF picker accepts `.ics` (`text/calendar` + octet-stream fallback) |
+| ICS export | Settings → “Export events (.ics)” — SAF `CreateDocument("text/calendar")`, next 90 days of events + one anchor VEVENT per yearly series with `RRULE:FREQ=YEARLY` (expanded instances skipped; `holidayOnly` text never exported), RFC 5545 escaping (`\ ; ,` + newlines), 74-octet line folding, CRLF endings, `DTEND` exclusive |
 | Hero header | Static seasonal banner per season (2 variants each, swap at day 1/15), month+year in the active system, secondary systems line, ✛ add-event button |
 | Widgets | **Date widget** (4×2 RemoteViews: today in active system + secondary systems + next event) and **Month widget** (4×5 GridView via `RemoteViewsService`, today highlighted, tap-a-day opens the app) |
 | Status-bar date | Persistent silent ongoing notification (IMPORTANCE_LOW) with today's date in the active system; toggle in Settings |
 | NTP | `NtpClient` — UDP SNTP to `pool.ntp.org` (3 s timeout, `Dispatchers.IO`), offset persisted in DataStore; syncs on app open (when online) + manual button |
-| Import | SAF `OpenDocument` picker → JSON / TXT / CSV parser (Jalali auto-detect: years < 1600, Persian digits normalized) → Room `ImportedEvent` (iso, jalaliIso, title, description, isHoliday, sourceName) — listed in Settings with ✍️/📥 source badges + per-row delete |
+| Import | SAF `OpenDocument` picker → JSON / TXT / CSV / **ICS** parser (Jalali auto-detect: years < 1600, Persian digits normalized; JSON `recurYearly`/`yearly` field; TXT/CSV trailing `yearly` column — backward compatible) → Room `ImportedEvent` (iso, jalaliIso, title, description, isHoliday, sourceName, recurYearly) — listed in Settings with ✍️/📥 source badges + 🔁 + per-row edit/delete |
 | i18n | `values/`, `values-ja/`, `values-fa/` string sets (fa = RTL); `android:supportsRtl="true"`; in-app language switching without activity recreation |
 
 ## 3. Low-power design notes
@@ -95,9 +98,9 @@ android/
 ├─ gradle/libs.versions.toml        # version catalog
 ├─ settings.gradle.kts, build.gradle.kts, gradle.properties
 ├─ app/src/main/java/com/celestial/calendar/
-│  ├─ engine/      Jdn, JalaliEngine, HijriEngine, ImperialEngine, Models, I18n, DateFormats, MoonEngine
+│  ├─ engine/      Jdn, JalaliEngine, HijriEngine, ImperialEngine, Models, I18n, DateFormats, MoonEngine, SolsticeEngine
 │  ├─ events/      EventRule, RuleDataset (66 rules), EventExpander, EventRepository, IcsBuilder
-│  ├─ import/      ImportParser (JSON/TXT/CSV + Jalali auto-detect)
+│  ├─ import/      ImportParser (JSON/TXT/CSV/ICS + Jalali auto-detect)
 │  ├─ data/        Room AppDatabase + ImportedEvent, SettingsDataStore
 │  ├─ ntp/         NtpClient (SNTP/UDP)
 │  ├─ statusbar/   StatusBarDate (persistent date notification)
@@ -110,6 +113,11 @@ android/
 
 ## 6. Notes & known limitations
 
+- **Room schema v2 (Task 8-b):** `imported_events` gained `recurYearly INTEGER
+  NOT NULL DEFAULT 0` via a registered, **non-destructive** `Migration(1, 2)`
+  (`AppDatabase.MIGRATION_1_2`). The old `fallbackToDestructiveMigration()`
+  was removed — user data is never silently wiped; an unforeseen future
+  schema mismatch now throws instead. Fresh installs build v2 directly.
 - **Hijri variant:** the web engine uses ICU `islamic-umalqura`; Android's
   `IslamicCalendar` here is set to **CIVIL** (tabular). The two can differ by
   ±1 day around month boundaries, and official Iranian dates depend on moon
@@ -119,8 +127,16 @@ android/
 - Moon-phase day-markers can differ ±1 day from live references when the true
   event falls within ~1 h of local midnight (149/153 agreement — same known
   limitation as the web `moon.ts`).
-- ICS export folds lines by character count (not UTF-8 octets), matching the
-  web builder — RFC-strict parsers may see >75-octet folded lines for
-  Persian/Japanese summaries; mainstream clients are tolerant.
+- Solstice/equinox instants are ±17 min (truncated 3-term solar series — same
+  accuracy as the web `solstice.ts`); “Occurs at HH:MM” uses the local-day
+  window's timezone offset (DST-transition days can be off by the DST delta).
+- Recurring yearly expansion is Gregorian month/day based (Feb 29 → Feb 28 in
+  non-leap years); Jalali/Imperial users see the event on the matching
+  Gregorian date each year. Editing the anchor edits the whole series.
+- ICS import is a minimal reader: parameters on DTSTART/DTEND are ignored
+  (VALUE=DATE or date-part only), BYMONTH/BYMONTHDAY are assumed to match
+  DTSTART, DURATION is not supported, and non-YEARLY RRULEs import as single
+  events (reported as warnings).
+- ICS export folds lines by UTF-8 octets (≤74) — strict RFC 5545 compliant.
 - First-launch `POST_NOTIFICATIONS` prompt (API 33+) is triggered by the
   status-bar date feature (default on).

@@ -21,10 +21,11 @@
   - Persian religious events (computed from the Hijri lunar calendar — Ashura, Eid al-Fitr, Eid al-Ghadir …)
   - Iranian national holidays (Nowruz 1–4, Nature Day, 22 Bahman …)
   - **Religious events can be hidden** — but legal holidays still appear as days-off
-  - **Manual events** — create personal events right on the selected day (title, description, day-off flag) with ✍️ source badge
-- **Moon phases** 🌑🌓🌕 — Meeus-derived engine (identical on web & Android): major-phase glyphs in month/week cells, a full phase card in Day view (name, illumination %, moon age). Validated against a live lunar reference (149/153 day-markers, new/full instants within ±5 min)
-- **Offline import** — JSON / TXT / CSV with downloadable samples ([`public/samples/`](public/samples)); Jalali (1405-07-01) and Gregorian (2026-10-01) dates auto-detected, Persian digits accepted
-- **ICS export** — download the agenda as a standards-compliant `.ics` (RFC 5545: CRLF, octet folding, escaped text) for Google/Apple/Outlook
+  - **Manual events** — create personal events right on the selected day (title, description, day-off flag) with ✍️ source badge — plus **full editing** (change anything, delete) and **yearly recurrence** 🔁 (birthdays, anniversaries — Feb 29 → Feb 28 fallback)
+- **Astronomy** 🌑♈ — moon phases AND solstice/equinox markers: Meeus-derived engines (identical on web & Android): major-phase glyphs in month/week cells, a full phase card in Day view (name, illumination %, moon age), ♈♋♎♑ season glyphs with local event times. Both validated against live references (moon: 149/153 day-markers, new/full instants within ±5 min; solstices: 8/8 anchors within ±17 min). The JP 春分の日/秋分の日 holidays are computed astronomically (JST bucketing) — matching the official Japanese calendar in every year
+- **Offline import** — **JSON / TXT / CSV / ICS** with downloadable samples ([`public/samples/`](public/samples)); Jalali (1405-07-01) and Gregorian (2026-10-01) dates auto-detected, Persian digits accepted; `.ics` parses Google/Apple/Outlook exports (yearly RRULE + multi-day events) — a full round-trip with our own export
+- **ICS export** — download the agenda as a standards-compliant `.ics` (RFC 5545: CRLF, octet folding, escaped text) for Google/Apple/Outlook; yearly events export with `RRULE:FREQ=YEARLY`
+- **Next-day-off countdown** — a pill in the header shows the next holiday and how many days away (respects your source toggles)
 - **NTP time sync** — live UDP query to `pool.ntp.org` with offset display
 - **Seasonal artwork** — 2 illustrations per season with gentle CSS animations (spring cherry petals, summer fireflies, autumn leaves, winter snow); respects `prefers-reduced-motion`
 - **Views**: Month (dual-date cells: big Shamsi + small Gregorian), **Week** (7 day-cards), Year, Day (all systems at once), Agenda (90 days)
@@ -64,6 +65,7 @@ bun scripts/validate-calendar.ts   # 432/432 checks
 - Jalali engine: 33-year cycle (epoch Farvardin 1, 1386 AP = 2007-03-21 CE); matches ICU `persian` and the astronomical calendar for 1930–2090.
 - Hijri: ICU `islamic-umalqura` (web) / tabular civil (Android). Religious dates may shift ±1 day with official moon sighting — as they do in real life.
 - Moon phases: two-term Meeus ch.49 corrections (separate new/full vs quarter tables), per-timezone day bucketing at local noon. Markers can differ ±1 day when the true event falls within ~1 h of local midnight — 149/153 agreement with a live reference.
+- Solstice/equinox: Meeus ch.25 truncated solar longitude + Newton solver — instants within ±17 min of USNO; JP equinox holidays bucket in JST (fixed-offset) and match the official calendar for every year tested (2024–2028).
 - Online holidays: [Nager.Date](https://date.nager.at) v3 (no key, no tracking).
 
 ## Credits

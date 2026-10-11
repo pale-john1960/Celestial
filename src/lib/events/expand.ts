@@ -5,6 +5,7 @@
 import { toJdn, fromJdn, isoDate } from '@/lib/calendar/jdn';
 import { gregorianToJalali, lastWeekdayOfJalaliMonth, nthWeekdayOfMonth, lastWeekdayOfMonth } from '@/lib/calendar/jalali';
 import { gregorianToHijri } from '@/lib/calendar/hijri';
+import { seasonEventsOfYear, SEASON_EVENT_TARGET } from '@/lib/calendar/solstice';
 import type { SimpleDate } from '@/lib/calendar/types';
 import type { EventRule, EventInstance } from './types';
 import { allBuiltinRules } from './data';
@@ -40,6 +41,20 @@ function matchesRule(rule: EventRule, g: SimpleDate): boolean {
     case 'hijri-fixed': {
       const h = gregorianToHijri(g);
       return h.month === rule.month && h.day === rule.day;
+    }
+    case 'season-event': {
+      // astronomical rule (e.g. 春分の日 / 秋分の日): the day whose FIXED-offset
+      // timezone window contains the solar-longitude event instant of g's year.
+      // month/day on the rule are informational seeds only.
+      const target = rule.seasonTarget ?? 0;
+      const info = seasonEventsOfYear(g.year).find(
+        (s) => SEASON_EVENT_TARGET[s.event] === target,
+      );
+      if (!info) return false;
+      // days-WEST offset of a fixed tz (posix sign): JST (+540 east) → −540/1440
+      const off = -(rule.tzOffsetMin ?? 0) / 1440;
+      const jdn = toJdn(g);
+      return info.jd >= jdn - 0.5 + off && info.jd < jdn + 0.5 + off;
     }
     default:
       return false;

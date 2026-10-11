@@ -1,8 +1,8 @@
-// Celestial — import dialog: upload JSON/TXT/CSV, samples, manage imported events
+// Celestial — import dialog: upload JSON/TXT/CSV/ICS, samples, manage events
 "use client";
 
 import { useRef, useState } from "react";
-import { FileDown, FileUp, Loader2, Trash2, UploadCloud } from "lucide-react";
+import { FileDown, FileUp, Loader2, Pencil, Trash2, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 import { getDict, jalaliMonthName, num } from "@/lib/i18n";
 import { parseIso } from "@/lib/calendar";
@@ -38,7 +38,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 const MAX_BYTES = 256 * 1024;
-const ALLOWED_EXT = [".json", ".txt", ".csv"];
+const ALLOWED_EXT = [".json", ".txt", ".csv", ".ics"];
 
 export function ImportDialog() {
   const locale = useSettings((s) => s.locale);
@@ -46,6 +46,7 @@ export function ImportDialog() {
 
   const open = useUi((s) => s.importOpen);
   const setImportOpen = useUi((s) => s.setImportOpen);
+  const openEditDialog = useUi((s) => s.openEditDialog);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -59,7 +60,7 @@ export function ImportDialog() {
     const lower = file.name.toLowerCase();
     if (!ALLOWED_EXT.some((ext) => lower.endsWith(ext))) {
       toast.error(dict.importInvalid, {
-        description: ".json / .txt / .csv",
+        description: ".json / .txt / .csv / .ics",
       });
       return;
     }
@@ -161,12 +162,12 @@ export function ImportDialog() {
             {uploading ? dict.importParsing : dict.importChooseFile}
           </p>
           <p className="text-xs text-muted-foreground">
-            .json · .txt · .csv · ≤256KB · ≤500
+            .json · .txt · .csv · .ics · ≤256KB · ≤500
           </p>
           <input
             ref={inputRef}
             type="file"
-            accept=".json,.txt,.csv"
+            accept=".json,.txt,.csv,.ics"
             className="sr-only"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -201,12 +202,13 @@ export function ImportDialog() {
           <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
             {dict.sampleFiles}
           </h3>
-          <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+          <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
             {(
               [
                 ["events.json", dict.importFormatJson],
                 ["events.txt", dict.importFormatTxt],
                 ["events.csv", dict.importFormatCsv],
+                ["events.ics", dict.importFormatIcs],
               ] as const
             ).map(([file, label]) => (
               <a
@@ -284,6 +286,17 @@ export function ImportDialog() {
                   dict={dict}
                   locale={locale}
                   onRemove={() => void removeOne(row)}
+                  onEdit={() => {
+                    setImportOpen(false);
+                    openEditDialog({
+                      id: row.id,
+                      iso: row.iso,
+                      title: row.title,
+                      description: row.description ?? "",
+                      isHoliday: row.isHoliday,
+                      recurYearly: row.recurYearly,
+                    });
+                  }}
                 />
               ))}
             </ul>
@@ -299,11 +312,13 @@ function ImportedRowItem({
   dict,
   locale,
   onRemove,
+  onEdit,
 }: {
   row: ImportedRow;
   dict: ReturnType<typeof getDict>;
   locale: "en" | "ja" | "fa";
   onRemove: () => void;
+  onEdit: () => void;
 }) {
   const g = parseIso(row.iso);
   const j = parseIso(row.jalaliIso);
@@ -319,12 +334,27 @@ function ImportedRowItem({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium" dir="auto">
           {row.title}
+          {row.recurYearly && (
+            <span title={dict.recurringYearly} aria-hidden>
+              {" "}🔁
+            </span>
+          )}
         </p>
         <p className="truncate text-xs text-muted-foreground tabular-nums" dir="auto">
           {g ? `${g.year}-${g.month}-${g.day}` : row.iso} · {jalaliText}
           {row.sourceName ? ` · ${row.sourceName}` : ""}
         </p>
       </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-7 shrink-0 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+        aria-label={`${dict.editEvent}: ${row.title}`}
+        title={dict.editEvent}
+        onClick={onEdit}
+      >
+        <Pencil className="size-3.5" aria-hidden />
+      </Button>
       <Button
         variant="ghost"
         size="icon"

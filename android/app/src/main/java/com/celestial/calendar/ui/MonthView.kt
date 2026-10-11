@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,6 +37,8 @@ import com.celestial.calendar.engine.DateFormats
 import com.celestial.calendar.engine.DayCell
 import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.MoonEngine
+import com.celestial.calendar.engine.SeasonEvent
+import com.celestial.calendar.engine.SolsticeEngine
 import com.celestial.calendar.engine.WeekStart
 import com.celestial.calendar.events.EventInstance
 
@@ -42,7 +46,8 @@ import com.celestial.calendar.events.EventInstance
  * Celestial — month view: 7-column grid, weekday header per weekStart,
  * weekend red styling (fa: Thu/Fri; others Sat/Sun), holiday cells with red
  * tint + 🌙, today highlight ring, small secondary date number, event dots
- * by category color, and a tiny moon-phase glyph on major-phase days.
+ * by category color, and a tiny bottom-end glyph cluster (moon phase +
+ * season marker) on major-phase / solstice / equinox days.
  */
 @Composable
 fun MonthView(
@@ -111,6 +116,7 @@ fun MonthView(
                             weekendDays = weekendDays,
                             events = eventsByIso[cell.date.iso] ?: emptyList(),
                             isSelected = selectedIso == cell.date.iso,
+                            strings = strings,
                             // always reports the tapped day — the parent decides
                             // select vs. open-day (2nd tap opens the Day view)
                             onClick = { onSelectDay(cell.date.iso) },
@@ -133,6 +139,7 @@ private fun DayCellView(
     weekendDays: Set<Int>,
     events: List<EventInstance>,
     isSelected: Boolean,
+    strings: LocalStrings,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -140,6 +147,7 @@ private fun DayCellView(
     val isHoliday = events.any { it.isHoliday || it.holidayOnly }
     val isWeekend = cell.date.weekday in weekendDays
     val moonMajor = remember(cell.date.iso) { MoonEngine.infoFor(cell.date.gregorian).major }
+    val seasonEvent = remember(cell.date.iso) { SolsticeEngine.eventOn(cell.date.gregorian) }
 
     val contentAlpha = if (cell.inMonth) 1f else 0.35f
 
@@ -205,25 +213,44 @@ private fun DayCellView(
             Box(Modifier.weight(1f))
             Box(
                 Modifier.fillMaxWidth(),
-                // start-align the dots on moon days so they never collide with
-                // the bottom-end phase glyph (same rule as the web app)
-                contentAlignment = if (moonMajor != null) Alignment.CenterStart else Alignment.Center,
+                // start-align the dots on glyph days so they never collide with
+                // the bottom-end cluster (same rule as the web app)
+                contentAlignment = if (moonMajor != null || seasonEvent != null) {
+                    Alignment.CenterStart
+                } else Alignment.Center,
             ) {
                 CommonUi.EventDots(events)
             }
             Box(Modifier.height(4.dp))
         }
 
-        // tiny major-phase glyph in the bottom-end corner (moon days only)
-        if (moonMajor != null) {
-            Text(
-                MoonEngine.majorGlyph(moonMajor),
-                fontSize = 9.sp,
-                modifier = Modifier
+        // bottom-end glyph cluster: moon major-phase + season marker
+        if (moonMajor != null || seasonEvent != null) {
+            Row(
+                Modifier
                     .align(Alignment.BottomEnd)
                     .padding(2.dp)
                     .alpha(0.6f),
-            )
+                horizontalArrangement = Arrangement.spacedBy(1.dp),
+            ) {
+                if (moonMajor != null) {
+                    Text(MoonEngine.majorGlyph(moonMajor), fontSize = 9.sp)
+                }
+                if (seasonEvent != null) {
+                    SeasonGlyph(seasonEvent, strings)
+                }
+            }
         }
     }
+}
+
+/** Tiny season marker glyph with a localized content description. */
+@Composable
+private fun SeasonGlyph(event: SeasonEvent, strings: LocalStrings) {
+    val name = strings.seasonEventName(event)
+    Text(
+        SolsticeEngine.glyphOf(event),
+        fontSize = 9.sp,
+        modifier = Modifier.semantics { contentDescription = strings.seasonGlyphDesc(name) },
+    )
 }

@@ -17,6 +17,12 @@ import {
 } from "@/lib/calendar";
 import { moonInfo, moonPhaseName, MOON_MAJOR_EMOJI } from "@/lib/calendar/moon";
 import type { MoonMajor } from "@/lib/calendar/moon";
+import {
+  SEASON_EVENT_EMOJI,
+  seasonEventName,
+  seasonEventOn,
+} from "@/lib/calendar/solstice";
+import type { SeasonEvent } from "@/lib/calendar/solstice";
 import type { CalendarSystem, DayCell } from "@/lib/calendar";
 import {
   getDict,
@@ -91,6 +97,15 @@ export function MonthView() {
     const map = new Map<string, MoonMajor | null>();
     for (const c of cells) {
       map.set(c.iso, moonInfo(c.gregorian).major ?? null);
+    }
+    return map;
+  }, [cells]);
+
+  // solstice/equinox markers for the visible grid (same corner, one cluster)
+  const seasonByIso = useMemo(() => {
+    const map = new Map<string, SeasonEvent | null>();
+    for (const c of cells) {
+      map.set(c.iso, seasonEventOn(c.gregorian)?.event ?? null);
     }
     return map;
   }, [cells]);
@@ -276,6 +291,7 @@ export function MonthView() {
                 selected={cell.iso === selectedIso}
                 events={eventsByIso.get(cell.iso)}
                 moon={moonByIso.get(cell.iso) ?? null}
+                season={seasonByIso.get(cell.iso) ?? null}
                 onClick={onCellClick}
               />
             ))}
@@ -307,6 +323,7 @@ function DayCellButton({
   selected,
   events,
   moon,
+  season,
   onClick,
 }: {
   cell: DayCell;
@@ -317,10 +334,14 @@ function DayCellButton({
   selected: boolean;
   events: EventInstance[] | undefined;
   moon: "new" | "firstQ" | "full" | "lastQ" | null;
+  season: SeasonEvent | null;
   onClick: (iso: string) => void;
 }) {
   const isHolidayDay = (events ?? []).some((e) => e.isHoliday);
   const dots = (events ?? []).filter((e) => !e.holidayOnly).slice(0, 4);
+  const hasRecurring = (events ?? []).some(
+    (e) => !e.holidayOnly && e.recurring,
+  );
 
   const primary =
     system === "gregorian"
@@ -344,7 +365,7 @@ function DayCellButton({
       type="button"
       role="gridcell"
       aria-selected={selected}
-      aria-label={`${dict.selectDate}: ${weekdayLong(locale, cell.weekday)}, ${activeDateText}${moon ? ` · ${dict.moonPhaseTitle}` : ""}`}
+      aria-label={`${dict.selectDate}: ${weekdayLong(locale, cell.weekday)}, ${activeDateText}${moon ? ` · ${dict.moonPhaseTitle}` : ""}${season ? ` · ${seasonEventName(dict, season)}` : ""}`}
       title={activeDateText}
       onClick={() => onClick(cell.iso)}
       initial={{ opacity: 0, scale: 0.96 }}
@@ -388,8 +409,8 @@ function DayCellButton({
       <span
         className={cn(
           "flex h-1.5 w-full items-center gap-0.5",
-          // keep the end corner free for the moon glyph on marker days
-          moon ? "justify-start" : "justify-center",
+          // keep the end corner free for the astronomy glyph cluster
+          moon || season ? "justify-start" : "justify-center",
         )}
       >
         {dots.map((e) => (
@@ -400,14 +421,33 @@ function DayCellButton({
             style={{ backgroundColor: categoryColor(e.category) }}
           />
         ))}
+        {hasRecurring && (
+          <span
+            aria-hidden
+            title={dict.recurringYearly}
+            className="text-[10px] leading-none"
+          >
+            🔁
+          </span>
+        )}
       </span>
-      {moon && (
+      {(moon || season) && (
         <span
           aria-hidden
-          className="absolute bottom-1 end-1 text-[10px] leading-none opacity-60"
-          title={`${dict.moonPhaseTitle}: ${moonPhaseName(dict, moon === "new" ? 0 : moon === "firstQ" ? 2 : moon === "full" ? 4 : 6)}`}
+          className="absolute bottom-1 end-1 flex items-center gap-0.5 text-[10px] leading-none opacity-60"
         >
-          {MOON_MAJOR_EMOJI[moon]}
+          {moon && (
+            <span
+              title={`${dict.moonPhaseTitle}: ${moonPhaseName(dict, moon === "new" ? 0 : moon === "firstQ" ? 2 : moon === "full" ? 4 : 6)}`}
+            >
+              {MOON_MAJOR_EMOJI[moon]}
+            </span>
+          )}
+          {season && (
+            <span title={seasonEventName(dict, season)}>
+              {SEASON_EVENT_EMOJI[season]}
+            </span>
+          )}
         </span>
       )}
     </motion.button>

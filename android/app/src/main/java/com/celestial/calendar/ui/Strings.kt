@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.celestial.calendar.R
 import com.celestial.calendar.engine.AppLocale
+import com.celestial.calendar.engine.SeasonEvent
 import java.util.Locale
 
 /**
@@ -190,6 +191,34 @@ class LocalStrings(private val res: Resources) {
 
     val exportIcs get() = res.getString(R.string.export_ics)
     fun exportIcsDone(count: Int) = res.getString(R.string.export_ics_done, count)
+
+    // ---- Solstice / equinox / recurring events / event editing (Task 8-b) ----
+    fun seasonEventName(event: SeasonEvent): String = when (event) {
+        SeasonEvent.MAR_EQUINOX -> res.getString(R.string.season_mar_equinox)
+        SeasonEvent.JUN_SOLSTICE -> res.getString(R.string.season_jun_solstice)
+        SeasonEvent.SEP_EQUINOX -> res.getString(R.string.season_sep_equinox)
+        SeasonEvent.DEC_SOLSTICE -> res.getString(R.string.season_dec_solstice)
+    }
+
+    fun seasonOccursAt(hhmm: String) = res.getString(R.string.season_occurs_at, hhmm)
+
+    fun seasonEventNote(event: SeasonEvent): String = when (event) {
+        SeasonEvent.MAR_EQUINOX, SeasonEvent.SEP_EQUINOX ->
+            res.getString(R.string.season_note_equal)
+        SeasonEvent.JUN_SOLSTICE -> res.getString(R.string.season_note_longest)
+        SeasonEvent.DEC_SOLSTICE -> res.getString(R.string.season_note_shortest)
+    }
+
+    fun seasonGlyphDesc(name: String) = res.getString(R.string.season_glyph_desc, name)
+
+    val recurringYearly get() = res.getString(R.string.recurring_yearly)
+    val addEventYearly get() = res.getString(R.string.add_event_yearly)
+    val addEventYearlyHint get() = res.getString(R.string.add_event_yearly_hint)
+    fun importWarnings(count: Int) = res.getString(R.string.import_warnings, count)
+
+    val editEvent get() = res.getString(R.string.edit_event)
+    val eventUpdated get() = res.getString(R.string.event_updated)
+    val deleteEvent get() = res.getString(R.string.delete_event)
 
     fun seasonName(season: Season): String = when (season) {
         Season.SPRING -> seasonSpring

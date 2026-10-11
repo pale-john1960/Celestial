@@ -29,6 +29,10 @@ enum class RuleKind {
 
     /** month/day in Hijri (lunar — shifts each year) */
     HIJRI_FIXED,
+
+    /** astronomical: solar longitude hits [EventRule.seasonTarget], day
+     *  bucketed in [EventRule.tzOffsetMin] (fixed-offset zones only) */
+    SEASON_EVENT,
 }
 
 enum class EventCategory { INTERNATIONAL, US, JAPAN, PERSIAN_CULTURAL, PERSIAN_RELIGIOUS, PERSIAN_NATIONAL, IMPORTED }
@@ -39,10 +43,14 @@ data class EventRule(
     val id: String,
     val category: EventCategory,
     val kind: RuleKind,
-    val month: Int,          // 1-12
-    val day: Int = 0,        // day (or nth/weekday anchor depending on kind)
+    val month: Int,          // 1-12 (informational seed for SEASON_EVENT)
+    val day: Int = 0,        // day (or nth/weekday anchor; informational seed for SEASON_EVENT)
     val weekday: Int? = null, // 0 = Sun … 6 = Sat for weekday-based kinds
     val nth: Int? = null,     // 1-5 for nth-weekday
+    /** SEASON_EVENT: solar longitude target in degrees (0/90/180/270) */
+    val seasonTarget: Int? = null,
+    /** SEASON_EVENT: fixed UTC offset in minutes EAST (e.g. 540 = JST). DST unsupported by design. */
+    val tzOffsetMin: Int? = null,
     val isHoliday: Boolean = false, // legal day off (in its country context)
     val emoji: String,
     val names: L10n,
@@ -62,6 +70,9 @@ data class EventInstance(
     val source: EventSource,
     val holidayOnly: Boolean = false, // hidden category but legal holiday → day-off only
     val manual: Boolean = false, // user-created event (sourceName == "manual") → ✍️
+    val recurring: Boolean = false, // yearly series instance (Room recurYearly row)
+    val anchorIso: String? = null,  // the series' stored anchor date (== iso on the anchor)
+    val dbId: Long? = null,         // Room ImportedEvent id (editable + delete-row kills series)
 ) {
     /** Localized name (holidayOnly instances must never expose their text). */
     fun localName(localeCode: String): String = names.forLocale(localeCode)

@@ -162,4 +162,32 @@ export interface LocaleDict {
   // ICS export
   exportIcs: string;
   exportIcsDone: string;
+
+  // solstice & equinox markers
+  seasonMarEquinox: string;
+  seasonJunSolstice: string;
+  seasonSepEquinox: string;
+  seasonDecSolstice: string;
+  seasonOccursAt: string;
+  seasonNoteEqual: string;
+  seasonNoteLongest: string;
+  seasonNoteShortest: string;
+
+  // ICS import
+  importFormatIcs: string;
+
+  // recurring annual events
+  addEventYearly: string;
+  addEventYearlyHint: string;
+  recurringYearly: string;
+
+  // event editing
+  editEvent: string;
+  eventUpdated: string;
+  deleteEvent: string;
+  saveChanges: string;
+
+  // next day off countdown
+  nextDayOff: string;
+  nextDayOffToday: string;
 }

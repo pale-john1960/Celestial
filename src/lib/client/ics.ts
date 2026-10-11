@@ -94,6 +94,10 @@ function sourceLabel(
 /**
  * Build an .ics payload from event instances (all-day events, DTEND exclusive
  * per RFC 5545). CRLF line endings, octet-based 74/73 folding, escaped text.
+ *
+ * Yearly-recurring series (recurring: true): only ONE instance per series is
+ * exported — the anchor when present, else the earliest instance — with
+ * RRULE:FREQ=YEARLY so a re-import restores the recurrence (round-trip ✓).
  */
 export function buildIcs(
   events: EventInstance[],
@@ -108,7 +112,28 @@ export function buildIcs(
     "CALSCALE:GREGORIAN",
   ];
 
+  // pick the representative instance of each recurring series (dbId is the
+  // series identity; all instances share it). Prefer the anchor instance,
+  // else the earliest iso.
+  const seriesExport = new Map<string, EventInstance>();
   for (const e of events) {
+    if (!e.recurring) continue;
+    const key = e.dbId ? `db-${e.dbId}` : `id-${e.id}`;
+    const cur = seriesExport.get(key);
+    if (
+      !cur ||
+      e.iso === e.anchorIso ||
+      (cur.iso !== cur.anchorIso && e.iso < cur.iso)
+    ) {
+      seriesExport.set(key, e);
+    }
+  }
+
+  for (const e of events) {
+    if (e.recurring) {
+      const key = e.dbId ? `db-${e.dbId}` : `id-${e.id}`;
+      if (seriesExport.get(key) !== e) continue; // skip non-representative instances
+    }
     const g = parseIso(e.iso);
     if (!g) continue;
     const dtStart = e.iso.replace(/-/g, "");
@@ -129,6 +154,7 @@ export function buildIcs(
       `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${dtStart}`,
       `DTEND;VALUE=DATE:${dtEnd}`,
+      ...(e.recurring ? ["RRULE:FREQ=YEARLY"] : []),
       `SUMMARY:${summary}`,
       `DESCRIPTION:${description}`,
       "END:VEVENT",

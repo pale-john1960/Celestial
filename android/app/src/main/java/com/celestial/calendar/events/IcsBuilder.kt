@@ -9,6 +9,7 @@ package com.celestial.calendar.events
  * @param description event description (may be blank)
  * @param isHoliday appends " (holiday)" to the summary
  * @param sourceLabel localized source label appended to the description
+ * @param recurYearly emits `RRULE:FREQ=YEARLY` (annual series anchor)
  */
 data class IcsEvent(
     val uid: String,
@@ -17,6 +18,7 @@ data class IcsEvent(
     val description: String,
     val isHoliday: Boolean,
     val sourceLabel: String,
+    val recurYearly: Boolean = false,
 )
 
 /**
@@ -30,6 +32,7 @@ data class IcsEvent(
  * - TEXT values escape `\ ; ,` and newlines as `\n`
  * - VEVENT: UID `<id>@celestial`, DTSTAMP now UTC (`yyyyMMddTHHmmssZ`),
  *   DTSTART/DTEND;VALUE=DATE with an exclusive end (iso + 1 day),
+ *   RRULE:FREQ=YEARLY for annual-series anchors (Task 8-b),
  *   SUMMARY `name (" (holiday)")`, DESCRIPTION `description · source label`
  */
 object IcsBuilder {
@@ -55,6 +58,9 @@ object IcsBuilder {
         appendFolded(sb, "DTSTAMP:$stamp")
         appendFolded(sb, "DTSTART;VALUE=DATE:${e.iso}")
         appendFolded(sb, "DTEND;VALUE=DATE:${isoPlusOne(e.iso)}")
+        if (e.recurYearly) {
+            appendFolded(sb, "RRULE:FREQ=YEARLY")
+        }
         val summary = escapeText(e.title) + if (e.isHoliday) " (holiday)" else ""
         appendFolded(sb, "SUMMARY:$summary")
         appendFolded(sb, "DESCRIPTION:${descriptionOf(e)}")

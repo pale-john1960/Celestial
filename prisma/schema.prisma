@@ -15,6 +15,7 @@ model ImportedEvent {
   title       String
   description String?
   isHoliday   Boolean  @default(false)
+  recurYearly Boolean  @default(false) // annual recurrence (birthdays etc.) — anchor date = iso
   sourceName  String   @default("import") // originating file name
   createdAt   DateTime @default(now())
 

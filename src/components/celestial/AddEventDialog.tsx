@@ -1,8 +1,10 @@
-// Celestial — add-event dialog: manual event creation (✍️)
+// Celestial — add/edit event dialog: manual event creation (✍️) and editing
+// (PATCH). Edit mode edits the ANCHOR row — for a recurring series the whole
+// series updates.
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, Loader2 } from "lucide-react";
+import { CalendarPlus, Loader2, Pencil, Repeat, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   buildDayCell,
@@ -13,7 +15,23 @@ import {
 import { getDict } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
-import { createCustomEvent, useInvalidateEvents } from "@/lib/client/api";
+import {
+  createCustomEvent,
+  deleteImportedEvents,
+  updateEvent,
+  useInvalidateEvents,
+} from "@/lib/client/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,28 +59,44 @@ export function AddEventDialog() {
   const locale = useSettings((s) => s.locale);
   const dict = getDict(locale);
 
-  const open = useUi((s) => s.addEventOpen);
-  const setAddEventOpen = useUi((s) => s.setAddEventOpen);
+  const open = useUi((s) => s.addEventOpen || s.editEvent !== null);
+  const addOpen = useUi((s) => s.addEventOpen);
+  const editEvent = useUi((s) => s.editEvent);
+  const closeEventEditor = useUi((s) => s.closeEventEditor);
   const selectedIso = useUi((s) => s.selectedIso);
 
   const [dateIso, setDateIso] = useState(selectedIso);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isHoliday, setIsHoliday] = useState(false);
+  const [recurYearly, setRecurYearly] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const invalidate = useInvalidateEvents();
 
-  // fresh form each time the dialog opens (default = current selection)
+  const editing = editEvent != null;
+
+  // fresh form on create; prefilled form on edit (anchor fields included)
   useEffect(() => {
     if (open) {
-      setDateIso(selectedIso);
-      setTitle("");
-      setDescription("");
-      setIsHoliday(false);
+      if (editEvent) {
+        setDateIso(editEvent.iso);
+        setTitle(editEvent.title);
+        setDescription(editEvent.description);
+        setIsHoliday(editEvent.isHoliday);
+        setRecurYearly(editEvent.recurYearly);
+      } else {
+        setDateIso(selectedIso);
+        setTitle("");
+        setDescription("");
+        setIsHoliday(false);
+        setRecurYearly(false);
+      }
       setSaving(false);
+      setDeleting(false);
     }
-  }, [open, selectedIso]);
+  }, [open, addOpen, editEvent]);
 
   // live conversion line — all systems + Hijri for the chosen date
   const conversion = useMemo(() => {
@@ -94,15 +128,28 @@ export function AddEventDialog() {
     }
     setSaving(true);
     try {
-      await createCustomEvent({
-        iso: dateIso,
-        title: t,
-        description: description.trim() ? description.trim() : undefined,
-        isHoliday,
-      });
+      if (editing && editEvent) {
+        await updateEvent({
+          id: editEvent.id,
+          iso: dateIso,
+          title: t,
+          description: description.trim() ? description.trim() : undefined,
+          isHoliday,
+          recurYearly,
+        });
+        toast.success(`✍️ ${dict.eventUpdated}`);
+      } else {
+        await createCustomEvent({
+          iso: dateIso,
+          title: t,
+          description: description.trim() ? description.trim() : undefined,
+          isHoliday,
+          recurYearly,
+        });
+        toast.success(`✍️ ${dict.addEventSaved}`);
+      }
       invalidate();
-      toast.success(`✍️ ${dict.addEventSaved}`);
-      setAddEventOpen(false);
+      closeEventEditor();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : dict.error);
     } finally {
@@ -110,15 +157,43 @@ export function AddEventDialog() {
     }
   };
 
+  const remove = async () => {
+    if (!editEvent || deleting) return;
+    setDeleting(true);
+    try {
+      await deleteImportedEvents({ id: editEvent.id });
+      toast.success(`${editEvent.title} — ${dict.remove}`);
+      invalidate();
+      closeEventEditor();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : dict.error);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(v) => setAddEventOpen(v)}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) closeEventEditor();
+      }}
+    >
       <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto rounded-2xl">
         <DialogHeader className="text-start">
           <DialogTitle className="flex items-center gap-2">
-            <CalendarPlus className="size-5 text-primary" aria-hidden />
-            {dict.addEventTitle}
+            {editing ? (
+              <Pencil className="size-5 text-primary" aria-hidden />
+            ) : (
+              <CalendarPlus className="size-5 text-primary" aria-hidden />
+            )}
+            {editing ? dict.editEvent : dict.addEventTitle}
           </DialogTitle>
-          <DialogDescription>{dict.addEvent}</DialogDescription>
+          <DialogDescription>
+            {editing
+              ? `${editEvent?.title ?? ""} · ${editEvent?.iso ?? ""}`
+              : dict.addEvent}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
@@ -194,23 +269,77 @@ export function AddEventDialog() {
               onCheckedChange={setIsHoliday}
             />
           </div>
+
+          {/* repeats yearly */}
+          <div className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3">
+            <div className="min-w-0">
+              <Label htmlFor="add-event-yearly" className="text-sm">
+                <Repeat className="me-1 inline size-3.5" aria-hidden />
+                {dict.addEventYearly}
+              </Label>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {dict.addEventYearlyHint}
+              </p>
+            </div>
+            <Switch
+              id="add-event-yearly"
+              checked={recurYearly}
+              onCheckedChange={setRecurYearly}
+            />
+          </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="gap-2">
+          {editing && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={saving || deleting}
+                  className="rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                  {dict.deleteEvent}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{dict.deleteEvent}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {editEvent?.title} — {dict.deleteImported}?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{dict.cancel}</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-white hover:bg-destructive/90"
+                    onClick={() => void remove()}
+                  >
+                    {dict.deleteEvent}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <Button
             variant="outline"
-            onClick={() => setAddEventOpen(false)}
+            onClick={() => closeEventEditor()}
             disabled={saving}
           >
             {dict.cancel}
           </Button>
-          <Button onClick={() => void submit()} disabled={saving || !title.trim()}>
+          <Button
+            onClick={() => void submit()}
+            disabled={saving || deleting || !title.trim()}
+          >
             {saving ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : editing ? (
+              <Pencil className="size-4" aria-hidden />
             ) : (
               <CalendarPlus className="size-4" aria-hidden />
             )}
-            {dict.save}
+            {editing ? dict.saveChanges : dict.save}
           </Button>
         </DialogFooter>
       </DialogContent>

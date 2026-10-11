@@ -26,6 +26,7 @@ export interface ImportedRow {
   title: string;
   description: string | null;
   isHoliday: boolean;
+  recurYearly: boolean;
   sourceName: string;
 }
 
@@ -141,6 +142,11 @@ export interface CustomEventInput {
   title: string;
   description?: string;
   isHoliday?: boolean;
+  recurYearly?: boolean;
+}
+
+export interface UpdateEventInput extends CustomEventInput {
+  id: string;
 }
 
 /** Create a single manual event (✍️) — POST /api/events/custom */
@@ -149,6 +155,16 @@ export async function createCustomEvent(
 ): Promise<ImportedRow> {
   const res = await fetchJson<{ event: ImportedRow }>("/api/events/custom", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return res.event;
+}
+
+/** Edit an existing event row (anchor of a recurring series) — PATCH */
+export async function updateEvent(input: UpdateEventInput): Promise<ImportedRow> {
+  const res = await fetchJson<{ event: ImportedRow }>("/api/events/custom", {
+    method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });

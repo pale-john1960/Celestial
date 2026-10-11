@@ -28,5 +28,12 @@
     "title": "Summer Solstice",
     "description": "The longest day of the year.",
     "isHoliday": false
+  },
+  {
+    "date": "1990-06-14",
+    "title": "Amir's birthday",
+    "description": "Sample yearly recurring event — JSON format.",
+    "isHoliday": false,
+    "recurYearly": true
   }
 ]

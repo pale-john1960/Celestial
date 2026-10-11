@@ -9,3 +9,4 @@
 2026-12-25 | Christmas Day | Sample holiday imported from a TXT file | holiday
 2027-03-21 | Nowruz 1406 | Persian New Year | holiday
 2026-06-21 | Summer Solstice | The longest day of the year
+1990-06-14 | Amir's birthday | Sample yearly recurring event | | yearly

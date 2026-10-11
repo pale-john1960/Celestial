@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
         title: row.title,
         description: row.description,
         isHoliday: row.isHoliday,
+        recurYearly: row.recurYearly,
         sourceName: row.sourceName,
       })),
     });

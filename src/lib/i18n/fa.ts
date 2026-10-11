@@ -66,7 +66,7 @@ export const fa: LocaleDict = {
   religiousHiddenHolidayNote: 'رویدادهای مذهبی پنهان شده‌اند، اما تعطیلات رسمی همچنان به‌عنوان روز مرخصی نمایش داده می‌شوند.',
 
   importTitle: 'درج رویدادها',
-  importHint: 'یک فایل JSON، TXT یا CSV بارگذاری کنید. تاریخ‌های شمسی (مثل ۱۴۰۵-۰۷-۰۱) و میلادی (۲۰۲۶-۱۰-۰۱) خودکار تشخیص داده می‌شوند.',
+  importHint: 'یک فایل JSON، TXT، CSV یا iCalendar (.ics) بارگذاری کنید. تاریخ‌های شمسی (مثل ۱۴۰۵-۰۷-۰۱) و میلادی (۲۰۲۶-۱۰-۰۱) خودکار تشخیص داده می‌شوند. در قالب ICS نشانه تعطیلی وجود ندارد — پس از درون‌ریزی آن را دستی علامت بزنید.',
   importChooseFile: 'انتخاب فایل',
   importParsing: 'در حال تحلیل فایل…',
   importResult: 'رویداد درج شد',
@@ -152,6 +152,29 @@ export const fa: LocaleDict = {
 
   exportIcs: 'خروجی .ics',
   exportIcsDone: '{n} رویداد خروجی گرفته شد',
+
+  seasonMarEquinox: 'اعتدال بهاری',
+  seasonJunSolstice: 'انقلاب تابستانی',
+  seasonSepEquinox: 'اعتدال پاییزی',
+  seasonDecSolstice: 'انقلاب زمستانی',
+  seasonOccursAt: 'رخداد در ساعت {t}',
+  seasonNoteEqual: 'طول روز و شب تقریباً برابر است',
+  seasonNoteLongest: 'بلندترین روز سال (نیمکره شمالی)',
+  seasonNoteShortest: 'کوتاه‌ترین روز سال (نیمکره شمالی)',
+
+  importFormatIcs: 'فایل تقویم (.ics) — خروجی Google/Apple/Outlook؛ تکرار سالانه (RRULE) و رویدادهای چندروزه پشتیبانی می‌شود',
+
+  addEventYearly: 'هر سال تکرار می‌شود',
+  addEventYearlyHint: 'تولدها و سالگردها',
+  recurringYearly: 'تکرار سالانه',
+
+  editEvent: 'ویرایش رویداد',
+  eventUpdated: 'رویداد به‌روزرسانی شد',
+  deleteEvent: 'حذف رویداد',
+  saveChanges: 'ذخیره تغییرات',
+
+  nextDayOff: 'تعطیل بعدی: {name} · {n} روز دیگر',
+  nextDayOffToday: 'تعطیل امروز: {name}',
 };
 
 export const faGregorianMonths = [

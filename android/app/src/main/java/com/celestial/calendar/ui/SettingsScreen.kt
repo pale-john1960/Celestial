@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -300,7 +301,14 @@ fun SettingsSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Button(onClick = {
-                    filePicker.launch(arrayOf("application/json", "text/*", "application/octet-stream"))
+                    filePicker.launch(
+                        arrayOf(
+                            "application/json",
+                            "text/*",
+                            "text/calendar", // .ics (also matched by text/*)
+                            "application/octet-stream",
+                        )
+                    )
                 }) {
                     Text(strings.importChooseFile)
                 }
@@ -309,7 +317,8 @@ fun SettingsSheet(
                 if (outcome.ok) {
                     Text(
                         strings.importResult(outcome.imported) +
-                                (if (outcome.skipped > 0) " · " + strings.importErrors(outcome.skipped) else ""),
+                                (if (outcome.skipped > 0) " · " + strings.importErrors(outcome.skipped) else "") +
+                                (if (outcome.warnings > 0) " · " + strings.importWarnings(outcome.warnings) else ""),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.tertiary,
                         fontWeight = FontWeight.SemiBold,
@@ -353,6 +362,7 @@ fun SettingsSheet(
                                 buildString {
                                     append(if (ev.sourceName == "manual") "✍️" else "📥")
                                     if (ev.isHoliday) append(" 🌙")
+                                    if (ev.recurYearly) append(" 🔁")
                                     append("  ").append(ev.jalaliIso)
                                     ev.sourceName?.takeIf { it.isNotBlank() }?.let {
                                         append("  ·  ").append(it)
@@ -365,6 +375,9 @@ fun SettingsSheet(
                                 "  ${ev.title}",
                                 style = MaterialTheme.typography.bodyMedium,
                             )
+                        }
+                        IconButton(onClick = { viewModel.beginEdit(ev) }) {
+                            Icon(Icons.Outlined.Edit, contentDescription = strings.editEvent)
                         }
                         IconButton(onClick = { viewModel.deleteImported(ev.id) }) {
                             Icon(Icons.Filled.Close, contentDescription = strings.remove)
@@ -402,6 +415,7 @@ fun SettingsSheet(
                                     description = ev.localDescription(locale.code),
                                     isHoliday = ev.isHoliday,
                                     sourceLabel = CommonUi.sourceLabel(ev, strings),
+                                    recurYearly = ev.recurring,
                                 )
                             },
                             System.currentTimeMillis(),

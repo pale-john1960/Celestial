@@ -8,10 +8,11 @@ import { toast } from "sonner";
 import {
   buildDayCell,
   isoDate,
+  systemDateOf,
   todayGregorian,
 } from "@/lib/calendar";
 import { fromJdn, toJdn } from "@/lib/calendar/jdn";
-import { getDict, num, weekdayShort } from "@/lib/i18n";
+import { getDict, gregorianMonthName, jalaliMonthName, num, weekdayShort } from "@/lib/i18n";
 import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
@@ -60,6 +61,38 @@ export function AgendaView() {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([iso, events]) => ({ iso, events }));
   }, [data]);
+
+  // group the date groups by ACTIVE-system month for sticky month headers
+  const monthGroups = useMemo(() => {
+    const out: {
+      key: string;
+      label: string;
+      groups: { iso: string; events: EventInstance[] }[];
+    }[] = [];
+    let prev: { year: number; month: number } | null = null;
+    for (const grp of groups) {
+      const g = {
+        year: Number(grp.iso.slice(0, 4)),
+        month: Number(grp.iso.slice(5, 7)),
+        day: Number(grp.iso.slice(8, 10)),
+      };
+      const sd = systemDateOf(system, g);
+      if (!prev || sd.year !== prev.year || sd.month !== prev.month) {
+        const monthName =
+          system === "gregorian"
+            ? gregorianMonthName(locale, sd.month)
+            : jalaliMonthName(locale, sd.month);
+        out.push({
+          key: `${sd.year}-${sd.month}`,
+          label: `${monthName} ${num(locale, sd.year)}`,
+          groups: [],
+        });
+        prev = sd;
+      }
+      out[out.length - 1].groups.push(grp);
+    }
+    return out;
+  }, [groups, system, locale]);
 
   const dayOffIsos = useMemo(() => {
     const set = new Set<string>();
@@ -162,90 +195,110 @@ export function AgendaView() {
       {groups.length > 0 && (
         <div
           data-agenda-scroll
-          className="max-h-[70vh] overflow-y-auto rounded-2xl border border-border bg-card p-2 sm:p-3"
+          className="max-h-[70vh] overflow-y-auto rounded-2xl border border-border bg-card p-2 sm:p-3 dark:border-white/10"
         >
-          {groups.map(({ iso, events }) => {
-            const g = {
-              year: Number(iso.slice(0, 4)),
-              month: Number(iso.slice(5, 7)),
-              day: Number(iso.slice(8, 10)),
-            };
-            const cell = buildDayCell(g, today, iso === from);
-            const diffDays = cell.jdn - todayJdn;
-            const relative = rtf.format(diffDays, "day");
-
-            const activeDateText =
-              system === "gregorian"
-                ? formatGregorianDate(locale, cell.gregorian, dict)
-                : system === "jalali"
-                  ? formatJalaliDate(locale, cell.jalali, dict)
-                  : formatImperialDate(locale, cell.imperial, dict);
-            const secondaryText =
-              system === "gregorian"
-                ? formatJalaliDate(locale, cell.jalali, dict)
-                : formatGregorianDate(locale, cell.gregorian, dict);
-            const isDayOff = dayOffIsos.has(iso);
-
-            return (
-              <div key={iso} className="mb-2 last:mb-0">
-                <div className="sticky top-0 z-10 -mx-1 bg-card/95 px-1 py-1.5 backdrop-blur-sm">
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <span className="text-sm font-bold tabular-nums">
-                      {weekdayShort(locale, cell.weekday)} · {activeDateText}
-                    </span>
-                    <span className="text-xs text-muted-foreground" dir="auto">
-                      {secondaryText}
-                    </span>
-                    <span className="text-xs font-medium text-primary">
-                      {relative}
-                    </span>
-                    {isDayOff && (
-                      <Badge
-                        variant="outline"
-                        className="border-red-300 bg-red-50 text-[10px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
-                      >
-                        {dict.dayOff}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-1.5 flex flex-col gap-1.5">
-                  {events.map((e) => (
-                    <motion.button
-                      key={e.id}
-                      type="button"
-                      whileHover={{ y: -2 }}
-                      transition={{ duration: 0.15 }}
-                      onClick={() => setEventDialog(e)}
-                      className={cn(
-                        "flex w-full cursor-pointer items-center gap-3 border border-border bg-background p-3 text-start rounded-e-xl rounded-s-sm transition-colors hover:bg-accent",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                      )}
-                      style={{
-                        borderInlineStartWidth: "3px",
-                        borderInlineStartColor: categoryColor(e.category),
-                      }}
-                    >
-                      <span className="text-xl leading-none" aria-hidden>
-                        {e.emoji}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {e.names[locale]}
-                      </span>
-                      {e.isHoliday && (
-                        <Badge
-                          variant="outline"
-                          className="shrink-0 border-red-300 bg-red-50 text-[10px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
-                        >
-                          {dict.holidayBadge}
-                        </Badge>
-                      )}
-                    </motion.button>
-                  ))}
-                </div>
+          {monthGroups.map((mg) => (
+            <div key={mg.key} className="mb-3 last:mb-0">
+              {/* sticky month header — sticks while its month is on screen */}
+              <div
+                data-no-print
+                className="sticky top-0 z-20 -mx-1 border-b border-border bg-background/95 px-2 py-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground backdrop-blur-sm"
+              >
+                {mg.label}
               </div>
-            );
-          })}
+              {mg.groups.map(({ iso, events }) => {
+                const g = {
+                  year: Number(iso.slice(0, 4)),
+                  month: Number(iso.slice(5, 7)),
+                  day: Number(iso.slice(8, 10)),
+                };
+                const cell = buildDayCell(g, today, iso === from);
+                const diffDays = cell.jdn - todayJdn;
+                const relative = rtf.format(diffDays, "day");
+
+                const activeDateText =
+                  system === "gregorian"
+                    ? formatGregorianDate(locale, cell.gregorian, dict)
+                    : system === "jalali"
+                      ? formatJalaliDate(locale, cell.jalali, dict)
+                      : formatImperialDate(locale, cell.imperial, dict);
+                const secondaryText =
+                  system === "gregorian"
+                    ? formatJalaliDate(locale, cell.jalali, dict)
+                    : formatGregorianDate(locale, cell.gregorian, dict);
+                const isDayOff = dayOffIsos.has(iso);
+
+                return (
+                  <div key={iso} className="mt-2">
+                    <div className="sticky top-[29px] z-10 -mx-1 bg-card/95 px-1 py-1.5 backdrop-blur-sm">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <span className="text-sm font-bold tabular-nums">
+                          {weekdayShort(locale, cell.weekday)} · {activeDateText}
+                        </span>
+                        <span className="text-xs text-muted-foreground" dir="auto">
+                          {secondaryText}
+                        </span>
+                        <span className="text-xs font-medium text-primary">
+                          {relative}
+                        </span>
+                        {isDayOff && (
+                          <Badge
+                            variant="outline"
+                            className="border-red-300 bg-red-50 text-[10px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                          >
+                            {dict.dayOff}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-1.5 flex flex-col gap-1.5">
+                      {events.map((e) => (
+                        <motion.button
+                          key={e.id}
+                          type="button"
+                          whileHover={{ y: -2 }}
+                          transition={{ duration: 0.15 }}
+                          onClick={() => setEventDialog(e)}
+                          className={cn(
+                            "flex w-full cursor-pointer items-center gap-3 border border-border bg-background p-3 text-start rounded-e-xl rounded-s-sm transition-colors hover:bg-accent dark:border-white/10 dark:shadow-sm",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                          )}
+                          style={{
+                            borderInlineStartWidth: "3px",
+                            borderInlineStartColor: categoryColor(e.category),
+                          }}
+                        >
+                          <span className="text-xl leading-none" aria-hidden>
+                            {e.emoji}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                            {e.names[locale]}
+                          </span>
+                          {e.recurring && (
+                            <Badge
+                              variant="outline"
+                              title={dict.recurringYearly}
+                              className="shrink-0 border-primary/40 bg-primary/5 text-[10px] text-primary"
+                            >
+                              🔁 {dict.recurringYearly}
+                            </Badge>
+                          )}
+                          {e.isHoliday && (
+                            <Badge
+                              variant="outline"
+                              className="shrink-0 border-red-300 bg-red-50 text-[10px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                            >
+                              {dict.holidayBadge}
+                            </Badge>
+                          )}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
     </section>

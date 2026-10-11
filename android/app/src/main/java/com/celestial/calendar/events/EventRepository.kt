@@ -1,6 +1,8 @@
 package com.celestial.calendar.events
 
 import com.celestial.calendar.data.ImportedEvent
+import com.celestial.calendar.engine.Jdn
+import com.celestial.calendar.engine.SimpleDate
 
 /**
  * Celestial — event aggregation per user source toggles.
@@ -13,6 +15,13 @@ import com.celestial.calendar.data.ImportedEvent
  * is hidden but a rule is a legal holiday, the instance is kept with
  * [EventInstance.holidayOnly] = true — the day still renders as a day off,
  * but the event text is never exposed.
+ *
+ * Recurring annual events (Task 8-b, same as web 8-a): imported rows with
+ * `recurYearly` are expanded into the years of the query range — the stored
+ * row is the ANCHOR instance (`imp-{id}`), every other year gets a synthetic
+ * instance at the same month/day (`imp-{id}-y{y}`, Feb 29 → Feb 28 in
+ * non-leap years). All instances share the row's `dbId`, so deleting the row
+ * kills the whole series on the next flow refresh.
  */
 class EventRepository {
 
@@ -45,25 +54,65 @@ class EventRepository {
         return out
     }
 
-    /** Imported (user) events as [EventInstance]s. */
-    fun importedInstances(events: List<ImportedEvent>): List<EventInstance> =
-        events.map { e ->
-            val g = com.celestial.calendar.engine.Jdn.parseIso(e.iso)
-            val manual = e.sourceName == "manual"
-            EventInstance(
-                id = "imported-${e.id}:${e.iso}",
-                ruleId = "imported",
-                category = EventCategory.IMPORTED,
-                iso = e.iso,
-                gregorian = g ?: com.celestial.calendar.engine.SimpleDate(1970, 1, 1),
-                isHoliday = e.isHoliday,
-                emoji = if (manual) "✍️" else "📥",
-                names = L10n(e.title, e.title, e.title),
-                descriptions = L10n(e.description ?: "", e.description ?: "", e.description ?: ""),
-                source = EventSource.IMPORTED,
-                manual = manual,
-            )
+    /**
+     * Imported (user) events as [EventInstance]s. Rows marked `recurYearly`
+     * additionally expand into every [years] entry that is not the anchor's
+     * year (same month/day; Feb 29 falls back to Feb 28 in non-leap years).
+     */
+    fun importedInstances(
+        events: List<ImportedEvent>,
+        years: Collection<Int> = emptySet(),
+    ): List<EventInstance> {
+        val out = ArrayList<EventInstance>(events.size)
+        for (e in events) {
+            val g = Jdn.parseIso(e.iso)
+            if (g == null) {
+                // defensive: unparseable row keeps the legacy fallback instance
+                out.add(instanceOf(e, "imported-${e.id}:${e.iso}", e.iso, SimpleDate(1970, 1, 1), false, null))
+                continue
+            }
+            if (!e.recurYearly) {
+                out.add(instanceOf(e, "imported-${e.id}:${e.iso}", e.iso, g, false, null))
+                continue
+            }
+            // yearly series: anchor + one instance per extra year in the range
+            out.add(instanceOf(e, "imp-${e.id}", e.iso, g, true, e.iso))
+            for (y in years.sorted()) {
+                if (y == g.year) continue
+                val day = minOf(g.day, Jdn.daysInMonth(y, g.month))
+                val d = SimpleDate(y, g.month, day)
+                out.add(instanceOf(e, "imp-${e.id}-y$y", Jdn.isoDate(d), d, true, e.iso))
+            }
         }
+        return out
+    }
+
+    private fun instanceOf(
+        e: ImportedEvent,
+        id: String,
+        iso: String,
+        g: SimpleDate,
+        recurring: Boolean,
+        anchorIso: String?,
+    ): EventInstance {
+        val manual = e.sourceName == "manual"
+        return EventInstance(
+            id = id,
+            ruleId = "imported",
+            category = EventCategory.IMPORTED,
+            iso = iso,
+            gregorian = g,
+            isHoliday = e.isHoliday,
+            emoji = if (manual) "✍️" else "📥",
+            names = L10n(e.title, e.title, e.title),
+            descriptions = L10n(e.description ?: "", e.description ?: "", e.description ?: ""),
+            source = EventSource.IMPORTED,
+            manual = manual,
+            recurring = recurring,
+            anchorIso = anchorIso,
+            dbId = e.id,
+        )
+    }
 
     /** Aggregate everything visible in [fromIso, toIso] per [settings]. */
     fun aggregate(
@@ -77,7 +126,7 @@ class EventRepository {
         val out = ArrayList<EventInstance>()
         out.addAll(builtinFor((y1..y2).toList(), settings))
         if (settings.imported) {
-            for (inst in importedInstances(imported)) {
+            for (inst in importedInstances(imported, (y1..y2).toList())) {
                 if (inst.iso in fromIso..toIso) out.add(inst)
             }
         }

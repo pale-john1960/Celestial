@@ -26,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -39,6 +41,7 @@ import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.Jdn
 import com.celestial.calendar.engine.MoonEngine
 import com.celestial.calendar.engine.MoonMajor
+import com.celestial.calendar.engine.SolsticeEngine
 import com.celestial.calendar.engine.WeekStart
 import com.celestial.calendar.events.EventInstance
 
@@ -47,8 +50,8 @@ import com.celestial.calendar.events.EventInstance
  * week containing the selected day, one card per day in a vertical list
  * (mobile-first, lowest power). Each card shows the weekday, the day number
  * in the active system (+ secondary system and Hijri, tiny), holiday styling,
- * a moon-phase glyph on major-phase days and the day's events in the same
- * card style as the Day view.
+ * the end-corner glyph cluster (moon phase + season marker) and the day's
+ * events in the same card style as the Day view.
  */
 @Composable
 fun WeekView(
@@ -150,6 +153,7 @@ private fun WeekDayCard(
     val visible = remember(events) { events.filter { !it.holidayOnly } }
     val dayOffOnly = remember(events) { events.any { it.holidayOnly } }
     val moonMajor = remember(date.iso) { MoonEngine.infoFor(date.gregorian).major }
+    val seasonEvent = remember(date.iso) { SolsticeEngine.eventOn(date.gregorian) }
 
     Surface(
         shape = RoundedCornerShape(14.dp),
@@ -208,12 +212,26 @@ private fun WeekDayCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                if (moonMajor != null) {
-                    Text(
-                        MoonEngine.majorGlyph(moonMajor),
-                        fontSize = 14.sp,
+                // end-corner glyph cluster: moon phase + season marker
+                if (moonMajor != null || seasonEvent != null) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier.alpha(0.6f),
-                    )
+                    ) {
+                        if (moonMajor != null) {
+                            Text(MoonEngine.majorGlyph(moonMajor), fontSize = 14.sp)
+                        }
+                        if (seasonEvent != null) {
+                            val seasonName = strings.seasonEventName(seasonEvent)
+                            Text(
+                                SolsticeEngine.glyphOf(seasonEvent),
+                                fontSize = 14.sp,
+                                modifier = Modifier.semantics {
+                                    contentDescription = strings.seasonGlyphDesc(seasonName)
+                                },
+                            )
+                        }
+                    }
                 }
             }
 

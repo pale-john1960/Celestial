@@ -1,7 +1,7 @@
-// Celestial — offline event import parsers (JSON / TXT / CSV)
+// Celestial — offline event import parsers (JSON / TXT / CSV / ICS)
 // Shared by the import API route. Auto-detects Jalali vs Gregorian dates:
 //   years < 1600 → Jalali, >= 1600 → Gregorian (explicit `calendar` field wins)
-import { parseIso, isoDate } from '@/lib/calendar/jdn';
+import { parseIso, isoDate, fromJdn, toJdn } from '@/lib/calendar/jdn';
 import { jalaliToGregorian } from '@/lib/calendar/jalali';
 import type { SimpleDate } from '@/lib/calendar/types';
 import type { ImportedEventInput } from '@/lib/events/types';
@@ -38,6 +38,7 @@ function pushEvent(
   description?: string,
   isHoliday?: boolean,
   calendar?: string,
+  recurYearly?: boolean,
 ) {
   const g = resolveDate(dateRaw, calendar);
   if (!g) {
@@ -53,6 +54,7 @@ function pushEvent(
     title: title.trim(),
     description: description?.trim() || undefined,
     isHoliday: !!isHoliday,
+    recurYearly: !!recurYearly,
   });
 }
 
@@ -78,7 +80,9 @@ export function parseJsonImport(text: string): ParsedImportResult {
     const description = o.description ?? o.desc ?? o.توضیحات;
     const isHoliday = !!(o.isHoliday ?? o.holiday ?? o['day off']);
     const calendar = o.calendar ? String(o.calendar) : undefined;
-    pushEvent(out, errors, i + 1, dateRaw, title, description ? String(description) : undefined, isHoliday, calendar);
+    // optional "recurYearly": true / "yearly": true — annual recurrence
+    const recurYearly = !!(o.recurYearly ?? o.yearly);
+    pushEvent(out, errors, i + 1, dateRaw, title, description ? String(description) : undefined, isHoliday, calendar, recurYearly);
   });
   return { events: out, errors };
 }
@@ -92,15 +96,17 @@ export function parseTxtImport(text: string): ParsedImportResult {
     lineNo++;
     const t = line.trim();
     if (!t || t.startsWith('#') || t.startsWith('//')) continue;
-    // format: date | title [| description] [| holiday?/category?]
+    // format: date | title [| description] [| holiday?/category?] [| yearly?]
     const parts = t.split('|').map((p) => p.trim());
     if (parts.length < 2) {
       errors.push(`Line ${lineNo}: expected "date | title [| description]"`);
       continue;
     }
-    const [dateRaw, title, description, extra] = parts;
+    const [dateRaw, title, description, extra, yearlyRaw] = parts;
     const isHoliday = /^(holiday|تعطیل|true|1)$/i.test(extra ?? '');
-    pushEvent(out, errors, lineNo, dateRaw, title, description || undefined, isHoliday);
+    // optional trailing column "yearly" (values: yearly/true/1) — backward compat
+    const recurYearly = /^(yearly|true|1)$/i.test(yearlyRaw ?? '');
+    pushEvent(out, errors, lineNo, dateRaw, title, description || undefined, isHoliday, undefined, recurYearly);
   }
   return { events: out, errors };
 }
@@ -131,13 +137,14 @@ export function parseCsvImport(text: string): ParsedImportResult {
   if (!rows.length) return { events: [], errors: ['Empty CSV'] };
   const header = rows[0].map((h) => h.trim().toLowerCase());
   const hasHeader = header.includes('date') || header.includes('تاریخ');
-  let dateIdx = 0, titleIdx = 1, descIdx = 2, holidayIdx = 3, calIdx = 4;
+  let dateIdx = 0, titleIdx = 1, descIdx = 2, holidayIdx = 3, calIdx = 4, yearlyIdx = 5;
   if (hasHeader) {
     dateIdx = header.findIndex((h) => h === 'date' || h === 'تاریخ');
     titleIdx = header.findIndex((h) => h === 'title' || h === 'event' || h === 'name' || h === 'عنوان');
     descIdx = header.findIndex((h) => h === 'description' || h === 'desc' || h === 'توضیحات');
     holidayIdx = header.findIndex((h) => h === 'holiday' || h === 'isholiday' || h === 'تعطیل');
     calIdx = header.findIndex((h) => h === 'calendar' || h === 'تقویم');
+    yearlyIdx = header.findIndex((h) => h === 'yearly' || h === 'recuryearly');
   }
   const dataRows = hasHeader ? rows.slice(1) : rows;
   dataRows.forEach((row, idx) => {
@@ -148,7 +155,10 @@ export function parseCsvImport(text: string): ParsedImportResult {
     const description = descIdx >= 0 ? row[descIdx] : undefined;
     const isHoliday = holidayIdx >= 0 && /^(holiday|تعطیل|true|1|yes)$/i.test((row[holidayIdx] ?? '').trim());
     const calendar = calIdx >= 0 ? row[calIdx]?.trim() || undefined : undefined;
-    pushEvent(out, errors, lineNo, dateRaw, title, description?.trim() || undefined, isHoliday, calendar);
+    // optional "yearly" column (values: yearly/true/1) — backward compat
+    const recurYearly =
+      yearlyIdx >= 0 && /^(yearly|true|1|yes)$/i.test((row[yearlyIdx] ?? '').trim());
+    pushEvent(out, errors, lineNo, dateRaw, title, description?.trim() || undefined, isHoliday, calendar, recurYearly);
   });
   return { events: out, errors };
 }
@@ -158,9 +168,182 @@ export function parseAuto(fileName: string, text: string): ParsedImportResult {
   if (ext === 'json') return parseJsonImport(text);
   if (ext === 'csv') return parseCsvImport(text);
   if (ext === 'txt') return parseTxtImport(text);
+  if (ext === 'ics' || ext === 'ical' || ext === 'ifb') return parseIcs(text);
   // sniff content
   const t = text.trim();
   if (t.startsWith('[') || t.startsWith('{')) return parseJsonImport(text);
+  if (/^BEGIN:VCALENDAR/i.test(t)) return parseIcs(text);
   if (t.includes(',')) return parseCsvImport(text);
   return parseTxtImport(text);
+}
+
+/* ---------------- iCalendar (.ics) — RFC 5545 subset ---------------- */
+
+/** RFC 5545 §3.3.11 text unescape — single pass, unknown escapes drop the backslash */
+function unescapeIcsText(s: string): string {
+  return s.replace(/\\(.)/g, (_m, ch: string) => {
+    if (ch === 'n' || ch === 'N') return '\n';
+    if (ch === ',' || ch === ';' || ch === '\\') return ch;
+    return ch;
+  });
+}
+
+/** Parse a DATE or DATE-TIME value to a Gregorian date (time-of-day ignored,
+ *  timezone approximated as a plain date — acceptable for an all-day calendar). */
+function icsDate(raw: string): SimpleDate | null {
+  const m = /^(\d{4})(\d{2})(\d{2})/.exec(raw.trim());
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  if (y < 1000 || y > 3000) return null;
+  return { year: y, month: mo, day: d };
+}
+
+interface IcsProp {
+  name: string;
+  params: string[]; // raw "KEY=VALUE" tokens
+  value: string;
+}
+
+/**
+ * Parse an iCalendar file into events.
+ * - unfolds continuations first (CRLF/LF + one leading WSP)
+ * - walks the component stack; only properties of the INNERMOST VEVENT are
+ *   read (VTIMEZONE/VTODO/VJOURNAL/VALARM content is skipped)
+ * - DTSTART/DTEND: VALUE=DATE or DATE-TIME — date part only (time ignored)
+ * - DTEND ≥ DTSTART+1d → one event per day (cap 30/VEVENT)
+ * - RRULE:FREQ=YEARLY → recurYearly (+ BYMONTH/BYMONTHDAY anchor override);
+ *   DAILY/WEEKLY/MONTHLY → single event + error entry
+ * - SUMMARY/DESCRIPTION unescaped (\n \, \; \\)
+ * - our own exports (UID …@celestial) parse like any VEVENT
+ */
+export function parseIcs(text: string): ParsedImportResult {
+  const events: ImportedEventInput[] = [];
+  const errors: string[] = [];
+
+  // 1. normalize newlines + unfold (RFC 5545 §3.1)
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const logical: string[] = [];
+  for (const line of normalized.split('\n')) {
+    if ((line.startsWith(' ') || line.startsWith('\t')) && logical.length > 0) {
+      // continuation: remove CRLF/LF + exactly one leading WSP
+      logical[logical.length - 1] += line.slice(1);
+    } else if (line.trim() !== '') {
+      logical.push(line);
+    }
+  }
+
+  // 2. walk components, collect VEVENT properties
+  const stack: string[] = [];
+  const vevents: IcsProp[][] = [];
+  let current: IcsProp[] | null = null;
+  for (const line of logical) {
+    const colon = line.indexOf(':');
+    if (colon === -1) continue;
+    const left = line.slice(0, colon);
+    const value = line.slice(colon + 1);
+    const [rawName, ...params] = left.split(';');
+    const name = rawName.trim().toUpperCase();
+
+    if (name === 'BEGIN') {
+      const comp = value.trim().toUpperCase();
+      stack.push(comp);
+      if (comp === 'VEVENT') current = [];
+      continue;
+    }
+    if (name === 'END') {
+      const comp = value.trim().toUpperCase();
+      const idx = stack.lastIndexOf(comp);
+      if (idx !== -1) stack.length = idx;
+      if (comp === 'VEVENT' && current) {
+        vevents.push(current);
+        current = null;
+      }
+      continue;
+    }
+    // only read properties while the innermost component is a VEVENT
+    // (skips VTIMEZONE DTSTARTs and VALARM props)
+    if (current && stack[stack.length - 1] === 'VEVENT') {
+      current.push({ name, params, value });
+    }
+  }
+
+  if (vevents.length === 0) {
+    return { events: [], errors: ['no VEVENT blocks found in the iCalendar file'] };
+  }
+
+  // 3. map VEVENTs → events
+  vevents.forEach((props, i) => {
+    const label = `VEVENT ${i + 1}`;
+    const get = (n: string) => props.find((p) => p.name === n);
+
+    const dtstartProp = get('DTSTART');
+    const start = dtstartProp ? icsDate(dtstartProp.value) : null;
+    if (!start) {
+      errors.push(`${label}: missing or invalid DTSTART — skipped`);
+      return;
+    }
+
+    const summaryProp = get('SUMMARY');
+    const title = summaryProp ? unescapeIcsText(summaryProp.value).trim() : '';
+    if (!title) {
+      errors.push(`${label}: missing SUMMARY — skipped`);
+      return;
+    }
+
+    const descProp = get('DESCRIPTION');
+    const description = descProp
+      ? unescapeIcsText(descProp.value).trim()
+      : undefined;
+
+    // anchor date: RRULE BYMONTH/BYMONTHDAY wins for YEARLY recurrences
+    let anchor: SimpleDate = start;
+    let recurYearly = false;
+    const rruleProp = get('RRULE');
+    if (rruleProp) {
+      const parts = rruleProp.value
+        .split(';')
+        .map((kv) => kv.split('='))
+        .filter((kv) => kv.length === 2);
+      const freq = (parts.find((kv) => kv[0].toUpperCase() === 'FREQ')?.[1] ?? '').toUpperCase();
+      if (freq === 'YEARLY') {
+        recurYearly = true;
+        const bm = Number(parts.find((kv) => kv[0].toUpperCase() === 'BYMONTH')?.[1]);
+        const bmd = Number(parts.find((kv) => kv[0].toUpperCase() === 'BYMONTHDAY')?.[1]);
+        if (bm >= 1 && bm <= 12 && bmd >= 1 && bmd <= 31) {
+          anchor = { year: start.year, month: bm, day: bmd };
+        }
+      } else if (freq) {
+        errors.push(
+          `RRULE ${freq} not supported — imported as single event`,
+        );
+      }
+    }
+
+    // duration: DTEND date part − start date (VALUE=DATE is exclusive)
+    let days = 1;
+    const dtendProp = get('DTEND');
+    const end = dtendProp ? icsDate(dtendProp.value) : null;
+    if (end) {
+      const dur = toJdn(end) - toJdn(anchor);
+      if (dur > days) days = dur;
+    }
+    if (days > 30) {
+      days = 30;
+      errors.push(`${label}: multi-day event truncated to 30 days`);
+    }
+
+    for (let k = 0; k < days; k++) {
+      events.push({
+        iso: isoDate(fromJdn(toJdn(anchor) + k)),
+        title,
+        description: description || undefined,
+        recurYearly,
+      });
+    }
+  });
+
+  return { events, errors };
 }

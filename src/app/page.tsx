@@ -78,6 +78,7 @@ function anyDialogOpen(): boolean {
     ui.importOpen ||
     ui.searchOpen ||
     ui.addEventOpen ||
+    ui.editEvent !== null ||
     ui.shortcutsOpen ||
     ui.activeEvent !== null
   );

@@ -1,6 +1,7 @@
 package com.celestial.calendar.data
 
 import android.content.Context
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -9,23 +10,29 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.Update
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 /**
  * Celestial — Room persistence for imported (user) events.
  *
  * Mirrors the web Prisma `ImportedEvent` model: iso + jalaliIso + title +
- * description + isHoliday + sourceName.
+ * description + isHoliday + sourceName, plus the recurring-yearly flag
+ * (Task 8-b — schema v2, see [AppDatabase.MIGRATION_1_2]).
  */
 @Entity(tableName = "imported_events")
 data class ImportedEvent(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val iso: String,             // Gregorian yyyy-mm-dd
+    val iso: String,             // Gregorian yyyy-mm-dd (series anchor when recurring)
     val jalaliIso: String,       // Jalali yyyy-mm-dd (display convenience)
     val title: String,
     val description: String? = null,
-    @androidx.room.ColumnInfo(name = "is_holiday") val isHoliday: Boolean = false,
-    @androidx.room.ColumnInfo(name = "source_name") val sourceName: String? = null,
+    @ColumnInfo(name = "is_holiday") val isHoliday: Boolean = false,
+    @ColumnInfo(name = "source_name") val sourceName: String? = null,
+    /** Annual recurrence: the row repeats every year (Feb 29 → Feb 28 fallback). */
+    @ColumnInfo(defaultValue = "0") val recurYearly: Boolean = false,
 )
 
 @Dao
@@ -40,6 +47,10 @@ interface ImportedEventDao {
     @Insert
     suspend fun insertAll(events: List<ImportedEvent>)
 
+    /** Full-row update by primary key (event editing). */
+    @Update
+    suspend fun update(event: ImportedEvent)
+
     @Query("DELETE FROM imported_events WHERE id = :id")
     suspend fun deleteById(id: Long)
 
@@ -50,7 +61,7 @@ interface ImportedEventDao {
     suspend fun count(): Int
 }
 
-@Database(entities = [ImportedEvent::class], version = 1, exportSchema = false)
+@Database(entities = [ImportedEvent::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun importedEventDao(): ImportedEventDao
@@ -59,13 +70,31 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        /**
+         * v1 → v2 (Task 8-b): adds the recurring-yearly flag. Column name and
+         * default value match the entity exactly (`recurYearly` INTEGER NOT
+         * NULL DEFAULT 0 — the Kotlin field name is the column name since no
+         * @ColumnInfo name override is given). Non-destructive: existing rows
+         * keep their data and default to non-recurring.
+         */
+        val MIGRATION_1_2: Migration = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE imported_events ADD COLUMN recurYearly INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
         fun get(context: Context): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "celestial.db",
-                ).fallbackToDestructiveMigration().build().also { INSTANCE = it }
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .build()
+                    .also { INSTANCE = it }
             }
     }
 }

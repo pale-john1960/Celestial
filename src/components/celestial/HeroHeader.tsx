@@ -27,6 +27,7 @@ import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SeasonalParticles } from "./SeasonalParticles";
+import { NextDayOffChip } from "./NextDayOffChip";
 import type { Season } from "./SeasonalParticles";
 
 /* ---------------- shared date display helpers ---------------- */
@@ -112,6 +113,14 @@ export function seasonOf(gMonth: number): Season {
   return "winter";
 }
 
+/** season tint layer under the dark scrim — subtle, non-blue */
+const SEASON_TINT: Record<Season, string> = {
+  spring: "bg-[#EC4899]/15",
+  summer: "bg-[#F59E0B]/15",
+  autumn: "bg-[#D97706]/20",
+  winter: "bg-[#78716C]/15",
+};
+
 /** /seasonal/{season}-{1|2}.jpg — consecutive months alternate variants */
 export function seasonImageSrc(gMonth: number): string {
   const season = seasonOf(gMonth);
@@ -133,8 +142,8 @@ export function HeroHeader() {
   const setView = useUi((s) => s.setView);
   const setSearchOpen = useUi((s) => s.setSearchOpen);
   const setSettingsOpen = useUi((s) => s.setSettingsOpen);
-  const setAddEventOpen = useUi((s) => s.setAddEventOpen);
   const setShortcutsOpen = useUi((s) => s.setShortcutsOpen);
+  const openAddDialog = useUi((s) => s.openAddDialog);
   const goToday = useUi((s) => s.goToday);
 
   // month identity in the ACTIVE system
@@ -202,6 +211,8 @@ export function HeroHeader() {
   return (
     <header data-no-print className="relative h-64 overflow-hidden sm:h-72 lg:h-80">
       <HeroImage src={seasonImageSrc(firstG.month)} />
+      {/* season tint layer (subtle color wash, under the dark scrim) */}
+      <div aria-hidden className={`absolute inset-0 ${SEASON_TINT[season]}`} />
       <div
         aria-hidden
         className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/25 to-black/10"
@@ -228,7 +239,7 @@ export function HeroHeader() {
           </button>
           <button
             type="button"
-            onClick={() => setAddEventOpen(true)}
+            onClick={() => openAddDialog()}
             aria-label={dict.addEvent}
             className="flex size-9 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
           >
@@ -271,6 +282,8 @@ export function HeroHeader() {
             {dict.today} · {todayWeekday} {num(locale, todayDayNum)}{" "}
             {todayMonthName}
           </button>
+          {/* next day-off countdown (hidden when loading with no data / none in 90d) */}
+          <NextDayOffChip />
         </div>
         {/* month title block — replays fade+rise when the month changes */}
         <motion.div

@@ -12,6 +12,16 @@ import type { SystemCode } from "./settings";
 
 export type ViewMode = "month" | "week" | "year" | "day" | "agenda";
 
+/** target of the add/edit dialog when editing an existing event row */
+export interface EditEventTarget {
+  id: string; // ImportedEvent row id
+  iso: string;
+  title: string;
+  description: string;
+  isHoliday: boolean;
+  recurYearly: boolean;
+}
+
 const today = todayGregorian();
 const todayIso = isoDate(today);
 
@@ -23,8 +33,10 @@ interface UiState {
   settingsOpen: boolean;
   importOpen: boolean;
   searchOpen: boolean;
-  /** add-event dialog */
+  /** add-event dialog (create mode) */
   addEventOpen: boolean;
+  /** add-event dialog (edit mode) — non-null while editing an event row */
+  editEvent: EditEventTarget | null;
   /** keyboard shortcuts help dialog */
   shortcutsOpen: boolean;
   /** event shown in the detail dialog */
@@ -45,6 +57,12 @@ interface UiState {
   setImportOpen: (open: boolean) => void;
   setSearchOpen: (open: boolean) => void;
   setAddEventOpen: (open: boolean) => void;
+  /** open the add-event dialog with a fresh form */
+  openAddDialog: () => void;
+  /** open the dialog in edit mode for an existing event row */
+  openEditDialog: (evt: EditEventTarget) => void;
+  /** close the add/edit dialog in either mode */
+  closeEventEditor: () => void;
   setShortcutsOpen: (open: boolean) => void;
   setEventDialog: (inst: EventInstance | null) => void;
 }
@@ -62,6 +80,7 @@ export const useUi = create<UiState>()((set, get) => ({
   importOpen: false,
   searchOpen: false,
   addEventOpen: false,
+  editEvent: null,
   shortcutsOpen: false,
   activeEvent: null,
 
@@ -94,7 +113,11 @@ export const useUi = create<UiState>()((set, get) => ({
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
   setImportOpen: (importOpen) => set({ importOpen }),
   setSearchOpen: (searchOpen) => set({ searchOpen }),
-  setAddEventOpen: (addEventOpen) => set({ addEventOpen }),
+  setAddEventOpen: (open) =>
+    set(open ? { addEventOpen: true, editEvent: null } : { addEventOpen: false }),
+  openAddDialog: () => set({ addEventOpen: true, editEvent: null }),
+  openEditDialog: (evt) => set({ editEvent: evt, addEventOpen: false }),
+  closeEventEditor: () => set({ addEventOpen: false, editEvent: null }),
   setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen }),
   setEventDialog: (activeEvent) => set({ activeEvent }),
 }));

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { aggregateEvents } from "@/lib/events";
 import type { EventInstance, SourceSettings } from "@/lib/events";
 import type { ImportedEvent } from "@prisma/client";
-import { parseIso } from "@/lib/calendar";
+import { parseIso, isoDate } from "@/lib/calendar";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +29,50 @@ function rowToInstance(row: ImportedEvent): EventInstance {
     source: manual ? "manual" : "imported",
     provider: manual ? "manual" : undefined,
     dbId: row.id,
+    ...(row.recurYearly ? { recurring: true, anchorIso: row.iso } : {}),
   };
+}
+
+/**
+ * Map a row to instances for [from, to]. Non-recurring rows → the single
+ * anchor instance (range-checked by the caller's query). Yearly-recurring
+ * rows additionally expand to every year in the range: date = (y, month,
+ * day) of the anchor, except a Feb 29 anchor in a non-leap year → Feb 28
+ * (documented fallback). Same dbId everywhere so deleting the row kills
+ * the whole series; ids are unique per year (dedupe-safe).
+ */
+function rowToInstances(
+  row: ImportedEvent,
+  from: string,
+  to: string,
+  fromYear: number,
+  toYear: number,
+): EventInstance[] {
+  const anchor = rowToInstance(row);
+  if (!row.recurYearly) return [anchor];
+
+  const out: EventInstance[] = [];
+  const anchorG = parseIso(row.iso);
+  if (anchorG) {
+    for (let y = fromYear; y <= toYear; y++) {
+      if (y === anchorG.year) continue;
+      // Feb 29 anchor in a non-leap year falls back to Feb 28
+      const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+      const day =
+        anchorG.month === 2 && anchorG.day === 29 && !leap ? 28 : anchorG.day;
+      const iso = isoDate({ year: y, month: anchorG.month, day });
+      if (iso < from || iso > to) continue;
+      out.push({
+        ...anchor,
+        id: `imp-${row.id}-y${y}`,
+        iso,
+        gregorian: { year: y, month: anchorG.month, day },
+      });
+    }
+  }
+  // anchor instance first when it is inside the range
+  if (row.iso >= from && row.iso <= to) out.unshift(anchor);
+  return out;
 }
 
 export async function GET(req: NextRequest) {
@@ -61,11 +104,18 @@ export async function GET(req: NextRequest) {
 
     let imported: EventInstance[] = [];
     if (settings.imported) {
+      // fetch in-range rows PLUS every yearly-recurring row (its expansion
+      // can land inside the range even when the anchor is far outside, e.g.
+      // a 1990 birthday anchor shown in 2026)
       const rows = await db.importedEvent.findMany({
-        where: { iso: { gte: from, lte: to } },
+        where: {
+          OR: [{ iso: { gte: from, lte: to } }, { recurYearly: true }],
+        },
         orderBy: { iso: "asc" },
       });
-      imported = rows.map(rowToInstance);
+      imported = rows.flatMap((row) =>
+        rowToInstances(row, from, to, fromG.year, toG.year),
+      );
     }
 
     const result = await aggregateEvents(from, to, settings, imported);

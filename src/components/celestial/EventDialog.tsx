@@ -5,7 +5,9 @@ import { buildDayCell, imperialDayName, todayGregorian } from "@/lib/calendar";
 import { getDict, weekdayLong } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
+import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +34,7 @@ export function EventDialog() {
   const dict = getDict(locale);
   const activeEvent = useUi((s) => s.activeEvent);
   const setEventDialog = useUi((s) => s.setEventDialog);
+  const openEditDialog = useUi((s) => s.openEditDialog);
 
   const today = todayGregorian();
   const cell = activeEvent ? buildDayCell(activeEvent.gregorian, today, true) : null;
@@ -45,6 +48,25 @@ export function EventDialog() {
           ? formatJalaliDate(locale, cell.jalali, dict)
           : formatImperialDate(locale, cell.imperial, dict);
 
+  // only imported/manual rows can be edited (dbId present)
+  const editable = activeEvent?.dbId != null;
+
+  const onEdit = () => {
+    if (!activeEvent || !editable) return;
+    setEventDialog(null);
+    openEditDialog({
+      id: activeEvent.dbId as string,
+      // for recurring series the ANCHOR row is what gets edited
+      iso: activeEvent.recurring
+        ? (activeEvent.anchorIso ?? activeEvent.iso)
+        : activeEvent.iso,
+      title: activeEvent.names.en,
+      description: activeEvent.descriptions.en,
+      isHoliday: activeEvent.isHoliday,
+      recurYearly: activeEvent.recurring === true,
+    });
+  };
+
   return (
     <Dialog
       open={activeEvent !== null}
@@ -57,7 +79,10 @@ export function EventDialog() {
           <>
             <DialogHeader className="text-start">
               <DialogTitle className="flex items-start gap-2.5 text-start">
-                <span className="text-3xl leading-none" aria-hidden>
+                <span
+                  aria-hidden
+                  className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-2xl"
+                >
                   {activeEvent.emoji}
                 </span>
                 <span className="min-w-0 break-words">
@@ -76,6 +101,15 @@ export function EventDialog() {
                   className="border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
                 >
                   {dict.holidayBadge}
+                </Badge>
+              )}
+              {activeEvent.recurring && (
+                <Badge
+                  variant="outline"
+                  title={dict.recurringYearly}
+                  className="border-primary/40 bg-primary/5 text-primary"
+                >
+                  🔁 {dict.recurringYearly}
                 </Badge>
               )}
               <span
@@ -134,10 +168,18 @@ export function EventDialog() {
               {activeEvent.source === "online" && activeEvent.provider
                 ? ` · ${activeEvent.provider}`
                 : ""}
-              {activeEvent.source === "imported" && activeEvent.dbId
-                ? ""
-                : ""}
             </p>
+
+            {editable && (
+              <Button
+                variant="outline"
+                onClick={onEdit}
+                className="ms-auto rounded-xl font-semibold"
+              >
+                <Pencil className="size-4" aria-hidden />
+                {dict.editEvent}
+              </Button>
+            )}
           </>
         )}
       </DialogContent>

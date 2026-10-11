@@ -66,7 +66,7 @@ export const ja: LocaleDict = {
   religiousHiddenHolidayNote: '宗教イベントは非表示でも、法定休日は休日として表示されます。',
 
   importTitle: 'イベントのインポート',
-  importHint: 'JSON・TXT・CSVファイルをアップロード。ジャラリ暦（例: 1405-07-01）とグレゴリオ暦（2026-10-01）の日付を自動判定します。',
+  importHint: 'JSON・TXT・CSV・iCalendar (.ics) ファイルをアップロード。ジャラリ暦（例: 1405-07-01）とグレゴリオ暦（2026-10-01）の日付を自動判定します。ICS には休日フラグがないため、取り込み後に手動で設定してください。',
   importChooseFile: 'ファイルを選択',
   importParsing: '解析中…',
   importResult: '件をインポートしました',
@@ -152,6 +152,29 @@ export const ja: LocaleDict = {
 
   exportIcs: '.ics を書き出す',
   exportIcsDone: '{n}件のイベントを書き出しました',
+
+  seasonMarEquinox: '春分',
+  seasonJunSolstice: '夏至',
+  seasonSepEquinox: '秋分',
+  seasonDecSolstice: '冬至',
+  seasonOccursAt: '{t} に起こる',
+  seasonNoteEqual: '昼と夜の長さがほぼ等しい',
+  seasonNoteLongest: '北半球で一年で最も昼が長い',
+  seasonNoteShortest: '北半球で一年で最も昼が短い',
+
+  importFormatIcs: 'カレンダーファイル (.ics) — Google・Apple・Outlook の書き出しに対応。毎年の RRULE と複数日にわたるイベントをサポート',
+
+  addEventYearly: '毎年繰り返す',
+  addEventYearlyHint: '誕生日や記念日',
+  recurringYearly: '毎年繰り返し',
+
+  editEvent: 'イベントを編集',
+  eventUpdated: 'イベントを更新しました',
+  deleteEvent: 'イベントを削除',
+  saveChanges: '変更を保存',
+
+  nextDayOff: '次の休日: {name} · {n} 日後',
+  nextDayOffToday: '今日は休日: {name}',
 };
 
 export const jaGregorianMonths = [

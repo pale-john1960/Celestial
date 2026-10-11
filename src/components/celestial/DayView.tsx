@@ -18,6 +18,12 @@ import {
 } from "@/lib/calendar";
 import { fromJdn, toJdn } from "@/lib/calendar/jdn";
 import { moonInfo, moonPhaseName, MOON_EMOJI } from "@/lib/calendar/moon";
+import {
+  SEASON_EVENT_EMOJI,
+  seasonEventName,
+  seasonEventNote,
+  seasonEventOn,
+} from "@/lib/calendar/solstice";
 import { getDict, num, weekdayLong } from "@/lib/i18n";
 import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
@@ -68,6 +74,17 @@ export function DayView() {
   const moon = moonInfo(g);
   const illumPct = Math.round(moon.illum * 100);
   const ageText = moon.ageDays.toFixed(1);
+
+  // solstice / equinox on this day (device-local window)
+  const season = seasonEventOn(g);
+  const seasonTimeText = season
+    ? num(
+        locale,
+        `${String(new Date(season.localMs).getHours()).padStart(2, "0")}:${String(
+          new Date(season.localMs).getMinutes(),
+        ).padStart(2, "0")}`,
+      )
+    : "";
 
   const activeDateText =
     system === "gregorian"
@@ -151,7 +168,7 @@ export function DayView() {
       </div>
 
       {/* moon phase card (every day) */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm dark:border-white/10">
         <div className="flex items-center gap-3.5">
           <span aria-hidden className="text-3xl leading-none">
             {MOON_EMOJI[moon.phaseIndex]}
@@ -168,6 +185,31 @@ export function DayView() {
           </div>
         </div>
       </div>
+
+      {/* solstice / equinox card (only on event days) */}
+      {season && (
+        <div
+          role="status"
+          className="rounded-2xl border border-border bg-card p-4 shadow-sm dark:border-white/10"
+        >
+          <div className="flex items-center gap-3.5">
+            <span aria-hidden className="text-3xl leading-none">
+              {SEASON_EVENT_EMOJI[season.event]}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-bold">
+                {seasonEventName(dict, season.event)}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                {dict.seasonOccursAt.replace("{t}", seasonTimeText)}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {seasonEventNote(dict, season.event)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* day-off banner */}
       {isDayOff && (
@@ -241,7 +283,7 @@ function EventCard({
       onClick={onOpen}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15 }}
-      className="w-full cursor-pointer rounded-2xl border border-border bg-card p-4 text-start shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+      className="w-full cursor-pointer rounded-2xl border border-border bg-card p-4 text-start shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background dark:border-white/10"
     >
       <div className="flex items-start gap-3">
         <span className="text-2xl leading-none" aria-hidden>
@@ -256,6 +298,15 @@ function EventCard({
                 className="border-red-300 bg-red-50 text-[10px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
               >
                 {dict.holidayBadge}
+              </Badge>
+            )}
+            {event.recurring && (
+              <Badge
+                variant="outline"
+                title={dict.recurringYearly}
+                className="border-primary/40 bg-primary/5 text-[10px] text-primary"
+              >
+                🔁 {dict.recurringYearly}
               </Badge>
             )}
           </div>

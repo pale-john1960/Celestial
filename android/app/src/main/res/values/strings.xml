@@ -66,7 +66,7 @@
 
     <!-- Import -->
     <string name="import_title">Import events</string>
-    <string name="import_hint">Upload a JSON, TXT or CSV file with your events. Jalali (e.g. 1405-07-01) and Gregorian (2026-10-01) dates are auto-detected.</string>
+    <string name="import_hint">Upload a JSON, TXT, CSV or ICS file with your events. Jalali (e.g. 1405-07-01) and Gregorian (2026-10-01) dates are auto-detected.</string>
     <string name="import_choose_file">Choose file</string>
     <string name="import_parsing">Parsing file…</string>
     <string name="import_result">%1$d events imported</string>
@@ -173,4 +173,26 @@
     <!-- ICS export (Task 6-b) -->
     <string name="export_ics">Export events (.ics)</string>
     <string name="export_ics_done">Exported %1$d events</string>
+
+    <!-- Solstice and equinox (Task 8-b) -->
+    <string name="season_mar_equinox">March equinox</string>
+    <string name="season_jun_solstice">June solstice</string>
+    <string name="season_sep_equinox">September equinox</string>
+    <string name="season_dec_solstice">December solstice</string>
+    <string name="season_occurs_at">Occurs at %1$s</string>
+    <string name="season_note_equal">Day and night are about equal</string>
+    <string name="season_note_longest">Longest day of the year (N. hemisphere)</string>
+    <string name="season_note_shortest">Shortest day of the year (N. hemisphere)</string>
+    <string name="season_glyph_desc">Season marker: %1$s</string>
+
+    <!-- Recurring annual events (Task 8-b) -->
+    <string name="recurring_yearly">Repeats yearly</string>
+    <string name="add_event_yearly">Repeats yearly</string>
+    <string name="add_event_yearly_hint">Birthdays, anniversaries</string>
+    <string name="import_warnings">%1$d warnings</string>
+
+    <!-- Event editing (Task 8-b) -->
+    <string name="edit_event">Edit event</string>
+    <string name="event_updated">Event updated</string>
+    <string name="delete_event">Delete event</string>
 </resources>

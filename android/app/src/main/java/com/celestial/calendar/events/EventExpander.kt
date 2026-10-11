@@ -3,7 +3,9 @@ package com.celestial.calendar.events
 import com.celestial.calendar.engine.HijriEngine
 import com.celestial.calendar.engine.JalaliEngine
 import com.celestial.calendar.engine.Jdn
+import com.celestial.calendar.engine.SeasonEvent
 import com.celestial.calendar.engine.SimpleDate
+import com.celestial.calendar.engine.SolsticeEngine
 
 /**
  * Celestial — rule expansion: turn [EventRule]s into concrete dated instances.
@@ -55,6 +57,24 @@ object EventExpander {
             RuleKind.HIJRI_FIXED -> {
                 val h = HijriEngine.gregorianToHijri(g)
                 h.month == rule.month && h.day == rule.day
+            }
+            RuleKind.SEASON_EVENT -> {
+                // astronomical rule (e.g. 春分の日 / 秋分の日): the day whose
+                // FIXED-offset timezone window contains the solar-longitude
+                // event instant of g's year. month/day are informational seeds.
+                val target = rule.seasonTarget ?: 0
+                val event = when (target) {
+                    0 -> SeasonEvent.MAR_EQUINOX
+                    90 -> SeasonEvent.JUN_SOLSTICE
+                    180 -> SeasonEvent.SEP_EQUINOX
+                    else -> SeasonEvent.DEC_SOLSTICE
+                }
+                val info = SolsticeEngine.eventsOfYear(g.year)
+                    .firstOrNull { it.event == event } ?: return false
+                // days-WEST offset of a fixed tz (posix sign): JST (+540 east) → −540/1440
+                val off = -(rule.tzOffsetMin ?: 0) / 1440.0
+                val jdn = Jdn.g2d(g.year, g.month, g.day)
+                info.jd >= jdn - 0.5 + off && info.jd < jdn + 0.5 + off
             }
         }
     }

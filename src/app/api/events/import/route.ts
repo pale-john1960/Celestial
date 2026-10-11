@@ -1,4 +1,6 @@
-// POST /api/events/import — multipart file import (JSON / TXT / CSV, ≤256KB, ≤500 events)
+// POST /api/events/import — multipart file import (JSON / TXT / CSV / ICS,
+// ≤256KB, ≤500 events). .ics is detected by extension (content-type is not
+// trusted — Google/Apple/Outlook export various types).
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { parseAuto } from "@/lib/import/parse";
@@ -9,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 256 * 1024;
 const MAX_EVENTS = 500;
-const ALLOWED_EXT = [".json", ".txt", ".csv"];
+const ALLOWED_EXT = [".json", ".txt", ".csv", ".ics"];
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,7 +27,7 @@ export async function POST(req: NextRequest) {
     const lower = file.name.toLowerCase();
     if (!ALLOWED_EXT.some((ext) => lower.endsWith(ext))) {
       return NextResponse.json(
-        { imported: 0, errors: ["only .json, .txt and .csv files are accepted"] },
+        { imported: 0, errors: ["only .json, .txt, .csv and .ics files are accepted"] },
         { status: 400 },
       );
     }
@@ -60,6 +62,7 @@ export async function POST(req: NextRequest) {
         title: e.title,
         description: e.description ?? null,
         isHoliday: e.isHoliday ?? false,
+        recurYearly: e.recurYearly ?? false,
         sourceName: file.name,
       };
     });
