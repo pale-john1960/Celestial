@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.celestial.calendar.R
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.SeasonEvent
+import com.celestial.calendar.ui.theme.normalizeEventColor
 import java.util.Locale
 
 /**
@@ -219,6 +220,26 @@ class LocalStrings(private val res: Resources) {
     val editEvent get() = res.getString(R.string.edit_event)
     val eventUpdated get() = res.getString(R.string.event_updated)
     val deleteEvent get() = res.getString(R.string.delete_event)
+
+    // ---- Per-event colors (Task 9) ----
+    val eventColor get() = res.getString(R.string.event_color)
+    val eventColorDefault get() = res.getString(R.string.event_color_default)
+
+    /** a11y label for the "default" option ("No color, use category default"). */
+    val eventColorNone get() = res.getString(R.string.event_color_none)
+
+    /** Localized swatch name for a palette hex (falls back to the raw hex). */
+    fun eventColorName(hex: String): String = when (normalizeEventColor(hex)) {
+        "#c2185b" -> res.getString(R.string.event_color_magenta)
+        "#d95970" -> res.getString(R.string.event_color_rose)
+        "#e07b39" -> res.getString(R.string.event_color_orange)
+        "#b8860b" -> res.getString(R.string.event_color_gold)
+        "#2ba84a" -> res.getString(R.string.event_color_green)
+        "#5b8c85" -> res.getString(R.string.event_color_teal)
+        "#8e7cc3" -> res.getString(R.string.event_color_violet)
+        "#64748b" -> res.getString(R.string.event_color_slate)
+        else -> hex
+    }
 
     fun seasonName(season: Season): String = when (season) {
         Season.SPRING -> seasonSpring

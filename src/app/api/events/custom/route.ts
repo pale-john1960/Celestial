@@ -3,6 +3,7 @@
 //   imported 📥; edits the ANCHOR of a recurring series → whole series updates)
 // Stored as an ImportedEvent row with sourceName "manual" so it flows through
 // the imported pipeline (list/delete/imported-source toggle) unchanged.
+// Optional `color`: "#rrggbb" (stored lowercase) or null = category default.
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { gregorianToJalali, isoDate, parseIso } from "@/lib/calendar";
@@ -19,11 +20,12 @@ interface ValidatedEvent {
   description: string | null;
   isHoliday: boolean;
   recurYearly: boolean;
+  color: string | null;
 }
 
 /** Validate a create/update body; returns an error string when invalid */
 function validate(body: Record<string, unknown>): ValidatedEvent | string {
-  const { iso, title, description, isHoliday, recurYearly } = body;
+  const { iso, title, description, isHoliday, recurYearly, color } = body;
 
   if (typeof iso !== "string") return "missing iso date";
   const g = parseIso(iso);
@@ -51,6 +53,15 @@ function validate(body: Record<string, unknown>): ValidatedEvent | string {
     return "recurYearly must be a boolean";
   }
 
+  // optional per-event color: "#rrggbb" (any hex case) or null (category default)
+  if (
+    color !== undefined &&
+    color !== null &&
+    (typeof color !== "string" || !/^#[0-9a-fA-F]{6}$/.test(color))
+  ) {
+    return "color must be a #rrggbb hex string or null";
+  }
+
   return {
     g,
     title: title.trim(),
@@ -60,6 +71,7 @@ function validate(body: Record<string, unknown>): ValidatedEvent | string {
         : null,
     isHoliday: isHoliday === true,
     recurYearly: recurYearly === true,
+    color: typeof color === "string" ? color.toLowerCase() : null,
   };
 }
 
@@ -71,6 +83,7 @@ function rowJson(row: {
   description: string | null;
   isHoliday: boolean;
   recurYearly: boolean;
+  color: string | null;
   sourceName: string;
 }) {
   return {
@@ -81,6 +94,7 @@ function rowJson(row: {
     description: row.description,
     isHoliday: row.isHoliday,
     recurYearly: row.recurYearly,
+    color: row.color,
     sourceName: row.sourceName,
   };
 }
@@ -108,6 +122,7 @@ export async function POST(req: NextRequest) {
         description: validated.description,
         isHoliday: validated.isHoliday,
         recurYearly: validated.recurYearly,
+        color: validated.color,
         sourceName: "manual",
       },
     });
@@ -157,6 +172,7 @@ export async function PATCH(req: NextRequest) {
         description: validated.description,
         isHoliday: validated.isHoliday,
         recurYearly: validated.recurYearly,
+        color: validated.color,
       },
     });
 

@@ -2,6 +2,7 @@ package com.celestial.calendar.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import com.celestial.calendar.events.EventCategory
+import com.celestial.calendar.events.EventInstance
 
 /**
  * Celestial palette — magenta primary (#C2185B), cream background (#FDFBF7),
@@ -82,3 +83,41 @@ fun categoryColor(category: EventCategory): Color = when (category) {
     EventCategory.PERSIAN_NATIONAL -> CategoryPersianNational
     EventCategory.IMPORTED -> CategoryImported
 }
+
+/**
+ * User-selectable per-event color palette (Task 9 — shared spec with the web
+ * app, no indigo/blue). Stored as 6-digit LOWERCASE hex, matching the web
+ * storage convention; `null` means "use the category default color".
+ */
+val EventPaletteHexes = listOf(
+    "#c2185b", // magenta
+    "#d95970", // rose
+    "#e07b39", // orange
+    "#b8860b", // gold
+    "#2ba84a", // green
+    "#5b8c85", // teal
+    "#8e7cc3", // violet
+    "#64748b", // slate
+)
+
+/** Normalize a stored per-event color: trimmed lowercase hex; null when blank. */
+fun normalizeEventColor(hex: String?): String? =
+    hex?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
+
+/**
+ * Defensive hex parse for `#rrggbb` / `#aarrggbb` — returns null for invalid
+ * input instead of throwing (stored colors may come from edited rows).
+ */
+fun parseHexColor(hex: String): Color? = try {
+    Color(android.graphics.Color.parseColor(hex.trim()))
+} catch (_: IllegalArgumentException) {
+    null
+}
+
+/**
+ * The color an event renders with: its per-event override (Task 9) when set
+ * and valid, otherwise the category default. Invalid stored hex falls back to
+ * the category color too.
+ */
+fun eventColor(event: EventInstance): Color =
+    normalizeEventColor(event.color)?.let { parseHexColor(it) } ?: categoryColor(event.category)

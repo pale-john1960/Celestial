@@ -369,7 +369,8 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
 
     /**
      * Persist a user-created event (sourceName = "manual"). The imported-events
-     * flow triggers the existing event refresh automatically.
+     * flow triggers the existing event refresh automatically. [color] is the
+     * optional per-event color override (6-digit lowercase hex, Task 9).
      */
     fun addManualEvent(
         title: String,
@@ -377,6 +378,7 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
         isHoliday: Boolean,
         iso: String,
         recurYearly: Boolean = false,
+        color: String? = null,
     ) {
         val g = Jdn.parseIso(iso) ?: return
         viewModelScope.launch {
@@ -390,6 +392,7 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
                         isHoliday = isHoliday,
                         sourceName = "manual",
                         recurYearly = recurYearly,
+                        color = color,
                     )
                 )
             )

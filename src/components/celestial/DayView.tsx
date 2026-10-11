@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  CloudMoon,
   MoonStar,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -33,10 +34,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  categoryColor,
   categoryLabel,
+  eventColor,
   sourceBadgeText,
 } from "./CategoryLegend";
+import { EmptyState } from "./EmptyState";
 import {
   formatGregorianDate,
   formatHijriDate,
@@ -242,12 +244,11 @@ export function DayView() {
         </div>
       )}
       {!isLoading && !isError && events.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-muted-foreground">
-          <span aria-hidden className="text-3xl leading-none">
-            🗓️
-          </span>
-          <p className="text-sm">{dict.noEvents}</p>
-        </div>
+        <EmptyState
+          icon={CloudMoon}
+          title={dict.noEvents}
+          hint={dict.emptyDayHint}
+        />
       )}
       {events.length > 0 && (
         <div className="flex flex-col gap-3">
@@ -284,6 +285,10 @@ function EventCard({
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15 }}
       className="w-full cursor-pointer rounded-2xl border border-border bg-card p-4 text-start shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background dark:border-white/10"
+      style={{
+        borderInlineStartWidth: "3px",
+        borderInlineStartColor: eventColor(event),
+      }}
     >
       <div className="flex items-start gap-3">
         <span className="text-2xl leading-none" aria-hidden>
@@ -319,14 +324,14 @@ function EventCard({
             <span
               className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium"
               style={{
-                borderColor: `${categoryColor(event.category)}55`,
-                color: categoryColor(event.category),
+                borderColor: `${eventColor(event)}55`,
+                color: eventColor(event),
               }}
             >
               <span
                 aria-hidden
                 className="size-1.5 rounded-full"
-                style={{ backgroundColor: categoryColor(event.category) }}
+                style={{ backgroundColor: eventColor(event) }}
               />
               {categoryLabel(dict, event.category)}
             </span>

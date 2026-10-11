@@ -1,8 +1,16 @@
-// Celestial — year overview: 12 (13) mini month cards
+// Celestial — year overview: stats card + 12 (13) mini month cards
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  BarChart3,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  MoonStar,
+  Repeat,
+  Sparkles,
+} from "lucide-react";
 import {
   monthGrid,
   systemToGregorian,
@@ -18,8 +26,9 @@ import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { useEvents } from "@/lib/client/api";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { categoryColor } from "./CategoryLegend";
+import { eventColor } from "./CategoryLegend";
 import { seasonImageSrc } from "./HeroHeader";
 
 export function YearView() {
@@ -71,6 +80,41 @@ export function YearView() {
     return map;
   }, [data]);
 
+  // year insights: computed from the same fetched dataset, scoped to the
+  // ACTIVE system's year (in-month cells only — the fetch range also covers
+  // trailing/leading days of the adjacent year's months)
+  const stats = useMemo(() => {
+    const monthOfIso = new Map<string, number>();
+    grids.forEach((cells, i) => {
+      const m = months[i].index;
+      for (const cell of cells) {
+        if (cell.inMonth) monthOfIso.set(cell.iso, m);
+      }
+    });
+    let total = 0;
+    let dayOffs = 0;
+    const perMonth = new Map<number, number>();
+    const recurringSeries = new Set<string>();
+    for (const e of data?.events ?? []) {
+      const m = monthOfIso.get(e.iso);
+      if (m === undefined) continue;
+      total++;
+      if (e.isHoliday) dayOffs++;
+      perMonth.set(m, (perMonth.get(m) ?? 0) + 1);
+      if (e.recurring) recurringSeries.add(e.dbId ?? e.id);
+    }
+    let busiest: number | null = null;
+    let busiestCount = 0;
+    for (const m of months) {
+      const count = perMonth.get(m.index) ?? 0;
+      if (count > busiestCount) {
+        busiest = m.index;
+        busiestCount = count;
+      }
+    }
+    return { total, dayOffs, recurring: recurringSeries.size, busiest };
+  }, [data, grids, months]);
+
   return (
     <section aria-label={dict.yearOverview} className="flex flex-col gap-3">
       <nav aria-label={dict.yearOverview} className="flex items-center gap-2">
@@ -108,6 +152,14 @@ export function YearView() {
         </Button>
       </nav>
 
+      <YearStats
+        dict={dict}
+        locale={locale}
+        system={system}
+        stats={stats}
+        ready={data !== undefined}
+      />
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {months.map((m, i) => (
           <MonthCard
@@ -128,6 +180,102 @@ export function YearView() {
         ))}
       </div>
     </section>
+  );
+}
+
+/** Year insights card — totals, day-offs, busiest month, recurring series */
+function YearStats({
+  dict,
+  locale,
+  system,
+  stats,
+  ready,
+}: {
+  dict: LocaleDict;
+  locale: LocaleCode;
+  system: CalendarSystem;
+  stats: { total: number; dayOffs: number; recurring: number; busiest: number | null };
+  ready: boolean;
+}) {
+  const busiestName =
+    stats.busiest === null
+      ? "—"
+      : system === "gregorian"
+        ? gregorianMonthName(locale, stats.busiest)
+        : jalaliMonthName(locale, stats.busiest);
+  const totalText = dict.statsTotal.replace("{n}", num(locale, stats.total));
+  const dayOffsText = dict.statsDayOffs.replace("{n}", num(locale, stats.dayOffs));
+  const busiestText = dict.statsBusiest.replace("{month}", busiestName);
+  const recurringText = dict.statsRecurring.replace("{n}", num(locale, stats.recurring));
+
+  return (
+    <section
+      aria-label={
+        ready
+          ? `${dict.statsTitle} · ${totalText} · ${dayOffsText} · ${busiestText} · ${recurringText}`
+          : dict.statsTitle
+      }
+      className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+    >
+      <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        <Sparkles className="size-3.5 shrink-0 text-primary" aria-hidden />
+        {dict.statsTitle}
+      </h3>
+      <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {ready ? (
+          <>
+            <StatTile icon={<CalendarDays className="size-3.5" aria-hidden />}>
+              <StatNum template={totalText} value={num(locale, stats.total)} />
+            </StatTile>
+            <StatTile icon={<MoonStar className="size-3.5" aria-hidden />}>
+              <StatNum template={dayOffsText} value={num(locale, stats.dayOffs)} />
+            </StatTile>
+            <StatTile icon={<BarChart3 className="size-3.5" aria-hidden />}>
+              {busiestText}
+            </StatTile>
+            <StatTile icon={<Repeat className="size-3.5" aria-hidden />}>
+              <StatNum template={recurringText} value={num(locale, stats.recurring)} />
+            </StatTile>
+          </>
+        ) : (
+          <Skeleton aria-hidden className="col-span-2 h-9 rounded-xl sm:col-span-4" />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function StatTile({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-2 rounded-xl bg-muted/50 p-2.5">
+      <span
+        aria-hidden
+        className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"
+      >
+        {icon}
+      </span>
+      <p className="min-w-0 text-xs font-medium text-foreground">{children}</p>
+    </div>
+  );
+}
+
+/** split an already-substituted "{n}" template so the number renders bold
+ *  (works for both number-first and label-first locales) */
+function StatNum({ template, value }: { template: string; value: string }) {
+  const parts = template.split(value);
+  if (parts.length !== 2) return template;
+  return (
+    <>
+      {parts[0]}
+      <span className="font-bold tabular-nums">{value}</span>
+      {parts[1]}
+    </>
   );
 }
 
@@ -229,7 +377,7 @@ function MonthCard({
                       <span
                         key={e.id}
                         className="block size-[2px] rounded-full"
-                        style={{ backgroundColor: categoryColor(e.category) }}
+                        style={{ backgroundColor: eventColor(e) }}
                       />
                     ))}
                   </span>

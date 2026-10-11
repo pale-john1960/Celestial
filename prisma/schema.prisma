@@ -16,6 +16,7 @@ model ImportedEvent {
   description String?
   isHoliday   Boolean  @default(false)
   recurYearly Boolean  @default(false) // annual recurrence (birthdays etc.) — anchor date = iso
+  color       String? // per-event dot color, 6-digit lowercase hex (null = category default #5B8C85)
   sourceName  String   @default("import") // originating file name
   createdAt   DateTime @default(now())
 

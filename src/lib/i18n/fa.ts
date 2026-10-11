@@ -35,6 +35,10 @@ export const fa: LocaleDict = {
   loading: 'در حال بارگذاری…',
   error: 'خطایی رخ داد',
   noEvents: 'رویدادی در این روز نیست',
+  emptyDayHint: 'برای دیدن رویدادها روزی را انتخاب کنید',
+  emptyAgendaHint: 'ماه دیگری را امتحان کنید یا منابع رویداد بیشتری را فعال کنید',
+  emptySearchHint: 'عبارت دیگری را جست‌وجو کنید',
+  moreEvents: '{n} مورد دیگر',
   upcoming: 'رویدادهای پیش رو',
   past: 'گذشته',
   allDay: 'تمام‌روز',
@@ -175,6 +179,16 @@ export const fa: LocaleDict = {
 
   nextDayOff: 'تعطیل بعدی: {name} · {n} روز دیگر',
   nextDayOffToday: 'تعطیل امروز: {name}',
+
+  eventColor: 'رنگ',
+  eventColorNone: 'پیش‌فرض',
+  eventColorHint: 'رنگ نشان این رویداد را شخصی‌سازی کنید',
+
+  statsTitle: 'سال در یک نگاه',
+  statsTotal: '{n} رویداد',
+  statsDayOffs: '{n} روز تعطیل',
+  statsBusiest: 'پررویدادترین ماه: {month}',
+  statsRecurring: '{n} تکرارشونده',
 };
 
 export const faGregorianMonths = [

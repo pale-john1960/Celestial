@@ -10,7 +10,7 @@ import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { categoryColor } from "./CategoryLegend";
+import { eventColor } from "./CategoryLegend";
 import {
   formatGregorianDate,
   formatImperialDate,
@@ -84,7 +84,7 @@ export function TodayStrip({
               <span
                 aria-hidden
                 className="size-2 shrink-0 rounded-full"
-                style={{ backgroundColor: categoryColor(e.category) }}
+                style={{ backgroundColor: eventColor(e) }}
               />
               <span aria-hidden>{e.emoji}</span>
               <span className="truncate">{e.names[locale]}</span>

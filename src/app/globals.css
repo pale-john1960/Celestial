@@ -200,35 +200,34 @@
   animation-delay: var(--delay, 0s), 0s;
 }
 
-/* Thin rounded scrollbars for max-h-* overflow areas */
+/* Thin rounded scrollbars — token-driven so the thumb tracks the active
+   light/dark border color; hover picks up the primary accent. Firefox uses
+   scrollbar-width/scrollbar-color; Chromium/Safari the ::-webkit- rules. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: hsl(336 10% 65% / 0.45) transparent;
-}
-.dark * {
-  scrollbar-color: hsl(40 12% 55% / 0.4) transparent;
+  scrollbar-color: color-mix(in srgb, var(--border) 60%, var(--foreground) 40%) transparent;
 }
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(336 10% 65% / 0.45);
+  background: color-mix(in srgb, var(--border) 60%, var(--foreground) 40%);
   border-radius: 9999px;
 }
-.dark ::-webkit-scrollbar-thumb {
-  background: hsl(40 12% 55% / 0.4);
-}
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(336 30% 55% / 0.6);
+  background: color-mix(in srgb, var(--primary) 60%, transparent);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
-/* Text selection — magenta tint (works in light & dark) */
+/* Text selection — primary tint (token-based, adapts to light & dark) */
 ::selection {
-  background: rgba(194, 24, 91, 0.25);
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 /* Respect users who prefer no motion */

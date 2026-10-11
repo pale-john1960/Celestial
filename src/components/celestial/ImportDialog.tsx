@@ -127,7 +127,7 @@ export function ImportDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(v) => setImportOpen(v)}>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto rounded-2xl">
+      <DialogContent closeLabel={dict.close} className="max-h-[85vh] max-w-lg overflow-y-auto rounded-2xl">
         <DialogHeader className="text-start">
           <DialogTitle className="flex items-center gap-2">
             <FileUp className="size-5 text-primary" aria-hidden />
@@ -295,6 +295,7 @@ export function ImportDialog() {
                       description: row.description ?? "",
                       isHoliday: row.isHoliday,
                       recurYearly: row.recurYearly,
+                      color: row.color,
                     });
                   }}
                 />
@@ -333,6 +334,13 @@ function ImportedRowItem({
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium" dir="auto">
+          {row.color && (
+            <span
+              aria-hidden
+              className="me-1 inline-block size-2 rounded-full align-middle"
+              style={{ backgroundColor: row.color }}
+            />
+          )}
           {row.title}
           {row.recurYearly && (
             <span title={dict.recurringYearly} aria-hidden>

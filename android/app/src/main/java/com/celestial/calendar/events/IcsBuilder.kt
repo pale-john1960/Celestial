@@ -34,6 +34,8 @@ data class IcsEvent(
  *   DTSTART/DTEND;VALUE=DATE with an exclusive end (iso + 1 day),
  *   RRULE:FREQ=YEARLY for annual-series anchors (Task 8-b),
  *   SUMMARY `name (" (holiday)")`, DESCRIPTION `description · source label`
+ * - no color property is emitted — per-event colors (Task 9) are app-internal
+ *   and never leave the app (same policy as the web `ics.ts`)
  */
 object IcsBuilder {
 

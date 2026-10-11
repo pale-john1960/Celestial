@@ -263,8 +263,8 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                     locale = s.locale,
                     selectedIso = viewModel.selectedIso ?: todayIso,
                     strings = strings,
-                    onSave = { title, description, isHoliday, iso, recurYearly ->
-                        viewModel.addManualEvent(title, description, isHoliday, iso, recurYearly)
+                    onSave = { title, description, isHoliday, iso, recurYearly, color ->
+                        viewModel.addManualEvent(title, description, isHoliday, iso, recurYearly, color)
                         showAddEvent = false
                         Toast.makeText(context, strings.addEventSaved, Toast.LENGTH_SHORT).show()
                     },
@@ -281,7 +281,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                     selectedIso = row.iso,
                     strings = strings,
                     editing = row,
-                    onSave = { title, description, isHoliday, iso, recurYearly ->
+                    onSave = { title, description, isHoliday, iso, recurYearly, color ->
                         viewModel.updateImported(
                             row.copy(
                                 iso = iso,
@@ -289,6 +289,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                 description = description.ifBlank { null },
                                 isHoliday = isHoliday,
                                 recurYearly = recurYearly,
+                                color = color,
                             )
                         )
                         Toast.makeText(context, strings.eventUpdated, Toast.LENGTH_SHORT).show()

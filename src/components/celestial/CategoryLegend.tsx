@@ -17,8 +17,26 @@ export const CATEGORY_COLORS: Record<EventCategory, string> = {
   imported: "#5B8C85",
 };
 
+/** Fixed per-event color palette (8 swatches, no indigo/blue) — shared spec
+ *  with Android. Stored/displayed as lowercase hex (DB canonical form). */
+export const EVENT_COLOR_PALETTE: readonly string[] = [
+  "#c2185b", // magenta
+  "#d95970", // rose
+  "#e07b39", // orange
+  "#b8860b", // gold
+  "#2ba84a", // green
+  "#5b8c85", // teal (category default)
+  "#8e7cc3", // violet
+  "#64748b", // slate
+];
+
 export function categoryColor(cat: EventCategory): string {
   return CATEGORY_COLORS[cat] ?? "#C2185B";
+}
+
+/** Effective dot color of an event instance: per-event color wins over the category default */
+export function eventColor(e: { color?: string; category: EventCategory }): string {
+  return e.color ?? categoryColor(e.category);
 }
 
 export function categoryLabel(dict: LocaleDict, cat: EventCategory): string {

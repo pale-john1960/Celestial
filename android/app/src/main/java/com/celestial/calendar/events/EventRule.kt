@@ -73,6 +73,7 @@ data class EventInstance(
     val recurring: Boolean = false, // yearly series instance (Room recurYearly row)
     val anchorIso: String? = null,  // the series' stored anchor date (== iso on the anchor)
     val dbId: Long? = null,         // Room ImportedEvent id (editable + delete-row kills series)
+    val color: String? = null,      // per-event color override (Task 9): 6-digit lowercase hex; null = category default
 ) {
     /** Localized name (holidayOnly instances must never expose their text). */
     fun localName(localeCode: String): String = names.forLocale(localeCode)

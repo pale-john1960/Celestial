@@ -114,10 +114,14 @@ function CelestialApp() {
     setTheme(theme);
   }, [theme, setTheme]);
 
-  // reflect the locale on <html>
+  // reflect the locale on <html> — including dir, so Radix portals (dialogs/
+  // sheets/tooltips mount on document.body, OUTSIDE the wrapper div below)
+  // inherit the correct direction for their chrome (close button side, text
+  // alignment). The wrapper div keeps its dir too (harmless, same value).
   useEffect(() => {
     document.documentElement.lang = locale;
-  }, [locale]);
+    document.documentElement.dir = dict.dir;
+  }, [locale, dict.dir]);
 
   // global keyboard shortcuts (Ctrl/Cmd+K, arrows, view keys, dialogs)
   useEffect(() => {

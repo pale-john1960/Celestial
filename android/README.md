@@ -49,6 +49,7 @@ No API keys, no secrets — the app is fully offline-capable by design.
 | Moon phases | `MoonEngine` — Meeus ch. 49-derived mean-lunation algorithm, **constants identical to the web `moon.ts`** (SYNODIC 29.530588853, BASE 2451550.09766, quarter positions 7.38264721/14.76529443/22.14794164, two-term anomaly correction): per-day age / phase / illumination / 8-phase emoji (🌑🌒🌓🌔🌕🌖🌗🌘) + localized names; major-phase day glyph (🌑🌓🌕🌗) in month cells, week cards and a Day-view card. Accuracy: new/full ±5 min, quarters ±2 h; day-markers match the live reference 149/153 |
 | Solstice & equinox | `SolsticeEngine` — low-precision solar apparent-longitude series (Meeus ch. 25 truncated: mean longitude 280.46646 + 0.9856474°/d + equation of centre 1.914602/0.019993/0.000289), Newton ×6 solve per event seeded at 12:00 UTC on the canonical date, residual guard 0.5°. **Constants identical to the web `solstice.ts`** — validated 8/8 anchors (2024 + 2026) within ±17 min. Day-marker convention = the moon engine's local-day window. Day view: ♈♋♎♑ row on the astronomy card (localized name, “Occurs at HH:MM” device-local, day/night note); month cells + week cards: glyph in the bottom-end cluster (9/14 sp, α 0.6) |
 | Manual events | ✛ button in the hero header → AddEventDialog (title 1–120, description ≤500, “day off” switch, “Repeats yearly” switch, Gregorian `yyyy-mm-dd` field pre-filled with the selected day + live active-system conversion + validation) → Room `ImportedEvent` with sourceName `"manual"`, ✍️ badge everywhere (📥 for file imports); **editable** — ✎ pencil on every imported/manual event card (Day view) and on the settings manager rows, with a destructive Delete in edit mode; jalaliIso recomputed on date change |
+| Per-event colors (Task 9) | User-selectable color for manual/imported events: fixed 8-swatch palette (**magenta `#C2185B` · rose `#D95970` · orange `#E07B39` · gold `#B8860B` · green `#2BA84A` · teal `#5B8C85` · violet `#8E7CC3` · slate `#64748B`** — shared spec with the web, no indigo/blue) + a “default” option (null = the category default, teal for imported). Room schema **v3** adds a nullable `color` column (6-digit lowercase hex; non-destructive migration). The override flows through every instance (incl. yearly expansions) and renders in month/Year dots, Day/Week card chips, and agenda rows; the editor preselects it in edit mode (ring + check, TalkBack labels per swatch) |
 | Recurring annual events | Rows flagged `recurYearly` (Room schema **v2**, non-destructive `ALTER TABLE … ADD COLUMN recurYearly INTEGER NOT NULL DEFAULT 0` migration) expand like the web: anchor instance `imp-{id}` + synthetic `imp-{id}-y{y}` per year in view (same month/day, **Feb 29 → Feb 28** in non-leap years) — 🔁 outlined chip on the cards, 🔁 badge in the manager; delete-row kills the whole series. ICS export writes only the anchor + `RRULE:FREQ=YEARLY` |
 | ICS import | `parseIcs` (port of the web 8-a parser): continuation-line unfolding, VEVENT DTSTART/DTEND (`VALUE=DATE` or date-part; exclusive end), multi-day expansion ≤30 days, TEXT unescaping (`,`, `;`, `\`, `\n`), `RRULE:FREQ=YEARLY` → recurring row, other FREQ → single event + warning count in the result line. SAF picker accepts `.ics` (`text/calendar` + octet-stream fallback) |
 | ICS export | Settings → “Export events (.ics)” — SAF `CreateDocument("text/calendar")`, next 90 days of events + one anchor VEVENT per yearly series with `RRULE:FREQ=YEARLY` (expanded instances skipped; `holidayOnly` text never exported), RFC 5545 escaping (`\ ; ,` + newlines), 74-octet line folding, CRLF endings, `DTEND` exclusive |
@@ -113,11 +114,13 @@ android/
 
 ## 6. Notes & known limitations
 
-- **Room schema v2 (Task 8-b):** `imported_events` gained `recurYearly INTEGER
-  NOT NULL DEFAULT 0` via a registered, **non-destructive** `Migration(1, 2)`
-  (`AppDatabase.MIGRATION_1_2`). The old `fallbackToDestructiveMigration()`
-  was removed — user data is never silently wiped; an unforeseen future
-  schema mismatch now throws instead. Fresh installs build v2 directly.
+- **Room schema v3 (Task 9-c):** `imported_events` gained `recurYearly INTEGER
+  NOT NULL DEFAULT 0` (v2, Task 8-b) and a nullable `color TEXT` column (v3,
+  Task 9-c) via registered, **non-destructive** migrations
+  (`AppDatabase.MIGRATION_1_2` + `MIGRATION_2_3`). The old
+  `fallbackToDestructiveMigration()` was removed — user data is never silently
+  wiped; an unforeseen future schema mismatch now throws instead. Fresh
+  installs build v3 directly.
 - **Hijri variant:** the web engine uses ICU `islamic-umalqura`; Android's
   `IslamicCalendar` here is set to **CIVIL** (tabular). The two can differ by
   ±1 day around month boundaries, and official Iranian dates depend on moon
@@ -137,6 +140,13 @@ android/
   (VALUE=DATE or date-part only), BYMONTH/BYMONTHDAY are assumed to match
   DTSTART, DURATION is not supported, and non-YEARLY RRULEs import as single
   events (reported as warnings).
+- Per-event colors never cross the import/export boundary: ICS (and every
+  other import format) does not carry the app's color column, and the ICS
+  export emits no color property — parity with the web. Invalid stored hex
+  falls back to the category color at render time.
+- The home-screen widgets don't render event dots (Date widget is text +
+  next-event line, Month widget colors only today/holiday day numbers), so
+  per-event colors are in-app only.
 - ICS export folds lines by UTF-8 octets (≤74) — strict RFC 5545 compliant.
 - First-launch `POST_NOTIFICATIONS` prompt (API 33+) is triggered by the
   status-bar date feature (default on).

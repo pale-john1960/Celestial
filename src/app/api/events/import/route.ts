@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
         description: e.description ?? null,
         isHoliday: e.isHoliday ?? false,
         recurYearly: e.recurYearly ?? false,
+        color: e.color ?? null,
         sourceName: file.name,
       };
     });

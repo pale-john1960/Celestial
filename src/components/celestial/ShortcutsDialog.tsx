@@ -55,7 +55,7 @@ export function ShortcutsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(v) => setShortcutsOpen(v)}>
-      <DialogContent className="max-w-md rounded-2xl">
+      <DialogContent closeLabel={dict.close} className="max-w-md rounded-2xl">
         <DialogHeader className="text-start">
           <DialogTitle className="flex items-center gap-2">
             <Keyboard className="size-5 text-primary" aria-hidden />

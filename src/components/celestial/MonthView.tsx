@@ -1,7 +1,7 @@
 // Celestial — month grid view (the core view)
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -47,8 +47,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { categoryColor } from "./CategoryLegend";
-import { CategoryLegend } from "./CategoryLegend";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { CategoryLegend, eventColor } from "./CategoryLegend";
 import {
   formatGregorianDate,
   formatImperialDate,
@@ -58,6 +62,27 @@ import { TodayStrip } from "./TodayStrip";
 
 const MIN_YEAR = 1;
 const MAX_YEAR = 3000;
+
+/** event chips shown in the hover preview before the "+N more" line */
+const PREVIEW_EVENTS = 6;
+
+/** true when the primary pointer can hover (desktop) — hover previews/tooltips
+ *  stay OFF on touch-only devices. Subscribed via useSyncExternalStore (SSR
+ *  snapshot: false — no hover on the server), same pattern as useMounted. */
+const HOVER_QUERY = "(hover: hover)";
+const hoverSubscribe = (onChange: () => void) => {
+  const mql = window.matchMedia(HOVER_QUERY);
+  mql.addEventListener("change", onChange);
+  return () => mql.removeEventListener("change", onChange);
+};
+const getHoverSnapshot = () => window.matchMedia(HOVER_QUERY).matches;
+function useHoverCapable(): boolean {
+  return useSyncExternalStore(
+    hoverSubscribe,
+    getHoverSnapshot,
+    () => false,
+  );
+}
 
 export function MonthView() {
   const locale = useSettings((s) => s.locale);
@@ -74,6 +99,7 @@ export function MonthView() {
   const goToday = useUi((s) => s.goToday);
 
   const today = useMemo(() => todayGregorian(), []);
+  const hoverCapable = useHoverCapable();
   const cells = useMemo(
     () => monthGrid(system, cursor.year, cursor.month, weekStart, today),
     [system, cursor, weekStart, today],
@@ -292,6 +318,7 @@ export function MonthView() {
                 events={eventsByIso.get(cell.iso)}
                 moon={moonByIso.get(cell.iso) ?? null}
                 season={seasonByIso.get(cell.iso) ?? null}
+                hoverCapable={hoverCapable}
                 onClick={onCellClick}
               />
             ))}
@@ -324,6 +351,7 @@ function DayCellButton({
   events,
   moon,
   season,
+  hoverCapable,
   onClick,
 }: {
   cell: DayCell;
@@ -335,6 +363,7 @@ function DayCellButton({
   events: EventInstance[] | undefined;
   moon: "new" | "firstQ" | "full" | "lastQ" | null;
   season: SeasonEvent | null;
+  hoverCapable: boolean;
   onClick: (iso: string) => void;
 }) {
   const isHolidayDay = (events ?? []).some((e) => e.isHoliday);
@@ -342,6 +371,10 @@ function DayCellButton({
   const hasRecurring = (events ?? []).some(
     (e) => !e.holidayOnly && e.recurring,
   );
+
+  // hover preview chips (all events incl. day-off-only) + "+N more" counter
+  const previewEvents = (events ?? []).slice(0, PREVIEW_EVENTS);
+  const moreCount = (events?.length ?? 0) - previewEvents.length;
 
   const primary =
     system === "gregorian"
@@ -360,13 +393,29 @@ function DayCellButton({
         ? formatJalaliDate(locale, cell.jalali, dict)
         : formatImperialDate(locale, cell.imperial, dict);
 
-  return (
+  // first few event names appended to the cell's aria-label (kept short)
+  const ariaEventNames = (events ?? [])
+    .filter((e) => !e.holidayOnly)
+    .slice(0, 3)
+    .map((e) => e.names[locale])
+    .join(", ")
+    .slice(0, 120);
+
+  // moon phase name for the corner-glyph title + hover preview
+  const moonPhaseText = moon
+    ? moonPhaseName(
+        dict,
+        moon === "new" ? 0 : moon === "firstQ" ? 2 : moon === "full" ? 4 : 6,
+      )
+    : "";
+
+  const cellButton = (
     <motion.button
       type="button"
       role="gridcell"
       aria-selected={selected}
-      aria-label={`${dict.selectDate}: ${weekdayLong(locale, cell.weekday)}, ${activeDateText}${moon ? ` · ${dict.moonPhaseTitle}` : ""}${season ? ` · ${seasonEventName(dict, season)}` : ""}`}
-      title={activeDateText}
+      aria-label={`${dict.selectDate}: ${weekdayLong(locale, cell.weekday)}, ${activeDateText}${moon ? ` · ${moonPhaseText}` : ""}${season ? ` · ${seasonEventName(dict, season)}` : ""}${ariaEventNames ? ` · ${ariaEventNames}` : ""}`}
+      title={hoverCapable ? undefined : activeDateText}
       onClick={() => onClick(cell.iso)}
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -376,8 +425,11 @@ function DayCellButton({
         "hover:bg-accent hover:z-10 hover:shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         cell.inMonth ? "" : "opacity-40",
-        isHolidayDay && "bg-red-50 dark:bg-red-950/30",
-        selected && "bg-primary/10 ring-1 ring-primary/40",
+        // selection WINS over the holiday tint (explicit precedence: two bg-*
+        // utilities would otherwise be resolved by stylesheet order, not class
+        // order) — selected keeps the red date number + 🌙 corner below
+        isHolidayDay && !selected && "bg-red-50 dark:bg-red-950/30",
+        selected && "bg-primary/15 ring-2 ring-primary",
       )}
     >
       {isHolidayDay && (
@@ -418,7 +470,7 @@ function DayCellButton({
             key={e.id}
             aria-hidden
             className="size-1.5 rounded-full"
-            style={{ backgroundColor: categoryColor(e.category) }}
+            style={{ backgroundColor: eventColor(e) }}
           />
         ))}
         {hasRecurring && (
@@ -437,9 +489,7 @@ function DayCellButton({
           className="absolute bottom-1 end-1 flex items-center gap-0.5 text-[10px] leading-none opacity-60"
         >
           {moon && (
-            <span
-              title={`${dict.moonPhaseTitle}: ${moonPhaseName(dict, moon === "new" ? 0 : moon === "firstQ" ? 2 : moon === "full" ? 4 : 6)}`}
-            >
+            <span title={`${dict.moonPhaseTitle}: ${moonPhaseText}`}>
               {MOON_MAJOR_EMOJI[moon]}
             </span>
           )}
@@ -451,5 +501,78 @@ function DayCellButton({
         </span>
       )}
     </motion.button>
+  );
+
+  // no hover previews on touch-only pointers — render the plain cell
+  if (!hoverCapable) return cellButton;
+
+  // desktop hover preview. The cell button stays the click/focus target
+  // (TooltipTrigger asChild — no extra wrapper DOM, role=gridcell intact);
+  // the bubble itself is pointer-events-none so it can never swallow a click.
+  return (
+    <Tooltip delayDuration={250}>
+      <TooltipTrigger asChild>{cellButton}</TooltipTrigger>
+      <TooltipContent
+        sideOffset={6}
+        className="rounded-xl border border-border bg-popover text-popover-foreground shadow-lg p-2.5 text-xs max-w-56 z-50 pointer-events-none [&>span:has(>svg)]:hidden"
+      >
+        <div className="flex flex-col gap-1.5">
+          <p className="font-semibold">
+            {weekdayLong(locale, cell.weekday)}, {activeDateText}
+          </p>
+          {previewEvents.length > 0 && (
+            <ul className="flex flex-col gap-1">
+              {previewEvents.map((e) => (
+                <li key={e.id} className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="size-1.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: eventColor(e) }}
+                  />
+                  <span className="min-w-0 flex-1 truncate">
+                    {e.names[locale]}
+                  </span>
+                  {e.isHoliday && (
+                    <span className="shrink-0 font-medium text-red-600 dark:text-red-400">
+                      🌙 {dict.holidayBadge}
+                    </span>
+                  )}
+                  {e.recurring && (
+                    <span
+                      aria-hidden
+                      title={dict.recurringYearly}
+                      className="shrink-0 opacity-70"
+                    >
+                      🔁
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {moreCount > 0 && (
+            <p className="text-muted-foreground">
+              {dict.moreEvents.replace("{n}", num(locale, moreCount))}
+            </p>
+          )}
+          {(moon || season) && (
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 border-t border-border pt-1.5 text-muted-foreground">
+              {moon && (
+                <span className="inline-flex items-center gap-1">
+                  <span aria-hidden>{MOON_MAJOR_EMOJI[moon]}</span>
+                  {moonPhaseText}
+                </span>
+              )}
+              {season && (
+                <span className="inline-flex items-center gap-1">
+                  <span aria-hidden>{SEASON_EVENT_EMOJI[season]}</span>
+                  {seasonEventName(dict, season)}
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }

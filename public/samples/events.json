@@ -3,7 +3,8 @@
     "date": "2026-10-29",
     "title": "Cyrus the Great Day",
     "description": "Commemorating the founding of the Achaemenid Empire by Cyrus the Great.",
-    "isHoliday": false
+    "isHoliday": false,
+    "color": "#B8860B"
   },
   {
     "date": "1405-07-13",

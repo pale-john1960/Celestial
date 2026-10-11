@@ -27,6 +27,8 @@ export interface ImportedRow {
   description: string | null;
   isHoliday: boolean;
   recurYearly: boolean;
+  /** per-event dot color (#rrggbb lowercase) — null = category default */
+  color: string | null;
   sourceName: string;
 }
 
@@ -143,6 +145,8 @@ export interface CustomEventInput {
   description?: string;
   isHoliday?: boolean;
   recurYearly?: boolean;
+  /** per-event dot color "#rrggbb" — null/omitted = category default */
+  color?: string | null;
 }
 
 export interface UpdateEventInput extends CustomEventInput {

@@ -195,4 +195,16 @@
     <string name="edit_event">イベントを編集</string>
     <string name="event_updated">イベントを更新しました</string>
     <string name="delete_event">イベントを削除</string>
+    <!-- Per-event colors (Task 9) -->
+    <string name="event_color">色</string>
+    <string name="event_color_default">デフォルト</string>
+    <string name="event_color_none">色なし（カテゴリの既定色を使用）</string>
+    <string name="event_color_magenta">マゼンタ</string>
+    <string name="event_color_rose">ローズ</string>
+    <string name="event_color_orange">オレンジ</string>
+    <string name="event_color_gold">ゴールド</string>
+    <string name="event_color_green">グリーン</string>
+    <string name="event_color_teal">ティール</string>
+    <string name="event_color_violet">バイオレット</string>
+    <string name="event_color_slate">スレート</string>
 </resources>

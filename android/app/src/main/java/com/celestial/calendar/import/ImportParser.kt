@@ -17,6 +17,10 @@ import org.json.JSONObject
  * escapes). ICS (RFC 5545) files are unfolded, VEVENTs parsed for
  * DTSTART/DTEND/SUMMARY/DESCRIPTION/RRULE with multi-day expansion (≤ 30
  * days) and FREQ=YEARLY → recurYearly.
+ *
+ * Per-event colors (Task 9) are deliberately NOT parsed from any import
+ * format — the color override is editor-only (same policy as the web app);
+ * imported rows keep `color = null` and render in the category default.
  */
 object ImportParser {
 
@@ -72,7 +76,7 @@ object ImportParser {
             errors.add("Line $line: invalid date \"$dateRaw\"")
             return
         }
-        if (title.isBlank()) {
+        if (title.isNullOrBlank()) {
             errors.add("Line $line: missing title")
             return
         }

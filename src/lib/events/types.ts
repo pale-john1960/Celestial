@@ -52,6 +52,8 @@ export interface EventInstance {
   recurring?: boolean;
   /** for recurring instances: the anchor row's iso (the series' stored date) */
   anchorIso?: string;
+  /** per-event dot color (manual/imported): 6-digit lowercase hex; undefined = category default */
+  color?: string;
 }
 
 export interface ImportedEventInput {
@@ -61,5 +63,7 @@ export interface ImportedEventInput {
   isHoliday?: boolean;
   /** import as a yearly-recurring series (anchor = iso) */
   recurYearly?: boolean;
+  /** per-event dot color, 6-digit lowercase hex ("#rrggbb"); omitted = category default */
+  color?: string;
   sourceName?: string;
 }

@@ -39,6 +39,7 @@ function pushEvent(
   isHoliday?: boolean,
   calendar?: string,
   recurYearly?: boolean,
+  color?: string,
 ) {
   const g = resolveDate(dateRaw, calendar);
   if (!g) {
@@ -55,6 +56,7 @@ function pushEvent(
     description: description?.trim() || undefined,
     isHoliday: !!isHoliday,
     recurYearly: !!recurYearly,
+    color,
   });
 }
 
@@ -82,7 +84,14 @@ export function parseJsonImport(text: string): ParsedImportResult {
     const calendar = o.calendar ? String(o.calendar) : undefined;
     // optional "recurYearly": true / "yearly": true — annual recurrence
     const recurYearly = !!(o.recurYearly ?? o.yearly);
-    pushEvent(out, errors, i + 1, dateRaw, title, description ? String(description) : undefined, isHoliday, calendar, recurYearly);
+    // optional "color": "#rrggbb" — per-event dot color (any hex case, stored lowercase)
+    let color: string | undefined;
+    if (o.color !== undefined && o.color !== null) {
+      const c = String(o.color).trim().toLowerCase();
+      if (/^#[0-9a-f]{6}$/.test(c)) color = c;
+      else errors.push(`Item ${i + 1}: invalid color "${String(o.color)}" (expected #rrggbb)`);
+    }
+    pushEvent(out, errors, i + 1, dateRaw, title, description ? String(description) : undefined, isHoliday, calendar, recurYearly, color);
   });
   return { events: out, errors };
 }
@@ -201,6 +210,28 @@ function icsDate(raw: string): SimpleDate | null {
   return { year: y, month: mo, day: d };
 }
 
+/**
+ * RFC 5545 §3.3.6 DURATION (ISO 8601 subset): P{n}W / P{n}D / P{n}DT{hms} /
+ * PT{hms} — no sign, no months/years. Returns the span in WHOLE days:
+ * weeks ×7 + days, and any time component > 0 rounds up one extra day
+ * (P1DT12H → 2, PT12H → 1, P3D → 3, P2W → 14). Returns null when invalid.
+ */
+function icsDurationDays(raw: string): number | null {
+  const s = raw.trim().toUpperCase();
+  const m = /^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/.exec(s);
+  if (!m) return null;
+  const [weeks, days, hours, mins, secs] = [m[1], m[2], m[3], m[4], m[5]].map(
+    (v) => (v === undefined ? 0 : Number(v)),
+  );
+  // at least one component must be present (bare "P" / "PT" are invalid)
+  if (m[1] === undefined && m[2] === undefined && m[3] === undefined && m[4] === undefined && m[5] === undefined) {
+    return null;
+  }
+  const whole = weeks * 7 + days;
+  const hasTime = hours + mins + secs > 0;
+  return whole + (hasTime ? 1 : 0);
+}
+
 interface IcsProp {
   name: string;
   params: string[]; // raw "KEY=VALUE" tokens
@@ -213,7 +244,11 @@ interface IcsProp {
  * - walks the component stack; only properties of the INNERMOST VEVENT are
  *   read (VTIMEZONE/VTODO/VJOURNAL/VALARM content is skipped)
  * - DTSTART/DTEND: VALUE=DATE or DATE-TIME — date part only (time ignored)
- * - DTEND ≥ DTSTART+1d → one event per day (cap 30/VEVENT)
+ * - DTEND ≥ DTSTART+1d → one event per day (cap 30/VEVENT); DURATION
+ *   (RFC 5545 §3.3.6 ISO 8601 subset: P{n}W / P{n}D / P{n}DT{hms} / PT{hms})
+ *   is used when DTEND is absent — DTEND wins when both are present (RFC 5545);
+ *   any time component > 0 rounds the span up to the next whole day
+ *   (e.g. P1DT12H → 2 days, PT12H → 1 day), weeks ×7
  * - RRULE:FREQ=YEARLY → recurYearly (+ BYMONTH/BYMONTHDAY anchor override);
  *   DAILY/WEEKLY/MONTHLY → single event + error entry
  * - SUMMARY/DESCRIPTION unescaped (\n \, \; \\)
@@ -322,13 +357,27 @@ export function parseIcs(text: string): ParsedImportResult {
       }
     }
 
-    // duration: DTEND date part − start date (VALUE=DATE is exclusive)
+    // duration: DTEND date part − start date (VALUE=DATE is exclusive).
+    // DURATION is consulted only when DTEND is absent (RFC 5545: DTEND wins);
+    // end-day semantics are identical: start + days, exclusive.
     let days = 1;
     const dtendProp = get('DTEND');
     const end = dtendProp ? icsDate(dtendProp.value) : null;
     if (end) {
       const dur = toJdn(end) - toJdn(anchor);
       if (dur > days) days = dur;
+    } else {
+      const durProp = get('DURATION');
+      if (durProp) {
+        const dur = icsDurationDays(durProp.value);
+        if (dur === null) {
+          errors.push(
+            `${label}: invalid DURATION "${durProp.value}" — imported as single event`,
+          );
+        } else if (dur > days) {
+          days = dur;
+        }
+      }
     }
     if (days > 30) {
       days = 30;

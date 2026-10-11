@@ -20,6 +20,7 @@ export interface EditEventTarget {
   description: string;
   isHoliday: boolean;
   recurYearly: boolean;
+  color: string | null; // per-event dot color — null = category default
 }
 
 const today = todayGregorian();

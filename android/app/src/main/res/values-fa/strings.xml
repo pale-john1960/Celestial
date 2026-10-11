@@ -195,4 +195,16 @@
     <string name="edit_event">ویرایش رویداد</string>
     <string name="event_updated">رویداد به‌روزرسانی شد</string>
     <string name="delete_event">حذف رویداد</string>
+    <!-- Per-event colors (Task 9) -->
+    <string name="event_color">رنگ</string>
+    <string name="event_color_default">پیش‌فرض</string>
+    <string name="event_color_none">بدون رنگ، استفاده از رنگ پیش‌فرض دسته</string>
+    <string name="event_color_magenta">سرخابی</string>
+    <string name="event_color_rose">گلبهی</string>
+    <string name="event_color_orange">نارنجی</string>
+    <string name="event_color_gold">طلایی</string>
+    <string name="event_color_green">سبز</string>
+    <string name="event_color_teal">سبزآبی</string>
+    <string name="event_color_violet">بنفش</string>
+    <string name="event_color_slate">خاکستری</string>
 </resources>

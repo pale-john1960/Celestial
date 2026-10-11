@@ -16,8 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  categoryColor,
   categoryLabel,
+  eventColor,
   sourceBadgeText,
 } from "./CategoryLegend";
 import { SourceBadge } from "./DayView";
@@ -64,6 +64,7 @@ export function EventDialog() {
       description: activeEvent.descriptions.en,
       isHoliday: activeEvent.isHoliday,
       recurYearly: activeEvent.recurring === true,
+      color: activeEvent.color ?? null,
     });
   };
 
@@ -74,7 +75,7 @@ export function EventDialog() {
         if (!open) setEventDialog(null);
       }}
     >
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto rounded-2xl">
+      <DialogContent closeLabel={dict.close} className="max-h-[85vh] max-w-lg overflow-y-auto rounded-2xl">
         {activeEvent && cell && (
           <>
             <DialogHeader className="text-start">
@@ -115,14 +116,14 @@ export function EventDialog() {
               <span
                 className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium"
                 style={{
-                  borderColor: `${categoryColor(activeEvent.category)}55`,
-                  color: categoryColor(activeEvent.category),
+                  borderColor: `${eventColor(activeEvent)}55`,
+                  color: eventColor(activeEvent),
                 }}
               >
                 <span
                   aria-hidden
                   className="size-1.5 rounded-full"
-                  style={{ backgroundColor: categoryColor(activeEvent.category) }}
+                  style={{ backgroundColor: eventColor(activeEvent) }}
                 />
                 {categoryLabel(dict, activeEvent.category)}
               </span>

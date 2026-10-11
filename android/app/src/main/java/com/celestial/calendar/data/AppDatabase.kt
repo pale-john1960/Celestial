@@ -20,7 +20,8 @@ import kotlinx.coroutines.flow.Flow
  *
  * Mirrors the web Prisma `ImportedEvent` model: iso + jalaliIso + title +
  * description + isHoliday + sourceName, plus the recurring-yearly flag
- * (Task 8-b — schema v2, see [AppDatabase.MIGRATION_1_2]).
+ * (Task 8-b — schema v2, see [AppDatabase.MIGRATION_1_2]) and the per-event
+ * color override (Task 9-c — schema v3, see [AppDatabase.MIGRATION_2_3]).
  */
 @Entity(tableName = "imported_events")
 data class ImportedEvent(
@@ -33,6 +34,8 @@ data class ImportedEvent(
     @ColumnInfo(name = "source_name") val sourceName: String? = null,
     /** Annual recurrence: the row repeats every year (Feb 29 → Feb 28 fallback). */
     @ColumnInfo(defaultValue = "0") val recurYearly: Boolean = false,
+    /** Per-event color override: 6-digit lowercase hex ("#rrggbb"); null = category default. */
+    val color: String? = null,
 )
 
 @Dao
@@ -61,7 +64,7 @@ interface ImportedEventDao {
     suspend fun count(): Int
 }
 
-@Database(entities = [ImportedEvent::class], version = 2, exportSchema = false)
+@Database(entities = [ImportedEvent::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun importedEventDao(): ImportedEventDao
@@ -85,6 +88,19 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v2 → v3 (Task 9-c): adds the per-event color override column.
+         * Nullable TEXT with no default — NULL means "use the category
+         * default color" (the Kotlin field is `String? = null` and the column
+         * name `color` is the field name, matching the ALTER exactly).
+         * Non-destructive: existing rows keep their data and default to NULL.
+         */
+        val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE imported_events ADD COLUMN color TEXT")
+            }
+        }
+
         fun get(context: Context): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -92,7 +108,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "celestial.db",
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                     .also { INSTANCE = it }
             }

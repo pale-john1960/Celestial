@@ -3,7 +3,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, CalendarClock, Download, RotateCw } from "lucide-react";
+import { AlertTriangle, CalendarClock, CalendarOff, Download, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import {
   buildDayCell,
@@ -22,7 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { categoryColor } from "./CategoryLegend";
+import { eventColor } from "./CategoryLegend";
+import { EmptyState } from "./EmptyState";
 import {
   formatGregorianDate,
   formatImperialDate,
@@ -184,12 +185,11 @@ export function AgendaView() {
         </div>
       )}
       {!isLoading && !isError && groups.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-muted-foreground">
-          <span aria-hidden className="text-3xl leading-none">
-            🗓️
-          </span>
-          <p className="text-sm">{dict.noEvents}</p>
-        </div>
+        <EmptyState
+          icon={CalendarOff}
+          title={dict.noEvents}
+          hint={dict.emptyAgendaHint}
+        />
       )}
 
       {groups.length > 0 && (
@@ -265,7 +265,7 @@ export function AgendaView() {
                           )}
                           style={{
                             borderInlineStartWidth: "3px",
-                            borderInlineStartColor: categoryColor(e.category),
+                            borderInlineStartColor: eventColor(e),
                           }}
                         >
                           <span className="text-xl leading-none" aria-hidden>

@@ -110,6 +110,7 @@ export function SettingsSheet() {
     >
       <SheetContent
         side={dict.dir === "rtl" ? "left" : "right"}
+        closeLabel={dict.close}
         className="w-full gap-0 overflow-hidden p-0 sm:max-w-md"
       >
         <SheetHeader className="pb-2">

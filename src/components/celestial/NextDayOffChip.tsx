@@ -59,7 +59,7 @@ export function NextDayOffChip() {
       onClick={() => gotoDay(next.iso)}
       title={fullLabel}
       aria-label={fullLabel}
-      className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+      className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm transition hover:bg-white/35 hover:scale-[1.02] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
     >
       <CalendarClock className="size-3.5 shrink-0" aria-hidden />
       <span className="truncate">{label}</span>

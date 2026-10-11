@@ -45,4 +45,12 @@ SUMMARY:Design review
 DESCRIPTION:Quarterly design review — folded description line to prov
  e unfolding works.
 END:VEVENT
+BEGIN:VEVENT
+UID:sample-festival@celestial
+DTSTAMP:20260101T000000Z
+DTSTART;VALUE=DATE:20270301
+DURATION:P3D
+SUMMARY:Desert festival
+DESCRIPTION:Three-day desert festival — DURATION property sample (no DTEND).
+END:VEVENT
 END:VCALENDAR

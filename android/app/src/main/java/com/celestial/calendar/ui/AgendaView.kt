@@ -1,18 +1,22 @@
 package com.celestial.calendar.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,6 +32,7 @@ import com.celestial.calendar.engine.DateFormats
 import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.Jdn
 import com.celestial.calendar.events.EventInstance
+import com.celestial.calendar.ui.theme.eventColor
 
 /**
  * Celestial — agenda view: the next 90 days as a grouped list (grouped by
@@ -179,10 +184,19 @@ private fun AgendaDayRow(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 events.forEach { event ->
                     if (!event.holidayOnly) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            // per-event color (Task 9) — mirrors the web's colored agenda rows
+                            Box(
+                                Modifier
+                                    .size(7.dp)
+                                    .background(eventColor(event), CircleShape)
+                            )
                             Text(event.emoji, fontSize = 14.sp)
                             Text(
-                                "  " + event.localName(locale.code),
+                                event.localName(locale.code),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (event.isHoliday) MaterialTheme.colorScheme.error

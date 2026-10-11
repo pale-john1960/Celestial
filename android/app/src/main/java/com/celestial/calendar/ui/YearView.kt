@@ -41,6 +41,7 @@ import com.celestial.calendar.engine.DayCell
 import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.WeekStart
 import com.celestial.calendar.events.EventInstance
+import com.celestial.calendar.ui.theme.eventColor
 
 /**
  * Celestial — year overview: 12 (13 in Imperial mode, incl. Andarjah) month
@@ -211,15 +212,14 @@ private fun MiniMonthCard(
                                         fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
                                     )
                                 }
-                                val dots = events?.filter { !it.holidayOnly }?.map { it.category }?.distinct()
+                                // per-event color override (Task 9) or the category default
+                                val dots = events?.filter { !it.holidayOnly }
+                                    ?.map { eventColor(it) }?.distinct()
                                 if (!dots.isNullOrEmpty()) {
                                     Box(
                                         Modifier
                                             .size(3.dp)
-                                            .background(
-                                                com.celestial.calendar.ui.theme.categoryColor(dots.first()),
-                                                CircleShape,
-                                            )
+                                            .background(dots.first(), CircleShape)
                                     )
                                 } else {
                                     Box(Modifier.size(3.dp))

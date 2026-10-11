@@ -22,6 +22,11 @@ import com.celestial.calendar.engine.SimpleDate
  * instance at the same month/day (`imp-{id}-y{y}`, Feb 29 → Feb 28 in
  * non-leap years). All instances share the row's `dbId`, so deleting the row
  * kills the whole series on the next flow refresh.
+ *
+ * Per-event colors (Task 9-c, same as web 9-a): each imported/manual row may
+ * carry a 6-digit lowercase hex `color` override — it flows through every
+ * instance of the row and renders wherever the category color otherwise
+ * would (null = the category default, teal for imported events).
  */
 class EventRepository {
 
@@ -111,6 +116,7 @@ class EventRepository {
             recurring = recurring,
             anchorIso = anchorIso,
             dbId = e.id,
+            color = e.color,
         )
     }
 

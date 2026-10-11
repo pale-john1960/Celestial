@@ -4,7 +4,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, Loader2, Pencil, Repeat, Trash2 } from "lucide-react";
+import { CalendarPlus, Check, Loader2, Palette, Pencil, Repeat, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   buildDayCell,
@@ -21,6 +21,7 @@ import {
   updateEvent,
   useInvalidateEvents,
 } from "@/lib/client/api";
+import { EVENT_COLOR_PALETTE, categoryColor } from "./CategoryLegend";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -70,6 +72,8 @@ export function AddEventDialog() {
   const [description, setDescription] = useState("");
   const [isHoliday, setIsHoliday] = useState(false);
   const [recurYearly, setRecurYearly] = useState(false);
+  /** selected swatch — null = category default */
+  const [color, setColor] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -86,17 +90,19 @@ export function AddEventDialog() {
         setDescription(editEvent.description);
         setIsHoliday(editEvent.isHoliday);
         setRecurYearly(editEvent.recurYearly);
+        setColor(editEvent.color ?? null);
       } else {
         setDateIso(selectedIso);
         setTitle("");
         setDescription("");
         setIsHoliday(false);
         setRecurYearly(false);
+        setColor(null);
       }
       setSaving(false);
       setDeleting(false);
     }
-  }, [open, addOpen, editEvent]);
+  }, [open, addOpen, editEvent, selectedIso]);
 
   // live conversion line — all systems + Hijri for the chosen date
   const conversion = useMemo(() => {
@@ -136,6 +142,7 @@ export function AddEventDialog() {
           description: description.trim() ? description.trim() : undefined,
           isHoliday,
           recurYearly,
+          color,
         });
         toast.success(`✍️ ${dict.eventUpdated}`);
       } else {
@@ -145,6 +152,7 @@ export function AddEventDialog() {
           description: description.trim() ? description.trim() : undefined,
           isHoliday,
           recurYearly,
+          color,
         });
         toast.success(`✍️ ${dict.addEventSaved}`);
       }
@@ -179,7 +187,7 @@ export function AddEventDialog() {
         if (!v) closeEventEditor();
       }}
     >
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto rounded-2xl">
+      <DialogContent closeLabel={dict.close} className="max-h-[85vh] max-w-lg overflow-y-auto rounded-2xl">
         <DialogHeader className="text-start">
           <DialogTitle className="flex items-center gap-2">
             {editing ? (
@@ -229,7 +237,15 @@ export function AddEventDialog() {
 
           {/* title */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="add-event-title">{dict.addEventName}</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="add-event-title">{dict.addEventName}</Label>
+              {/* live preview of the effective dot color */}
+              <span
+                aria-hidden
+                className="size-2.5 shrink-0 rounded-full ring-1 ring-border"
+                style={{ backgroundColor: color ?? categoryColor("imported") }}
+              />
+            </div>
             <Input
               id="add-event-title"
               value={title}
@@ -251,6 +267,68 @@ export function AddEventDialog() {
               onChange={(e) => setDescription(e.target.value)}
               className="rounded-xl"
             />
+          </div>
+
+          {/* color */}
+          <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-2.5">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="flex items-center gap-1.5 text-sm font-medium">
+                <Palette className="size-3.5" aria-hidden />
+                {dict.eventColor}
+              </span>
+              <p className="min-w-0 flex-1 text-xs text-muted-foreground">
+                {dict.eventColorHint}
+              </p>
+            </div>
+            <div
+              role="group"
+              aria-label={dict.eventColor}
+              className="flex flex-wrap items-center gap-1.5"
+            >
+              {EVENT_COLOR_PALETTE.map((c) => {
+                const selected = color === c;
+                const label = c.toUpperCase();
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={selected}
+                    aria-label={`${dict.eventColor}: ${label}`}
+                    title={label}
+                    onClick={() => setColor(c)}
+                    className={cn(
+                      "grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-background",
+                      "transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "motion-reduce:transition-none motion-reduce:hover:scale-100",
+                      selected && "ring-2 ring-ring",
+                    )}
+                    style={{ backgroundColor: c }}
+                  >
+                    {selected && (
+                      <Check
+                        className="size-3.5 text-white drop-shadow-sm"
+                        aria-hidden
+                      />
+                    )}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                aria-pressed={color === null}
+                aria-label={dict.eventColorNone}
+                title={dict.eventColorNone}
+                onClick={() => setColor(null)}
+                className={cn(
+                  "grid size-7 place-items-center rounded-full border border-dashed border-border text-muted-foreground ring-offset-2 ring-offset-background",
+                  "transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "motion-reduce:transition-none motion-reduce:hover:scale-100",
+                  color === null && "ring-2 ring-ring",
+                )}
+              >
+                <X className="size-3.5" aria-hidden />
+              </button>
+            </div>
           </div>
 
           {/* day off */}

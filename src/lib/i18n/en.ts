@@ -35,6 +35,10 @@ export const en: LocaleDict = {
   loading: 'Loading…',
   error: 'Something went wrong',
   noEvents: 'No events on this day',
+  emptyDayHint: 'Click any day to see its events',
+  emptyAgendaHint: 'Try another month or enable more event sources',
+  emptySearchHint: 'Try a different search term',
+  moreEvents: '{n} more',
   upcoming: 'Upcoming',
   past: 'Past',
   allDay: 'All day',
@@ -175,6 +179,16 @@ export const en: LocaleDict = {
 
   nextDayOff: 'Next day off: {name} · in {n} days',
   nextDayOffToday: 'Next day off today: {name}',
+
+  eventColor: 'Color',
+  eventColorNone: 'Default',
+  eventColorHint: "Personalize this event's dot",
+
+  statsTitle: 'Year in numbers',
+  statsTotal: '{n} events',
+  statsDayOffs: '{n} day-offs',
+  statsBusiest: 'Busiest: {month}',
+  statsRecurring: '{n} recurring',
 };
 
 // Gregorian month names (en)

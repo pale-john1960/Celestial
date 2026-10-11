@@ -40,7 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { categoryColor } from "./CategoryLegend";
+import { eventColor } from "./CategoryLegend";
 import {
   formatGregorianDate,
   formatHijriDate,
@@ -377,7 +377,7 @@ function WeekDayCard({
                   <span
                     aria-hidden
                     className="size-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: categoryColor(e.category) }}
+                    style={{ backgroundColor: eventColor(e) }}
                   />
                   <span className="truncate text-xs font-semibold" title={e.names[locale]}>
                     {e.names[locale]}

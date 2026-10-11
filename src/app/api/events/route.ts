@@ -30,6 +30,7 @@ function rowToInstance(row: ImportedEvent): EventInstance {
     provider: manual ? "manual" : undefined,
     dbId: row.id,
     ...(row.recurYearly ? { recurring: true, anchorIso: row.iso } : {}),
+    ...(row.color ? { color: row.color } : {}),
   };
 }
 

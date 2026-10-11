@@ -32,24 +32,27 @@ import com.celestial.calendar.events.EventCategory
 import com.celestial.calendar.events.EventInstance
 import com.celestial.calendar.events.EventSource
 import com.celestial.calendar.ui.theme.categoryColor
+import com.celestial.calendar.ui.theme.eventColor
 
 /** Shared small UI pieces (event dots, category chips, day-off banner, event card). */
 object CommonUi {
 
     /** Category dot color (web palette). */
-    @Composable
     fun dotColor(category: EventCategory): Color = categoryColor(category)
+
+    /** Per-event color: the user's override (Task 9) or the category default. */
+    fun dotColor(event: EventInstance): Color = eventColor(event)
 
     @Composable
     fun EventDots(events: List<EventInstance>, maxDots: Int = 3) {
-        val cats = events.filter { !it.holidayOnly }.map { it.category }.distinct()
-        if (cats.isEmpty()) return
+        val colors = events.filter { !it.holidayOnly }.map { dotColor(it) }.distinct()
+        if (colors.isEmpty()) return
         Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            cats.take(maxDots).forEach { cat ->
+            colors.take(maxDots).forEach { c ->
                 Box(
                     Modifier
                         .size(5.dp)
-                        .background(categoryColor(cat), CircleShape)
+                        .background(c, CircleShape)
                 )
             }
         }
@@ -61,6 +64,7 @@ object CommonUi {
         locale: AppLocale,
         strings: LocalStrings,
         manual: Boolean = false,
+        colorOverride: Color? = null,
     ) {
         val label = if (manual) strings.sourceManual else when (category) {
             EventCategory.INTERNATIONAL -> strings.srcInternational
@@ -71,9 +75,11 @@ object CommonUi {
             EventCategory.PERSIAN_NATIONAL -> strings.nationalBadge
             EventCategory.IMPORTED -> strings.srcImported
         }
+        // a per-event color (Task 9) replaces the category tint on the chip
+        val color = colorOverride ?: categoryColor(category)
         Surface(
             shape = RoundedCornerShape(50),
-            color = categoryColor(category).copy(alpha = 0.14f),
+            color = color.copy(alpha = 0.14f),
         ) {
             Row(
                 Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -83,12 +89,12 @@ object CommonUi {
                 Box(
                     Modifier
                         .size(6.dp)
-                        .background(categoryColor(category), CircleShape)
+                        .background(color, CircleShape)
                 )
                 Text(
                     label,
                     style = MaterialTheme.typography.labelSmall,
-                    color = categoryColor(category),
+                    color = color,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
@@ -191,7 +197,13 @@ object CommonUi {
                             )
                         }
                     }
-                    CategoryChip(event.category, locale, strings, manual = event.manual)
+                    CategoryChip(
+                        event.category,
+                        locale,
+                        strings,
+                        manual = event.manual,
+                        colorOverride = dotColor(event),
+                    )
                 }
                 val desc = event.localDescription(locale.code)
                 if (desc.isNotBlank()) {

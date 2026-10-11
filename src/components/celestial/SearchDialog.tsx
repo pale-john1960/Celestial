@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Search, Settings2 } from "lucide-react";
+import { CalendarDays, Search, SearchX, Settings2 } from "lucide-react";
 import { monthGrid, todayGregorian } from "@/lib/calendar";
 import { getDict } from "@/lib/i18n";
 import type { EventInstance } from "@/lib/events";
@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { categoryColor } from "./CategoryLegend";
+import { eventColor } from "./CategoryLegend";
+import { EmptyState } from "./EmptyState";
 import {
   formatGregorianDate,
   formatImperialDate,
@@ -90,7 +91,7 @@ export function SearchDialog() {
         if (!v) setQuery("");
       }}
     >
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-hidden rounded-2xl p-0">
+      <DialogContent closeLabel={dict.close} className="max-h-[85vh] max-w-lg overflow-hidden rounded-2xl p-0">
         <DialogHeader className="border-b border-border px-5 pb-3 pt-5 text-start">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Search className="size-4 text-primary" aria-hidden />
@@ -148,9 +149,12 @@ export function SearchDialog() {
             </p>
           )}
           {!isLoading && results.length === 0 && (
-            <p className="px-2 py-4 text-sm text-muted-foreground">
-              {dict.noEvents}
-            </p>
+            <EmptyState
+              icon={SearchX}
+              title={dict.noEvents}
+              hint={dict.emptySearchHint}
+              className="mx-2 my-4 border-border/70 p-6"
+            />
           )}
           <ul className="space-y-0.5">
             {results.map((e) => (
@@ -169,7 +173,7 @@ export function SearchDialog() {
                   <span
                     aria-hidden
                     className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: categoryColor(e.category) }}
+                    style={{ backgroundColor: eventColor(e) }}
                   />
                   <span aria-hidden className="text-base leading-none">
                     {e.emoji}

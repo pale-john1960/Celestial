@@ -195,4 +195,16 @@
     <string name="edit_event">Edit event</string>
     <string name="event_updated">Event updated</string>
     <string name="delete_event">Delete event</string>
+    <!-- Per-event colors (Task 9) -->
+    <string name="event_color">Color</string>
+    <string name="event_color_default">Default</string>
+    <string name="event_color_none">No color, use the category default</string>
+    <string name="event_color_magenta">Magenta</string>
+    <string name="event_color_rose">Rose</string>
+    <string name="event_color_orange">Orange</string>
+    <string name="event_color_gold">Gold</string>
+    <string name="event_color_green">Green</string>
+    <string name="event_color_teal">Teal</string>
+    <string name="event_color_violet">Violet</string>
+    <string name="event_color_slate">Slate</string>
 </resources>

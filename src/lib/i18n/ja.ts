@@ -35,6 +35,10 @@ export const ja: LocaleDict = {
   loading: '読み込み中…',
   error: 'エラーが発生しました',
   noEvents: 'この日のイベントはありません',
+  emptyDayHint: 'カレンダーの日を選ぶと予定が表示されます',
+  emptyAgendaHint: '別の月を見るか、表示するイベントのソースを増やしてみてください',
+  emptySearchHint: '別のキーワードで検索してみてください',
+  moreEvents: '他 {n}件',
   upcoming: '今後の予定',
   past: '過去',
   allDay: '終日',
@@ -175,6 +179,16 @@ export const ja: LocaleDict = {
 
   nextDayOff: '次の休日: {name} · {n} 日後',
   nextDayOffToday: '今日は休日: {name}',
+
+  eventColor: '色',
+  eventColorNone: 'デフォルト',
+  eventColorHint: 'この予定の色を設定します',
+
+  statsTitle: '一年のまとめ',
+  statsTotal: '予定 {n}件',
+  statsDayOffs: '休日 {n}日',
+  statsBusiest: '最多の月: {month}',
+  statsRecurring: '繰り返し {n}件',
 };
 
 export const jaGregorianMonths = [

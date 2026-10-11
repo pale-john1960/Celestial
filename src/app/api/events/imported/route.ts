@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
         description: row.description,
         isHoliday: row.isHoliday,
         recurYearly: row.recurYearly,
+        color: row.color,
         sourceName: row.sourceName,
       })),
     });

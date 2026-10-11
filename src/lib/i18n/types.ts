@@ -36,6 +36,11 @@ export interface LocaleDict {
   loading: string;
   error: string;
   noEvents: string;
+  // empty-state hints (day / agenda / search) + hover-preview "+N more"
+  emptyDayHint: string;
+  emptyAgendaHint: string;
+  emptySearchHint: string;
+  moreEvents: string;
   upcoming: string;
   past: string;
   allDay: string;
@@ -190,4 +195,16 @@ export interface LocaleDict {
   // next day off countdown
   nextDayOff: string;
   nextDayOffToday: string;
+
+  // per-event colors (manual & imported)
+  eventColor: string;
+  eventColorNone: string;
+  eventColorHint: string;
+
+  // year insights (stats card in Year view)
+  statsTitle: string;
+  statsTotal: string;
+  statsDayOffs: string;
+  statsBusiest: string;
+  statsRecurring: string;
 }
