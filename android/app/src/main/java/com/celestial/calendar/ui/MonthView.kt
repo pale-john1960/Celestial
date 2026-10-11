@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -45,9 +44,11 @@ import com.celestial.calendar.events.EventInstance
 /**
  * Celestial — month view: 7-column grid, weekday header per weekStart,
  * weekend red styling (fa: Thu/Fri; others Sat/Sun), holiday cells with red
- * tint + 🌙, today highlight ring, small secondary date number, event dots
- * by category color, and a tiny bottom-end glyph cluster (moon phase +
- * season marker) on major-phase / solstice / equinox days.
+ * tint + 🌙 (in the fa locale every Friday gets the same day-off styling —
+ * Iran's weekly day off), distinct bordered surface tiles per day cell,
+ * today highlight ring, small secondary date number, event dots by category
+ * color, and a tiny bottom-end glyph cluster (moon phase + season marker) on
+ * major-phase / solstice / equinox days.
  */
 @Composable
 fun MonthView(
@@ -94,19 +95,19 @@ fun MonthView(
             }
         }
 
-        // 6 rows x 7 columns
+        // 6 rows x 7 columns (3dp gaps — tiles need clear separation)
         Column(
             Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             cells.chunked(7).forEach { week ->
                 Row(
                     Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
                     week.forEach { cell ->
                         DayCellView(
@@ -145,35 +146,50 @@ private fun DayCellView(
 ) {
     val isToday = cell.isToday
     val isHoliday = events.any { it.isHoliday || it.holidayOnly }
+    // Iran: Friday is the weekly day off — in the fa locale every Friday gets
+    // the full holiday STYLING (red date number + red tint + 🌙 corner), same
+    // as event holidays. STYLING ONLY: no event is fabricated, so dots /
+    // moon/season glyphs / a11y stay purely event-driven (web parity).
+    val iranFriday = locale == AppLocale.FA && cell.date.weekday == 5
+    val dayOff = isHoliday || iranFriday
     val isWeekend = cell.date.weekday in weekendDays
     val moonMajor = remember(cell.date.iso) { MoonEngine.infoFor(cell.date.gregorian).major }
-    val seasonEvent = remember(cell.date.iso) { SolsticeEngine.eventOn(cell.date.gregorian) }
+    val seasonEvent = remember(cell.date.iso) { SolsticeEngine.eventOn(cell.date.gregorian)?.event }
 
     val contentAlpha = if (cell.inMonth) 1f else 0.35f
 
     val dayText = DateFormats.dayNumber(system, locale, cell.date)
     val secondaryText = DateFormats.secondaryDayNumber(system, locale, cell.date)
 
-    val base = if (isToday) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-    } else if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-    } else if (isHoliday && cell.inMonth) {
-        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f)
-    } else {
-        Color.Transparent
-    }
+    // Background precedence (explicit, like the web): today > selected >
+    // day-off tint > plain tile. Every cell sits on a distinct surface tile
+    // with a hairline outline so neighboring days are easy to tell apart.
+    val shape = RoundedCornerShape(8.dp)
+    val tileBorder = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
 
     Box(
         modifier
             .fillMaxHeight()
-            .clip(RoundedCornerShape(10.dp))
-            .background(base)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .then(
+                if (dayOff && cell.inMonth && !isToday && !isSelected) {
+                    Modifier.background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f))
+                } else Modifier
+            )
+            .then(
+                if (isToday) {
+                    Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f))
+                } else if (isSelected) {
+                    Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f))
+                } else Modifier
+            )
+            .border(tileBorder, shape)
             .then(
                 if (isToday) {
                     Modifier.border(
                         BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
-                        RoundedCornerShape(10.dp),
+                        shape,
                     )
                 } else Modifier
             )
@@ -192,12 +208,12 @@ private fun DayCellView(
                     fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
                     color = when {
                         !cell.inMonth -> MaterialTheme.colorScheme.onSurfaceVariant
-                        isHoliday -> MaterialTheme.colorScheme.error
+                        dayOff -> MaterialTheme.colorScheme.error
                         isWeekend -> MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
                         else -> MaterialTheme.colorScheme.onSurface
                     }.copy(alpha = if (cell.inMonth) 1f else contentAlpha),
                 )
-                if (isHoliday && cell.inMonth) {
+                if (dayOff && cell.inMonth) {
                     Text(
                         "🌙",
                         fontSize = 8.sp,

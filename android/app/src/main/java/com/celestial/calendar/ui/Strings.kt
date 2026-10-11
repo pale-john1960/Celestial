@@ -269,9 +269,33 @@ class LocalStrings(private val res: Resources) {
 
     /** a11y label for the header zodiac chip: "Zodiac of <month>: <sign>". */
     fun zodiacChipDesc(month: String, sign: String) = res.getString(R.string.zodiac_chip_desc, month, sign)
+
+    // ---- Header themes / Hijri toggle / daily horoscope (Task 13-d) ----
+
+    /** Label of the header-artwork theme selector in settings. */
+    val headerTheme get() = res.getString(R.string.header_theme)
+
+    /** Localized name of a header artwork theme. */
+    fun headerThemeName(theme: com.celestial.calendar.data.HeaderTheme): String = when (theme) {
+        com.celestial.calendar.data.HeaderTheme.SEASONAL -> res.getString(R.string.theme_seasonal)
+        com.celestial.calendar.data.HeaderTheme.CELESTIAL -> res.getString(R.string.theme_celestial)
+        com.celestial.calendar.data.HeaderTheme.MAGICAL -> res.getString(R.string.theme_magical)
+        com.celestial.calendar.data.HeaderTheme.SHAHANSHAHI -> res.getString(R.string.theme_shahanshahi)
+        com.celestial.calendar.data.HeaderTheme.JAPANESE -> res.getString(R.string.theme_japanese)
+        com.celestial.calendar.data.HeaderTheme.KOREAN -> res.getString(R.string.theme_korean)
+        com.celestial.calendar.data.HeaderTheme.CHINESE -> res.getString(R.string.theme_chinese)
+    }
+
+    val showHijri get() = res.getString(R.string.show_hijri)
+    val showHoroscope get() = res.getString(R.string.show_horoscope)
+    val horoscopeTitle get() = res.getString(R.string.horoscope_title)
+    val horoscopeMood get() = res.getString(R.string.horoscope_mood)
+    val horoscopeLuckyNumber get() = res.getString(R.string.horoscope_lucky_number)
+    val horoscopeLuckyColor get() = res.getString(R.string.horoscope_lucky_color)
+    val horoscopeAdvice get() = res.getString(R.string.horoscope_advice)
 }
 
-/** Season of the year (Gregorian months) + seasonal banner resources. */
+/** Season of the year (Gregorian months). */
 enum class Season {
     SPRING, SUMMER, AUTUMN, WINTER;
 
@@ -285,11 +309,57 @@ enum class Season {
     }
 }
 
-fun seasonBannerRes(season: Season, variant: Int): Int = when (season) {
-    Season.SPRING -> if (variant == 1) R.drawable.seasonal_spring_1 else R.drawable.seasonal_spring_2
-    Season.SUMMER -> if (variant == 1) R.drawable.seasonal_summer_1 else R.drawable.seasonal_summer_2
-    Season.AUTUMN -> if (variant == 1) R.drawable.seasonal_autumn_1 else R.drawable.seasonal_autumn_2
-    Season.WINTER -> if (variant == 1) R.drawable.seasonal_winter_1 else R.drawable.seasonal_winter_2
+/**
+ * Hero banner artwork resource for the active header theme (round 13).
+ *
+ * SEASONAL: the NEW spring/summer pools + the original autumn/winter pieces
+ * (now shipped as the generated jpgs); the two variants alternate with the
+ * months — consecutive months flip the piece, exactly like the web. Fixed
+ * themes: two pieces alternating by Gregorian month parity (odd months show
+ * the 2nd piece, mirroring the web's `gMonth % 2` index). All assets are the
+ * generated 1344x768 jpgs in `res/drawable-nodpi/` — `painterResource` loads
+ * them like any drawable. Static imagery only (no animations — low power).
+ */
+fun heroArtworkRes(theme: com.celestial.calendar.data.HeaderTheme, gMonth: Int): Int {
+    val secondVariant: Boolean = when (theme) {
+        com.celestial.calendar.data.HeaderTheme.SEASONAL -> {
+            val season = Season.ofGregorianMonth(gMonth)
+            val start = when (season) {
+                Season.SPRING -> 3
+                Season.SUMMER -> 6
+                Season.AUTUMN -> 9
+                Season.WINTER -> 12
+            }
+            val idxInSeason = (gMonth - start + 12) % 12
+            idxInSeason % 2 == 1
+        }
+        else -> gMonth % 2 == 1 // fixed themes: month parity (Jan -> piece 2)
+    }
+    return when (theme) {
+        com.celestial.calendar.data.HeaderTheme.SEASONAL ->
+            when (Season.ofGregorianMonth(gMonth)) {
+                Season.SPRING ->
+                    if (secondVariant) R.drawable.hero_seasonal_spring_4 else R.drawable.hero_seasonal_spring_3
+                Season.SUMMER ->
+                    if (secondVariant) R.drawable.hero_seasonal_summer_4 else R.drawable.hero_seasonal_summer_3
+                Season.AUTUMN ->
+                    if (secondVariant) R.drawable.hero_seasonal_autumn_2 else R.drawable.hero_seasonal_autumn_1
+                Season.WINTER ->
+                    if (secondVariant) R.drawable.hero_seasonal_winter_2 else R.drawable.hero_seasonal_winter_1
+            }
+        com.celestial.calendar.data.HeaderTheme.CELESTIAL ->
+            if (secondVariant) R.drawable.hero_celestial_2 else R.drawable.hero_celestial_1
+        com.celestial.calendar.data.HeaderTheme.MAGICAL ->
+            if (secondVariant) R.drawable.hero_magical_2 else R.drawable.hero_magical_1
+        com.celestial.calendar.data.HeaderTheme.SHAHANSHAHI ->
+            if (secondVariant) R.drawable.hero_shahanshahi_2 else R.drawable.hero_shahanshahi_1
+        com.celestial.calendar.data.HeaderTheme.JAPANESE ->
+            if (secondVariant) R.drawable.hero_japanese_2 else R.drawable.hero_japanese_1
+        com.celestial.calendar.data.HeaderTheme.KOREAN ->
+            if (secondVariant) R.drawable.hero_korean_2 else R.drawable.hero_korean_1
+        com.celestial.calendar.data.HeaderTheme.CHINESE ->
+            if (secondVariant) R.drawable.hero_chinese_2 else R.drawable.hero_chinese_1
+    }
 }
 
 private fun Context.withLocale(locale: AppLocale): Context {

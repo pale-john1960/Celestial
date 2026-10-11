@@ -221,4 +221,21 @@
     <string name="zodiac_aquarius">دلو</string>
     <string name="zodiac_pisces">حوت</string>
     <string name="zodiac_chip_desc">برج %2$s برای %1$s</string>
+
+    <!-- Header themes / Hijri toggle / daily horoscope (Task 13-d) -->
+    <string name="header_theme">تم هدر</string>
+    <string name="theme_seasonal">فصلی</string>
+    <string name="theme_celestial">آسمانی</string>
+    <string name="theme_magical">جادویی</string>
+    <string name="theme_shahanshahi">شاهنشاهی</string>
+    <string name="theme_japanese">ژاپنی</string>
+    <string name="theme_korean">کره‌ای</string>
+    <string name="theme_chinese">چینی</string>
+    <string name="show_hijri">نمایش سال هجری</string>
+    <string name="show_horoscope">طالع‌بینی روزانه</string>
+    <string name="horoscope_title">طالع‌بینی</string>
+    <string name="horoscope_mood">حال و هوا</string>
+    <string name="horoscope_lucky_number">عدد شانس</string>
+    <string name="horoscope_lucky_color">رنگ شانس</string>
+    <string name="horoscope_advice">توصیه</string>
 </resources>

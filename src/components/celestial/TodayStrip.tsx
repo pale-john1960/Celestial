@@ -11,6 +11,7 @@ import { useUi } from "@/store/ui";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { eventColor } from "./CategoryLegend";
+import { EventGlyph } from "./FlagIcon";
 import {
   formatGregorianDate,
   formatImperialDate,
@@ -89,7 +90,7 @@ export function TodayStrip({
                 className="size-2 shrink-0 rounded-full"
                 style={{ backgroundColor: eventColor(e) }}
               />
-              <span aria-hidden>{e.emoji}</span>
+              <EventGlyph emoji={e.emoji} className="text-base" />
               <span className="truncate">{e.names[locale]}</span>
             </button>
           ))}

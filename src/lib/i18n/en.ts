@@ -49,7 +49,7 @@ export const en: LocaleDict = {
   systemGregorian: 'Gregorian',
   systemJalali: 'Shamsi (Jalali)',
   systemImperial: 'Persian Imperial',
-  systemImperialHint: 'Ancient royal calendar — 30-day months, 5 Andarjah days, devotional day names',
+  systemImperialHint: 'Ancient royal calendar — Shahanshahi era of Cyrus the Great (559 BCE): year = Jalali + 1180; 30-day months, 5 Andarjah days, devotional day names',
   calendarSystem: 'Calendar system',
   language: 'Language',
   weekStart: 'Week starts on',
@@ -69,6 +69,25 @@ export const en: LocaleDict = {
 
   // iOS Add-to-Home-Screen hint
   iosInstallHint: 'Install: Share → Add to Home Screen',
+
+  // Header artwork theme (round 13)
+  headerTheme: 'Header theme',
+  themeSeasonal: 'Seasonal',
+  themeCelestial: 'Celestial',
+  themeMagical: 'Magical',
+  themeShahanshahi: 'Shahanshahi',
+  themeJapanese: 'Japanese',
+  themeKorean: 'Korean',
+  themeChinese: 'Chinese',
+
+  // Hijri year visibility + horoscope
+  showHijri: 'Show Hijri year',
+  showHoroscope: 'Daily horoscope',
+  horoscopeTitle: 'Horoscope',
+  horoscopeMood: 'Mood',
+  horoscopeLuckyNumber: 'Lucky number',
+  horoscopeLuckyColor: 'Lucky color',
+  horoscopeAdvice: 'Advice',
 
   // week-number column labels
   weekNumCol: 'Wk',
@@ -121,7 +140,7 @@ export const en: LocaleDict = {
   seasonWinter: 'Winter',
   eraGregorian: 'CE',
   eraJalali: 'SH',
-  eraImperial: 'Imperial',
+  eraImperial: 'Shahanshahi',
   hijriLabel: 'AH',
   secondaryDate: 'Secondary date',
   eventsCount: 'events',

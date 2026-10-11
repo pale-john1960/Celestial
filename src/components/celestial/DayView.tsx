@@ -8,6 +8,7 @@ import {
   ChevronRight,
   CloudMoon,
   MoonStar,
+  Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -38,6 +39,7 @@ import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { useEvents } from "@/lib/client/api";
+import { horoscopeFor, localizeHoroscope } from "@/lib/horoscope";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,6 +49,7 @@ import {
   sourceBadgeText,
 } from "./CategoryLegend";
 import { EmptyState } from "./EmptyState";
+import { EventGlyph, FlagIcon } from "./FlagIcon";
 import {
   formatGregorianDate,
   formatHijriDate,
@@ -58,6 +61,8 @@ export function DayView() {
   const locale = useSettings((s) => s.locale);
   const system = useSettings((s) => s.system);
   const sources = useSettings((s) => s.sources);
+  const showHijri = useSettings((s) => s.showHijri);
+  const showHoroscope = useSettings((s) => s.showHoroscope);
   const dict = getDict(locale);
 
   const selectedIso = useUi((s) => s.selectedIso);
@@ -120,6 +125,13 @@ export function DayView() {
         .replace("{month}", zodiacMonthLabel)
         .replace("{sign}", zodiacSign)
     : "";
+
+  // daily horoscope (opt-in) — deterministic per (day, sign): the pick is
+  // locale-independent indices, resolved against the active locale's banks
+  const horoscope =
+    showHoroscope && zodiac
+      ? localizeHoroscope(horoscopeFor(cell.iso, zodiac.key), locale)
+      : null;
 
   return (
     <section aria-label={dict.viewDay} className="flex flex-col gap-3">
@@ -209,7 +221,9 @@ export function DayView() {
               {imperialDayName(locale, cell.imperial)}
             </span>
           )}
-          <span>{formatHijriDate(locale, cell.hijri, dict)}</span>
+          {showHijri && (
+            <span>{formatHijriDate(locale, cell.hijri, dict)}</span>
+          )}
         </div>
 
         {!cell.isToday && (
@@ -251,6 +265,62 @@ export function DayView() {
           </div>
         </div>
       </div>
+
+      {/* daily horoscope card (opt-in via settings) — sign of the displayed
+          day; deterministic, so revisiting a date always shows the same
+          horoscope. Print-friendly like every other card. */}
+      {horoscope && zodiac && (
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm dark:border-white/10">
+          <div className="flex items-center gap-3.5">
+            <span aria-hidden className="text-3xl leading-none text-primary">
+              {zodiac.glyph}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {dict.horoscopeTitle} — {zodiacSign}
+              </p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
+                  <span aria-hidden className="leading-none">
+                    {horoscope.mood.emoji}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {dict.horoscopeMood}:
+                  </span>{" "}
+                  <span dir="auto">{horoscope.mood.label}</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium tabular-nums">
+                  <span className="text-muted-foreground">
+                    {dict.horoscopeLuckyNumber}:
+                  </span>{" "}
+                  {num(locale, horoscope.luckyNumber)}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
+                  <span
+                    aria-hidden
+                    className="size-3 shrink-0 rounded-full ring-1 ring-black/10 dark:ring-white/25"
+                    style={{ backgroundColor: horoscope.color.hex }}
+                  />
+                  <span className="text-muted-foreground">
+                    {dict.horoscopeLuckyColor}:
+                  </span>{" "}
+                  <span dir="auto">{horoscope.color.label}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <p className="mt-2.5 flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
+            <Sparkles
+              className="mt-0.5 size-3.5 shrink-0 text-primary"
+              aria-hidden
+            />
+            <span dir="auto">
+              <span className="sr-only">{dict.horoscopeAdvice}: </span>
+              {horoscope.advice}
+            </span>
+          </p>
+        </div>
+      )}
 
       {/* solstice / equinox card (only on event days) */}
       {season && (
@@ -374,9 +444,7 @@ function EventCard({
       }}
     >
       <div className="flex items-start gap-3">
-        <span className="text-2xl leading-none" aria-hidden>
-          {event.emoji}
-        </span>
+        <EventGlyph emoji={event.emoji} className="text-2xl leading-none" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="font-semibold">{event.names[locale]}</span>
@@ -438,7 +506,8 @@ export function SourceBadge({
   if (event.source === "online") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-        <span aria-hidden>🌐</span>
+        {/* globe as an SVG asset — the 🌐 emoji glyph is Windows-hostile */}
+        <FlagIcon code="int" className="h-3.5 w-5" />
         {dict.onlineSources}
         {event.provider ? ` · ${event.provider}` : ""}
       </span>

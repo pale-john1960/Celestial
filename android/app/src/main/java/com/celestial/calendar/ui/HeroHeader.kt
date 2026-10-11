@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.celestial.calendar.data.HeaderTheme
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CelestialDate
@@ -48,14 +49,15 @@ import com.celestial.calendar.engine.DateFormats
 import com.celestial.calendar.engine.JalaliEngine
 
 /**
- * Celestial — seasonal hero header.
+ * Celestial — hero header with selectable artwork themes (round 13).
  *
- * Static seasonal banner (image per season, 2 variants alternating through the
- * month — no cross-fade animation on Android, per the low-power rules), month
- * name + year in the active system, a small zodiac chip with the displayed
- * Jalali month's constellation glyph + sign name (Task 10; month view only),
- * secondary line with the other systems, and the Month/Week/Year/Day/Agenda
- * view switcher.
+ * Static banner image per header theme (7 themes, 2 pieces each, alternating
+ * with the months — no cross-fade animation on Android, per the low-power
+ * rules), month name + year in the active system, a small zodiac chip with
+ * the displayed Jalali month's constellation glyph + sign name (Task 10;
+ * month view only), a secondary line with the other systems (Hijri line
+ * gated behind the showHijri setting; the season suffix only shows for the
+ * seasonal artwork theme), and the Month/Week/Year/Day/Agenda view switcher.
  */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +68,8 @@ fun HeroHeader(
     navYear: Int,
     navMonth: Int,
     view: ViewKind,
+    headerTheme: HeaderTheme,
+    showHijri: Boolean,
     strings: LocalStrings,
     onViewChange: (ViewKind) -> Unit,
     onPrevMonth: () -> Unit,
@@ -75,8 +79,9 @@ fun HeroHeader(
     onAddEvent: () -> Unit,
 ) {
     val season = Season.ofGregorianMonth(today.gregorian.month)
-    val variant = if (today.gregorian.day >= 15) 2 else 1
-    val banner = seasonBannerRes(season, variant)
+    // hero artwork: active theme's pool; the two pieces alternate with the
+    // months (seasonal: consecutive months flip; fixed themes: month parity)
+    val banner = heroArtworkRes(headerTheme, today.gregorian.month)
 
     val navMonthName = DateFormats.monthNameOf(system, locale, navYear, navMonth)
     val navYearText = com.celestial.calendar.engine.I18n.num(locale, navYear)
@@ -94,17 +99,25 @@ fun HeroHeader(
     ).month
     val seasonLabel = strings.seasonName(season)
 
+    // Secondary line: the other system(s) of TODAY. The Hijri (AH) year line
+    // is gated behind the showHijri setting (default on); the season suffix
+    // only shows for the seasonal artwork theme (fixed themes carry their
+    // own palette — same rule as the web's season chip).
     val secondary = buildString {
         when (system) {
             CalendarSystem.GREGORIAN -> {
                 append(DateFormats.jalaliMonthYearEra(locale, today))
-                append(" · ")
-                append(DateFormats.hijriMonthYearEra(locale, today))
+                if (showHijri) {
+                    append(" · ")
+                    append(DateFormats.hijriMonthYearEra(locale, today))
+                }
             }
             CalendarSystem.JALALI -> {
                 append(DateFormats.gregorianMonthYearEra(locale, today))
-                append(" · ")
-                append(DateFormats.hijriMonthYearEra(locale, today))
+                if (showHijri) {
+                    append(" · ")
+                    append(DateFormats.hijriMonthYearEra(locale, today))
+                }
             }
             CalendarSystem.IMPERIAL -> {
                 append(DateFormats.gregorianMonthYearEra(locale, today))
@@ -112,8 +125,10 @@ fun HeroHeader(
                 append(DateFormats.jalaliMonthYearEra(locale, today))
             }
         }
-        append(" · ")
-        append(seasonLabel)
+        if (headerTheme == HeaderTheme.SEASONAL) {
+            append(" · ")
+            append(seasonLabel)
+        }
     }
 
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -126,7 +141,12 @@ fun HeroHeader(
         ) {
             Image(
                 painter = painterResource(banner),
-                contentDescription = seasonLabel,
+                // seasonal art = the current season; fixed themes = the theme
+                contentDescription = if (headerTheme == HeaderTheme.SEASONAL) {
+                    seasonLabel
+                } else {
+                    strings.headerThemeName(headerTheme)
+                },
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -155,7 +175,7 @@ fun HeroHeader(
                 }
                 IconButton(onClick = onGoToday) {
                     Icon(
-                        Icons.Filled.Today, contentDescription = strings.goToday,
+                        Icons.Filled.DateRange, contentDescription = strings.goToday,
                         tint = Color.White,
                     )
                 }

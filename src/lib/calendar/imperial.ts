@@ -1,7 +1,15 @@
-// Celestial — Persian Imperial (ancient royal / Zoroastrian) calendar
-// Derived from the Jalali year anchor: 12 fixed 30-day months + 5(6) Andarjah
-// epagomenal days at the end of the year. Each day carries one of the 30
-// devotional day names (the cycle repeats every month).
+// Celestial — Persian Imperial (Shahanshahi) calendar
+//
+// Shahanshahi era: Cyrus the Great's coronation 559 BCE (Wikipedia: Shahanshahi
+// calendar / Iranian calendars). Year = Jalali + 1180; Farvardin 1, 1355 AP =
+// 2535 — the official conversion introduced by the 1976 Pahlavi reform
+// (1355 AP became 2535 Imperial). So Nowruz 2026 (1405 AP) is Imperial year
+// 2585.
+//
+// Month/day structure (unchanged, Fasli-aligned): 12 fixed 30-day months +
+// 5(6) Andarjah epagomenal days at the end of the year (6 in Jalali leap
+// years). Each day carries one of the 30 devotional day names (the cycle
+// repeats every month).
 import { farvardin1Jdn } from './jalali';
 import { toJdn, d2g, g2d } from './jdn';
 import type { SimpleDate, ImperialDate } from './types';
@@ -52,12 +60,13 @@ export function gregorianToImperial(g: SimpleDate): ImperialDate {
     anchor = farvardin1Jdn(jy);
   }
   const offset = jdn - anchor; // 0-based day of the Jalali year
+  const iy = jy + IMPERIAL_EPOCH_OFFSET; // Shahanshahi = Jalali + 1180
   if (offset >= 360) {
-    return { year: jy, month: 13, day: offset - 360 + 1 };
+    return { year: iy, month: 13, day: offset - 360 + 1 };
   }
   const month = Math.floor(offset / 30) + 1;
   const day = (offset % 30) + 1;
-  return { year: jy, month, day, dayNameIndex: day - 1 };
+  return { year: iy, month, day, dayNameIndex: day - 1 };
 }
 
 function isJyLeap(jy: number): boolean {
@@ -65,9 +74,14 @@ function isJyLeap(jy: number): boolean {
   return farvardin1Jdn(jy + 1) - far1 === 366;
 }
 
+/** Shahanshahi = Jalali + 1180 (Farvardin 1, 1355 AP = 2535). */
+export const IMPERIAL_EPOCH_OFFSET = 1180;
+
 /** Imperial -> Gregorian (for navigation) */
 export function imperialToGregorian(i: ImperialDate): SimpleDate {
-  const anchor = farvardin1Jdn(i.year);
+  // Imperial year -> underlying Jalali year, then its Farvardin 1 anchor
+  const jy = i.year - IMPERIAL_EPOCH_OFFSET;
+  const anchor = farvardin1Jdn(jy);
   if (i.month === 13) return d2g(anchor + 360 + i.day - 1);
   return d2g(anchor + (i.month - 1) * 30 + i.day - 1);
 }

@@ -1,8 +1,10 @@
-// Celestial — seasonal hero header with dual-date overlay + view switcher.
+// Celestial — themed hero header with dual-date overlay + view switcher.
 // Also exports the cross-view date formatting helpers (hijri month names etc).
+// Round 13: 7 artwork themes (seasonal + 6 fixed), wind-driven particle
+// system, static imagery (no kenburns), optional Hijri year line.
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeftRight, CalendarSearch, Keyboard, Plus, Search, Settings2 } from "lucide-react";
 import {
@@ -24,11 +26,12 @@ import {
 import { jdnWeekday, toJdn } from "@/lib/calendar/jdn";
 import type { HijriDate, SimpleDate, ImperialDate } from "@/lib/calendar";
 import { useSettings } from "@/store/settings";
+import type { HeaderThemeCode } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SeasonalParticles } from "./SeasonalParticles";
+import type { ParticleTone, ParticleVariant, Season } from "./SeasonalParticles";
 import { NextDayOffChip } from "./NextDayOffChip";
-import type { Season } from "./SeasonalParticles";
 
 /* ---------------- shared date display helpers ---------------- */
 
@@ -122,13 +125,91 @@ const SEASON_TINT: Record<Season, string> = {
   winter: "bg-muted-foreground/15",
 };
 
-/** /seasonal/{season}-{1|2}.jpg — consecutive months alternate variants */
+/** /seasonal/{season}-{1|2}.jpg — consecutive months alternate variants
+ *  (used by the YearView month cards; the hero has its own round-13 pool) */
 export function seasonImageSrc(gMonth: number): string {
   const season = seasonOf(gMonth);
   const start = SEASON_START[season];
   const idxInSeason = (gMonth - start + 12) % 12;
   const variant = (idxInSeason % 2) + 1;
   return `/seasonal/${season}-${variant}.jpg`;
+}
+
+/* ---------------- hero artwork themes (round 13) ---------------- */
+
+/** seasonal hero pool — NEW spring/summer artwork (round 13); autumn/winter
+ *  keep the original pieces (still in /seasonal/) */
+const SEASONAL_HERO_POOL: Record<Season, readonly string[]> = {
+  spring: ["/hero/seasonal-spring-3.jpg", "/hero/seasonal-spring-4.jpg"],
+  summer: ["/hero/seasonal-summer-3.jpg", "/hero/seasonal-summer-4.jpg"],
+  autumn: ["/seasonal/autumn-1.jpg", "/seasonal/autumn-2.jpg"],
+  winter: ["/seasonal/winter-1.jpg", "/seasonal/winter-2.jpg"],
+};
+
+/** fixed-theme pools — /hero/{theme}-{1|2}.jpg */
+const FIXED_HERO_POOL: Record<Exclude<HeaderThemeCode, "seasonal">, readonly string[]> = {
+  celestial: ["/hero/celestial-1.jpg", "/hero/celestial-2.jpg"],
+  magical: ["/hero/magical-1.jpg", "/hero/magical-2.jpg"],
+  shahanshahi: ["/hero/shahanshahi-1.jpg", "/hero/shahanshahi-2.jpg"],
+  japanese: ["/hero/japanese-1.jpg", "/hero/japanese-2.jpg"],
+  korean: ["/hero/korean-1.jpg", "/hero/korean-2.jpg"],
+  chinese: ["/hero/chinese-1.jpg", "/hero/chinese-2.jpg"],
+};
+
+/** active pool for the theme + Gregorian month (consecutive months
+ *  alternate the two variants; fixed themes alternate by month parity) */
+function heroPool(
+  headerTheme: HeaderThemeCode,
+  gMonth: number,
+): { key: string; urls: readonly string[]; index: number } {
+  if (headerTheme === "seasonal") {
+    const season = seasonOf(gMonth);
+    const idxInSeason = (gMonth - SEASON_START[season] + 12) % 12;
+    return {
+      key: `seasonal-${season}`,
+      urls: SEASONAL_HERO_POOL[season],
+      index: idxInSeason % 2,
+    };
+  }
+  return { key: headerTheme, urls: FIXED_HERO_POOL[headerTheme], index: gMonth % 2 };
+}
+
+/** night-sky art themes: their artwork carries its own stars, so the DOM
+ *  starfield + the extra dark-mode deepening wash are redundant there */
+const NIGHT_ART_THEMES: ReadonlySet<HeaderThemeCode> = new Set([
+  "celestial",
+  "magical",
+  "korean",
+]);
+
+/** theme → particle system (see SeasonalParticles) */
+const PARTICLE_BY_SEASON: Record<Season, ParticleVariant> = {
+  spring: "petals",
+  summer: "fireflies",
+  autumn: "leaves",
+  winter: "snow",
+};
+
+function heroParticles(
+  headerTheme: HeaderThemeCode,
+  season: Season,
+): { variant: ParticleVariant; tone: ParticleTone } {
+  switch (headerTheme) {
+    case "seasonal":
+      return { variant: PARTICLE_BY_SEASON[season], tone: "default" };
+    case "celestial":
+      return { variant: "stars", tone: "default" };
+    case "magical":
+      return { variant: "sparkles", tone: "default" };
+    case "shahanshahi":
+      return { variant: "goldDust", tone: "default" };
+    case "japanese":
+      return { variant: "petals", tone: "subdued" };
+    case "korean":
+      return { variant: "fireflies", tone: "cool" };
+    case "chinese":
+      return { variant: "goldDust", tone: "redGold" };
+  }
 }
 
 /* ---------------- dark-mode starfield (deterministic, CSS-only) ---------------- */
@@ -207,6 +288,8 @@ const STARS_3 = [
 export function HeroHeader() {
   const locale = useSettings((s) => s.locale);
   const system = useSettings((s) => s.system);
+  const headerTheme = useSettings((s) => s.headerTheme);
+  const showHijri = useSettings((s) => s.showHijri);
   const dict = getDict(locale);
 
   const cursor = useUi((s) => s.cursor);
@@ -242,7 +325,12 @@ export function HeroHeader() {
           ? dict.seasonAutumn
           : dict.seasonWinter;
 
-  // secondary line: the other main system(s) + hijri of the 1st of month
+  // hero artwork: active theme's pool + month-parity variant
+  const pool = heroPool(headerTheme, firstG.month);
+  const isNightArt = NIGHT_ART_THEMES.has(headerTheme);
+  const particles = heroParticles(headerTheme, season);
+
+  // secondary line: the other main system(s) + (optional) hijri of the 1st
   const secondary: string[] = [];
   if (system !== "gregorian") {
     secondary.push(
@@ -261,10 +349,12 @@ export function HeroHeader() {
       `${jalaliMonthName(locale, j.month)} ${num(locale, j.year)} ${dict.eraJalali}`,
     );
   }
-  const hijri = gregorianToHijri(firstG);
-  secondary.push(
-    `${hijriMonthName(locale, hijri.month)} ${num(locale, hijri.year)} ${dict.hijriLabel}`,
-  );
+  if (showHijri) {
+    const hijri = gregorianToHijri(firstG);
+    secondary.push(
+      `${hijriMonthName(locale, hijri.month)} ${num(locale, hijri.year)} ${dict.hijriLabel}`,
+    );
+  }
 
   // today chip label
   const today = todayGregorian();
@@ -283,40 +373,48 @@ export function HeroHeader() {
 
   return (
     <header data-no-print className="relative h-64 overflow-hidden sm:h-72 lg:h-80">
-      <HeroImage src={seasonImageSrc(firstG.month)} />
-      {/* season tint layer (subtle color wash, under the dark scrim) */}
-      <div aria-hidden className={`absolute inset-0 ${SEASON_TINT[season]}`} />
+      <HeroImage poolKey={pool.key} urls={pool.urls} activeIndex={pool.index} />
+      {/* season tint layer (subtle color wash, under the dark scrim) —
+          seasonal artwork only; fixed themes carry their own palette */}
+      {headerTheme === "seasonal" && (
+        <div aria-hidden className={`absolute inset-0 ${SEASON_TINT[season]}`} />
+      )}
       <div
         aria-hidden
         className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/25 to-black/10"
       />
       {/* dark mode only: deepen the clear-sky area into a night sky so the
           starfield + white text read clearly against the photo (light mode
-          keeps the photo as-is) */}
-      <div
-        aria-hidden
-        className="absolute inset-0 hidden dark:block bg-gradient-to-b from-black/65 via-black/30 to-black/5"
-      />
+          keeps the photo as-is; night-art themes skip it — already dark) */}
+      {!isNightArt && (
+        <div
+          aria-hidden
+          className="absolute inset-0 hidden dark:block bg-gradient-to-b from-black/65 via-black/30 to-black/5"
+        />
+      )}
       {/* dark-mode night sky: 3 deterministic star layers over the photo's
-          upper ~55%, UNDER the date text; opacity-only twinkle (globals.css) */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[55%] hidden dark:block"
-      >
-        <span
-          className="absolute left-0 top-0 size-px rounded-full bg-transparent animate-twinkle-1"
-          style={{ boxShadow: STARS_1 }}
-        />
-        <span
-          className="absolute left-0 top-0 size-[2px] rounded-full bg-transparent animate-twinkle-2"
-          style={{ boxShadow: STARS_2 }}
-        />
-        <span
-          className="absolute left-0 top-0 size-px rounded-full bg-transparent animate-twinkle-3"
-          style={{ boxShadow: STARS_3 }}
-        />
-      </div>
-      <SeasonalParticles season={season} />
+          upper ~55%, UNDER the date text; opacity-only twinkle (globals.css).
+          Hidden for night-art themes — their artwork has its own stars. */}
+      {!isNightArt && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[55%] hidden dark:block"
+        >
+          <span
+            className="absolute left-0 top-0 size-px rounded-full bg-transparent animate-twinkle-1"
+            style={{ boxShadow: STARS_1 }}
+          />
+          <span
+            className="absolute left-0 top-0 size-[2px] rounded-full bg-transparent animate-twinkle-2"
+            style={{ boxShadow: STARS_2 }}
+          />
+          <span
+            className="absolute left-0 top-0 size-px rounded-full bg-transparent animate-twinkle-3"
+            style={{ boxShadow: STARS_3 }}
+          />
+        </div>
+      )}
+      <SeasonalParticles variant={particles.variant} tone={particles.tone} />
 
       {/* top row: brand + actions (flex flips naturally in RTL) */}
       <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-1 p-3 sm:p-4">
@@ -378,10 +476,13 @@ export function HeroHeader() {
       {/* main overlay: month + year + secondary dates + today chip */}
       <div className="absolute inset-x-0 bottom-14 flex flex-col gap-1.5 px-4 sm:bottom-16 sm:px-6">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-            <span aria-hidden>{SEASON_EMOJI[season]}</span>
-            {seasonLabel}
-          </span>
+          {/* season chip — seasonal artwork only (fixed themes ARE the vibe) */}
+          {headerTheme === "seasonal" && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+              <span aria-hidden>{SEASON_EMOJI[season]}</span>
+              {seasonLabel}
+            </span>
+          )}
           <button
             type="button"
             onClick={goToday}
@@ -453,50 +554,49 @@ export function HeroHeader() {
 }
 
 /**
- * All 8 seasonal images stay mounted; the active one fades to opacity-100
- * (700ms crossfade), failures fall back to a magenta gradient. No timers —
- * the crossfade is pure CSS class flipping.
+ * Mounts the ACTIVE theme's 2-image pool; the month-parity variant fades to
+ * opacity-100 (700ms crossfade), failures fall back to a magenta gradient.
+ * The pool wrapper is keyed (theme/season) so switching artwork remounts it
+ * with a graceful fade-in (animate-fade-swap). Images are STATIC — no
+ * kenburns (round 13: user prefers no camera motion). No timers — the
+ * crossfade is pure CSS class flipping.
  */
-const SEASONAL_KEYS = [
-  "spring-1",
-  "spring-2",
-  "summer-1",
-  "summer-2",
-  "autumn-1",
-  "autumn-2",
-  "winter-1",
-  "winter-2",
-] as const;
-
-function HeroImage({ src }: { src: string }) {
+function HeroImage({
+  poolKey,
+  urls,
+  activeIndex,
+}: {
+  poolKey: string;
+  urls: readonly string[];
+  activeIndex: number;
+}) {
   const [failed, setFailed] = useState<readonly string[]>([]);
   const isFailed = (url: string) => failed.includes(url);
+  const activeFailed = isFailed(urls[activeIndex] ?? "");
 
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0"
-    >
-      {isFailed(src) && (
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      {activeFailed && (
         <div className="absolute inset-0 z-10 bg-gradient-to-br from-primary/70 to-primary/40" />
       )}
-      {SEASONAL_KEYS.map((k) => {
-        const url = `/seasonal/${k}.jpg`;
-        const active = url === src && !isFailed(url);
-        return (
-          <img
-            key={k}
-            src={url}
-            alt=""
-            onError={() =>
-              setFailed((f) => (f.includes(url) ? f : [...f, url]))
-            }
-            className={`absolute inset-0 size-full animate-kenburns object-cover object-[50%_35%] transition-opacity duration-700 ${
-              active ? "opacity-100" : "opacity-0"
-            }`}
-          />
-        );
-      })}
+      <div key={poolKey} className="absolute inset-0 animate-fade-swap">
+        {urls.map((url, i) => {
+          const active = i === activeIndex && !isFailed(url);
+          return (
+            <img
+              key={url}
+              src={url}
+              alt=""
+              onError={() =>
+                setFailed((f) => (f.includes(url) ? f : [...f, url]))
+              }
+              className={`absolute inset-0 size-full object-cover object-[50%_35%] transition-opacity duration-700 ${
+                active ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

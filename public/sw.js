@@ -4,7 +4,7 @@
  * WHAT IT INTERCEPTS (three branches; EVERYTHING else is untouched)
  * -------------------------------------------------------------------
  *   A. STATIC ASSETS — cache-first (unchanged since v1):
- *        - path prefixes:  /seasonal/  /icons/  /samples/  /_next/static/
+ *        - path prefixes:  /seasonal/  /hero/  /flags/  /icons/  /samples/  /_next/static/
  *        - exact paths:    /logo.svg  /robots.txt  /manifest.webmanifest
  *      Plus a RUNTIME-captured copy of the app shell document "/" (see C).
  *
@@ -54,9 +54,9 @@
  *      network failures.
  */
 
-const VERSION = "v4";
-const STATIC_CACHE = `celestial-static-${VERSION}`; // "celestial-static-v4"
-const API_CACHE = `celestial-api-${VERSION}`; // "celestial-api-v4"
+const VERSION = "v5";
+const STATIC_CACHE = `celestial-static-${VERSION}`;
+const API_CACHE = `celestial-api-${VERSION}`;
 
 /** Stable cache key for the runtime-captured app shell document. */
 const SHELL_URL = new URL("/", self.location.origin).href;
@@ -72,6 +72,8 @@ const PRECACHE_URLS = [
 /** Path prefixes served cache-first (immutable / static-only). */
 const CACHE_FIRST_PREFIXES = [
   "/seasonal/",
+  "/hero/",
+  "/flags/",
   "/icons/",
   "/samples/",
   "/_next/static/",

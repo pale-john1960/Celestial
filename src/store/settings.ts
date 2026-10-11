@@ -7,6 +7,17 @@ export type SystemCode = "gregorian" | "jalali" | "imperial";
 export type WeekStartCode = 0 | 1 | 6; // 0 = Sunday, 1 = Monday, 6 = Saturday
 export type ThemeCode = "light" | "dark" | "system";
 
+/** Hero header artwork theme (round 13). "seasonal" = the original
+ *  season-rotating artwork; the rest are fixed rich themes. */
+export type HeaderThemeCode =
+  | "seasonal"
+  | "celestial"
+  | "magical"
+  | "shahanshahi"
+  | "japanese"
+  | "korean"
+  | "chinese";
+
 export interface SourceFlags {
   international: boolean;
   us: boolean;
@@ -31,6 +42,12 @@ interface SettingsState {
   theme: ThemeCode;
   /** event notifications (opt-in) — daily "today's events" browser notification */
   notifyEvents: boolean;
+  /** show the Hijri (AH) year line in the hero + secondary date rows */
+  showHijri: boolean;
+  /** daily horoscope card in Day view (zodiac of the day) */
+  showHoroscope: boolean;
+  /** hero header artwork theme (round 13) */
+  headerTheme: HeaderThemeCode;
   /** show the ISO week-number column in the month grid (off by default) */
   showWeekNumbers: boolean;
   setLocale: (locale: Locale) => void;
@@ -39,6 +56,9 @@ interface SettingsState {
   setSource: (key: keyof SourceFlags, value: boolean) => void;
   setTheme: (theme: ThemeCode) => void;
   setNotifyEvents: (value: boolean) => void;
+  setShowHijri: (value: boolean) => void;
+  setShowHoroscope: (value: boolean) => void;
+  setHeaderTheme: (value: HeaderThemeCode) => void;
   setShowWeekNumbers: (value: boolean) => void;
 }
 
@@ -63,11 +83,12 @@ export const useSettings = create<SettingsState>()(
       theme: "light",
       // persisted version stays 1 — zustand's persist default-merges the
       // stored state over these defaults, so existing users simply gain the
-      // new `notifyEvents: false` key without any migration
+      // new keys (notifyEvents, showHijri, showHoroscope, headerTheme,
+      // showWeekNumbers) without any migration
       notifyEvents: false,
-      // persisted version stays 1 — zustand's persist default-merges the
-      // stored state over these defaults, so existing users simply gain the
-      // new `showWeekNumbers: false` key without any migration
+      showHijri: true,
+      showHoroscope: true,
+      headerTheme: "seasonal",
       showWeekNumbers: false,
       setLocale: (locale) => {
         const prev = get().locale;
@@ -84,6 +105,9 @@ export const useSettings = create<SettingsState>()(
         set((s) => ({ sources: { ...s.sources, [key]: value } })),
       setTheme: (theme) => set({ theme }),
       setNotifyEvents: (value) => set({ notifyEvents: value }),
+      setShowHijri: (value) => set({ showHijri: value }),
+      setShowHoroscope: (value) => set({ showHoroscope: value }),
+      setHeaderTheme: (value) => set({ headerTheme: value }),
       setShowWeekNumbers: (value) => set({ showWeekNumbers: value }),
     }),
     {

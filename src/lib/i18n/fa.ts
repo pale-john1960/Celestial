@@ -49,7 +49,7 @@ export const fa: LocaleDict = {
   systemGregorian: 'میلادی',
   systemJalali: 'شمسی (جلالی)',
   systemImperial: 'شاهنشاهی ایران',
-  systemImperialHint: 'گاه‌شماری باستانی — ماه‌های ۳۰روزه، ۵ روز اندارج و نام روزهای نیایشی',
+  systemImperialHint: 'گاه‌شماری باستانی — مبدأ شاهنشاهی: تاج‌گذاری کوروش بزرگ (۵۵۹ پ.م، سال = شمسی + ۱۱۸۰). ماه‌های ۳۰روزه، ۵ روز اندارج و نام روزهای نیایشی',
   calendarSystem: 'نوع گاه‌شماری',
   language: 'زبان',
   weekStart: 'شروع هفته',
@@ -69,6 +69,25 @@ export const fa: LocaleDict = {
 
   // راهنمای نصب در iOS
   iosInstallHint: 'نصب: اشتراک ← افزودن به صفحه اصلی',
+
+  // تم هدر (مرحله ۱۳)
+  headerTheme: 'تم هدر',
+  themeSeasonal: 'فصلی',
+  themeCelestial: 'آسمانی',
+  themeMagical: 'جادویی',
+  themeShahanshahi: 'شاهنشاهی',
+  themeJapanese: 'ژاپنی',
+  themeKorean: 'کره‌ای',
+  themeChinese: 'چینی',
+
+  // نمایش سال هجری و طالع‌بینی
+  showHijri: 'نمایش سال هجری',
+  showHoroscope: 'طالع‌بینی روزانه',
+  horoscopeTitle: 'طالع‌بینی',
+  horoscopeMood: 'حال و هوا',
+  horoscopeLuckyNumber: 'عدد شانس',
+  horoscopeLuckyColor: 'رنگ شانس',
+  horoscopeAdvice: 'توصیه',
 
   // برچسب ستون شماره هفته
   weekNumCol: 'هفته',

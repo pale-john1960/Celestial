@@ -60,3 +60,9 @@ dev.log
 
 # transient tool read/bash artifacts
 tool-results/
+
+# Android APK artifacts served for download (not committed)
+public/*.apk
+
+# local Android SDK
+android/local.properties

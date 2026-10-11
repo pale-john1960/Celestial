@@ -49,9 +49,10 @@ import com.celestial.calendar.events.EventInstance
  * Celestial — week view: the 7 days (starting at the user's weekStart) of the
  * week containing the selected day, one card per day in a vertical list
  * (mobile-first, lowest power). Each card shows the weekday, the day number
- * in the active system (+ secondary system and Hijri, tiny), holiday styling,
- * the end-corner glyph cluster (moon phase + season marker) and the day's
- * events in the same card style as the Day view.
+ * in the active system (+ secondary system and — behind the showHijri
+ * setting — the Hijri date, tiny), holiday styling, the end-corner glyph
+ * cluster (moon phase + season marker) and the day's events in the same card
+ * style as the Day view.
  */
 @Composable
 fun WeekView(
@@ -61,6 +62,7 @@ fun WeekView(
     todayIso: String,
     selectedIso: String,
     eventsByIso: Map<String, List<EventInstance>>,
+    showHijri: Boolean,
     strings: LocalStrings,
     onPrevWeek: () -> Unit,
     onNextWeek: () -> Unit,
@@ -129,6 +131,7 @@ fun WeekView(
                 system = system,
                 locale = locale,
                 isToday = date.iso == todayIso,
+                showHijri = showHijri,
                 events = eventsByIso[date.iso] ?: emptyList(),
                 strings = strings,
                 onOpenDay = { onOpenDay(date.iso) },
@@ -145,6 +148,7 @@ private fun WeekDayCard(
     system: CalendarSystem,
     locale: AppLocale,
     isToday: Boolean,
+    showHijri: Boolean,
     events: List<EventInstance>,
     strings: LocalStrings,
     onOpenDay: () -> Unit,
@@ -153,7 +157,7 @@ private fun WeekDayCard(
     val visible = remember(events) { events.filter { !it.holidayOnly } }
     val dayOffOnly = remember(events) { events.any { it.holidayOnly } }
     val moonMajor = remember(date.iso) { MoonEngine.infoFor(date.gregorian).major }
-    val seasonEvent = remember(date.iso) { SolsticeEngine.eventOn(date.gregorian) }
+    val seasonEvent = remember(date.iso) { SolsticeEngine.eventOn(date.gregorian)?.event }
 
     Surface(
         shape = RoundedCornerShape(14.dp),
@@ -207,7 +211,7 @@ private fun WeekDayCard(
                         }
                     }
                     Text(
-                        secondaryLine(system, locale, date),
+                        secondaryLine(system, locale, date, showHijri),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -272,8 +276,14 @@ private fun DayOffChip(strings: LocalStrings, modifier: Modifier = Modifier) {
     }
 }
 
-/** Secondary-system date + Hijri date, e.g. "12 Mehr · 4 Rabiʿ II". */
-private fun secondaryLine(system: CalendarSystem, locale: AppLocale, date: CelestialDate): String {
+/** Secondary-system date + Hijri date (Hijri gated behind showHijri),
+ *  e.g. "12 Mehr · 4 Rabiʿ II". */
+private fun secondaryLine(
+    system: CalendarSystem,
+    locale: AppLocale,
+    date: CelestialDate,
+    showHijri: Boolean,
+): String {
     val secondary = when (system) {
         CalendarSystem.GREGORIAN ->
             "${I18n.num(locale, date.jalali.day)} ${I18n.jalaliMonthName(locale, date.jalali.month)}"
@@ -282,6 +292,7 @@ private fun secondaryLine(system: CalendarSystem, locale: AppLocale, date: Celes
         CalendarSystem.IMPERIAL ->
             "${I18n.num(locale, date.jalali.day)} ${I18n.jalaliMonthName(locale, date.jalali.month)}"
     }
+    if (!showHijri) return secondary
     val hijri = "${I18n.num(locale, date.hijri.day)} ${I18n.hijriMonthName(locale, date.hijri.month)}"
     return "$secondary · $hijri"
 }

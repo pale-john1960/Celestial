@@ -89,7 +89,9 @@ object CalendarFacade {
         CalendarSystem.GREGORIAN -> Jdn.daysInMonth(y, m)
         CalendarSystem.JALALI -> if (m == 13) 0 else JalaliEngine.jalaliMonthLength(y, m)
         CalendarSystem.IMPERIAL -> if (m == 13) {
-            if (JalaliEngine.isJalaliLeap(y)) 6 else 5
+            // y is a SHAHANSHAI year — the Andarjah leap test runs on the
+            // UNDERLYING Jalali year (y - 1180): Shahanshahi = Jalali + 1180.
+            if (JalaliEngine.isJalaliLeap(y - ImperialEngine.IMPERIAL_EPOCH_OFFSET)) 6 else 5
         } else 30
     }
 

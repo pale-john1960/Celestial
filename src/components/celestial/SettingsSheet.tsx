@@ -7,11 +7,18 @@ import { toast } from "sonner";
 import { getDict, num } from "@/lib/i18n";
 import type { LocaleDict } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
-import type { SourceFlags } from "@/store/settings";
+import type { HeaderThemeCode, SourceFlags } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -121,6 +128,36 @@ const APP_LABELS: Record<"en" | "ja" | "fa", { title: string }> = {
   ja: { title: "アプリ" },
   fa: { title: "برنامه" },
 };
+
+/** hero artwork themes (round 13) — dict carries the localized labels */
+const HEADER_THEME_CODES = [
+  "seasonal",
+  "celestial",
+  "magical",
+  "shahanshahi",
+  "japanese",
+  "korean",
+  "chinese",
+] as const satisfies readonly HeaderThemeCode[];
+
+function headerThemeLabel(dict: LocaleDict, code: HeaderThemeCode): string {
+  switch (code) {
+    case "seasonal":
+      return dict.themeSeasonal;
+    case "celestial":
+      return dict.themeCelestial;
+    case "magical":
+      return dict.themeMagical;
+    case "shahanshahi":
+      return dict.themeShahanshahi;
+    case "japanese":
+      return dict.themeJapanese;
+    case "korean":
+      return dict.themeKorean;
+    case "chinese":
+      return dict.themeChinese;
+  }
+}
 
 /** true once a service worker is active (static assets are offline-ready) */
 function useOfflineReady(): boolean {
@@ -536,6 +573,41 @@ export function SettingsSheet() {
             />
           </div>
 
+          {/* Hijri (AH) year line in the hero + horoscope card in Day view
+              (round 13) — same Switch row pattern */}
+          <div className="mt-1.5 flex items-start justify-between gap-3 rounded-xl p-2.5 hover:bg-accent">
+            <div className="min-w-0">
+              <Label
+                htmlFor="show-hijri"
+                className="cursor-pointer text-sm font-medium leading-tight"
+              >
+                {dict.showHijri}
+              </Label>
+            </div>
+            <Switch
+              id="show-hijri"
+              checked={settings.showHijri}
+              onCheckedChange={(v) => settings.setShowHijri(v)}
+              className="mt-0.5 shrink-0"
+            />
+          </div>
+          <div className="mt-1.5 flex items-start justify-between gap-3 rounded-xl p-2.5 hover:bg-accent">
+            <div className="min-w-0">
+              <Label
+                htmlFor="show-horoscope"
+                className="cursor-pointer text-sm font-medium leading-tight"
+              >
+                {dict.showHoroscope}
+              </Label>
+            </div>
+            <Switch
+              id="show-horoscope"
+              checked={settings.showHoroscope}
+              onCheckedChange={(v) => settings.setShowHoroscope(v)}
+              className="mt-0.5 shrink-0"
+            />
+          </div>
+
           <Separator className="my-4" />
 
           {/* event sources */}
@@ -611,6 +683,37 @@ export function SettingsSheet() {
               radioRow(mode, `theme-${mode}`, THEME_LABELS[locale][mode]),
             )}
           </RadioGroup>
+
+          {/* hero header artwork theme (round 13) — Select near the palette radios */}
+          <div className="mt-1.5 flex items-center justify-between gap-3 rounded-xl p-2.5 hover:bg-accent">
+            <Label
+              htmlFor="header-theme"
+              className="cursor-pointer text-sm font-medium leading-tight"
+            >
+              {dict.headerTheme}
+            </Label>
+            <Select
+              value={settings.headerTheme}
+              onValueChange={(v) =>
+                settings.setHeaderTheme(v as HeaderThemeCode)
+              }
+            >
+              <SelectTrigger
+                id="header-theme"
+                size="sm"
+                className="mt-0.5 w-auto min-w-32 shrink-0 rounded-lg"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {HEADER_THEME_CODES.map((code) => (
+                  <SelectItem key={code} value={code}>
+                    {headerThemeLabel(dict, code)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* app (install + offline) */}
           <AppSection />

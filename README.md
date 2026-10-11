@@ -11,7 +11,7 @@
 - **Three calendar systems**
   - **Gregorian** (CE)
   - **Shamsi / Jalali** (Solar Hijri, ه.ش) — pure engine validated 432/432 against ICU across 1930–2090
-  - **Persian Imperial** (optional) — the ancient royal calendar: 12 fixed 30-day months + 5 *Andarjah* epagomenal days, each day carrying its Zoroastrian devotional name (Ormazd, Bahman, …)
+  - **Persian Imperial** (optional) — the ancient royal calendar on the Shahanshahi era of Cyrus the Great (559 BCE; year = Jalali + 1180 — today 2585): 12 fixed 30-day months + 5 *Andarjah* epagomenal days (6 in leap years), each day carrying its Zoroastrian devotional name (Ormazd, Bahman, …)
   - **Hijri** (AH) shown alongside for religious dates
 - **Three languages**: English, 日本語, فارسی (full RTL + Persian digits ۱۴۰۵) — every event name & description is translated
 - **Events & holidays**
@@ -38,6 +38,14 @@
 - **Date converter** ⭄ — press `C` (or the hero toolbar button) to convert any date between Gregorian, Jalali and Imperial side-by-side, with live weekday / moon-phase / zodiac chips, "use today" and "show in calendar" jumps; accepts Persian digits ۱۴۰۵
 - **ISO week numbers** — optional left-edge week column in the month grid (settings toggle; ISO 8601 Thursday rule, verified 47,847 days 1970–2100), also on paper when printing
 - **iOS install hint** — iPhone/iPad users get a footer "Share → Add to Home Screen" chip (dismissable) since iOS Safari never offers the standard install prompt
+- **Header artwork themes** (web + Android) — 7 selectable hero themes: Seasonal (fresh spring/summer artwork), Celestial (Milky Way night skies), Magical (enchanted forest & aurora), Shahanshahi (Persepolis & royal gardens), Japanese (ukiyo-e Fuji & torii), Korean (moonlit hanok & palace), Chinese (shan shui ink wash & lanterns); natural wind-driven particle animation (tumbling leaves with gusts, swaying petals, wandering fireflies, twinkling stars, golden dust) — no more zoom-pan; all motion off under `prefers-reduced-motion`
+- **Shahanshahi era** — the Imperial calendar now uses the correct epoch: year 1 = Cyrus the Great's coronation, 559 BCE (year = Jalali + 1180 → today 2585), per the 1976 Pahlavi reform (Wikipedia: *Shahanshahi calendar*)
+- **Iranian Friday** — in the Persian locale every Friday is styled as the weekly day off (red date + holiday tint), as it is in Iran
+- **World observances** — 22 additional international days (World Food Day, Human Rights Day, World Health Day, International Day of Education, …), all trilingual
+- **Daily horoscope** (web + Android, toggleable) — deterministic per-day-and-sign horoscope card in Day view: mood, lucky number, lucky color and advice, in all three languages
+- **Hijri year toggle** — hide the AH year line (hero + day/week rows + event dialogs) from settings
+- **Flag icons** — US/JP/IR flags and a globe render as crisp SVGs everywhere (Windows shows flag *emoji* as the letters "US"/"JP" — SVGs fix that)
+- **Wide-screen frame** — on ≥1280px the app sits in a centered 1440px rounded card over a quiet backdrop instead of stretching edge-to-edge; month cells got white tile borders for clarity
 - **Flexible settings**: week start (Sat/Sun/Mon), theme (light/dark), per-source toggles, online mode
 - **Motion & polish** — Framer Motion view transitions, staggered cell entrances, card hover lifts, structured loading skeletons (week/day/agenda), thin custom scrollbars, print mastheads on Month/Week/Day/Agenda, dark-mode hero starfield + moonlight halo (all motion killed under `prefers-reduced-motion`)
 - Android: home-screen **widgets** (date 4×2 + month grid 4×5), **status-bar date** via persistent notification, **manual events + .ics export**, low-power design (no continuous animations)
@@ -65,8 +73,18 @@
 bun install
 bun run db:push     # SQLite + Prisma client
 bun run dev         # http://localhost:3000
-bun scripts/validate-calendar.ts   # 432/432 checks
+bun scripts/validate-calendar.ts   # 440/440 checks
 ```
+
+### Building the Android APK
+
+```bash
+cd android
+echo "sdk.dir=$HOME/android-sdk" > local.properties   # Android SDK 35 + build-tools
+./gradlew assembleDebug                                # or: gradle assembleDebug
+# → app/build/outputs/apk/debug/app-debug.apk (debug-signed, installable)
+```
+Requires JDK 17+ (with `jlink` — a full JDK, not a JRE) and Android SDK platform 35. The current debug APK is served by the web dev server at `/celestial-debug.apk`. A debug build is signed with the debug keystore and installs on any device with "install unknown apps" enabled; for Play-style distribution build `assembleRelease` with your own keystore.
 
 ### E2E smoke test
 
@@ -79,7 +97,8 @@ With the dev server running, `bun run smoke` (see `scripts/smoke.ts`) drives the
 - Moon phases: two-term Meeus ch.49 corrections (separate new/full vs quarter tables), per-timezone day bucketing at local noon. Markers can differ ±1 day when the true event falls within ~1 h of local midnight — 149/153 agreement with a live reference.
 - Solstice/equinox: Meeus ch.25 truncated solar longitude + Newton solver — instants within ±17 min of USNO; JP equinox holidays bucket in JST (fixed-offset) and match the official calendar for every year tested (2024–2028).
 - Online holidays: [Nager.Date](https://date.nager.at) v3 (no key, no tracking).
+- Shahanshahi epoch: year 1 = 559 BCE (Cyrus the Great); year = Jalali + 1180 (1355 AP = 2535, per the 1976 reform).
 
 ## Credits
 
-Seasonal artwork generated for this project. Built with Next.js 16, Tailwind CSS 4, shadcn/ui, Prisma, Jetpack Compose, and a love for all calendars. 💜
+Seasonal + all header-theme artwork was generated for this project. Built with Next.js 16, Tailwind CSS 4, shadcn/ui, Prisma, Jetpack Compose, and a love for all calendars. 💜

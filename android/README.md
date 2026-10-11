@@ -152,3 +152,29 @@ android/
 - ICS export folds lines by UTF-8 octets (≤74) — strict RFC 5545 compliant.
 - First-launch `POST_NOTIFICATIONS` prompt (API 33+) is triggered by the
   status-bar date feature (default on).
+
+## 7. Building the APK
+
+```bash
+# prerequisites: JDK 17+ (full JDK with jlink, not a JRE) + Android SDK
+cd android
+echo "sdk.dir=$HOME/android-sdk" > local.properties   # platforms;android-35 + build-tools;35.0.0
+./gradlew assembleDebug          # if you have the Gradle wrapper jar; otherwise:
+gradle assembleDebug             # Gradle 8.9 (AGP 8.7.3, Kotlin 2.0.21)
+# → app/build/outputs/apk/debug/app-debug.apk
+```
+
+- `assembleDebug` produces a debug-keystore-signed APK (~15 MB) that installs
+  on any device with "install unknown apps" enabled — fine for testing.
+- `assembleRelease` needs a signing config (`keystore.properties`, not
+  committed) for distribution.
+- The compile toolchain was verified in this sandbox: Temurin JDK 17
+  (`-Dorg.gradle.java.home=…` if your default JVM is a JRE), SDK 35,
+  Gradle 8.9 — `BUILD SUCCESSFUL`, APK bundled with all 20 header-theme
+  drawables.
+
+Round-13 Android parity: Shahanshahi epoch (year = Jalali + 1180, Cyrus 559
+BCE), Iranian-Friday day-off styling, Hijri-year toggle, daily horoscope
+(deterministic, same picks as the web), header artwork themes (7 × jpg
+drawables in `drawable-nodpi/`), month-cell tile borders, and the full
+32-entry international observance dataset.

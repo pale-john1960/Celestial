@@ -49,7 +49,7 @@ export const ja: LocaleDict = {
   systemGregorian: 'グレゴリオ暦',
   systemJalali: 'シャムス暦（ジャラリ暦）',
   systemImperial: 'ペルシア帝国暦',
-  systemImperialHint: '古代王暦 — 30日×12ヶ月＋年末のアンダルジャ5日、各日に聖名',
+  systemImperialHint: '古代王暦 — キュロス大王のシャーハンシャーヒ紀元（紀元前559年、西暦=ジャラリ暦+1180年）。30日×12ヶ月＋年末のアンダルジャ5日、各日に聖名',
   calendarSystem: '暦システム',
   language: '言語',
   weekStart: '週の開始日',
@@ -69,6 +69,25 @@ export const ja: LocaleDict = {
 
   // iOS ホーム画面追加ヒント
   iosInstallHint: 'インストール：共有 → ホーム画面に追加',
+
+  // ヘッダーテーマ（ラウンド13）
+  headerTheme: 'ヘッダーテーマ',
+  themeSeasonal: '季節',
+  themeCelestial: '天体',
+  themeMagical: 'マジカル',
+  themeShahanshahi: 'シャーハンシャーヒ',
+  themeJapanese: '日本風',
+  themeKorean: '韓国風',
+  themeChinese: '中国風',
+
+  // ヒジュラ暦の表示と占い
+  showHijri: 'ヒジュラ暦の年を表示',
+  showHoroscope: '今日の星座占い',
+  horoscopeTitle: '占い',
+  horoscopeMood: '気分',
+  horoscopeLuckyNumber: 'ラッキーナンバー',
+  horoscopeLuckyColor: 'ラッキーカラー',
+  horoscopeAdvice: 'アドバイス',
 
   // 週番号列ラベル
   weekNumCol: '週',
@@ -121,7 +140,7 @@ export const ja: LocaleDict = {
   seasonWinter: '冬',
   eraGregorian: '西暦',
   eraJalali: 'ヒジュラ太陽暦',
-  eraImperial: '帝国暦',
+  eraImperial: 'シャーハンシャーヒ',
   hijriLabel: 'ヒジュラ暦',
   secondaryDate: '副日付',
   eventsCount: '件のイベント',

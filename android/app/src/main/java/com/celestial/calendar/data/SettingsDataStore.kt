@@ -17,6 +17,13 @@ import kotlinx.coroutines.flow.map
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+/** Hero header artwork theme (round 13) — mirrors the web's HeaderThemeCode.
+ *  SEASONAL = the original season-rotating artwork; the rest are fixed
+ *  rich themes (2 jpg pieces each in drawable-nodpi). */
+enum class HeaderTheme {
+    SEASONAL, CELESTIAL, MAGICAL, SHAHANSHAHI, JAPANESE, KOREAN, CHINESE
+}
+
 /** App settings — mirrors the web's persisted Settings model. */
 data class Settings(
     val system: CalendarSystem = CalendarSystem.GREGORIAN,
@@ -25,6 +32,9 @@ data class Settings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val sources: SourceSettings = SourceSettings(),
     val statusBarDate: Boolean = true,
+    val showHijri: Boolean = true,
+    val showHoroscope: Boolean = true,
+    val headerTheme: HeaderTheme = HeaderTheme.SEASONAL,
     val ntpOffsetMs: Long? = null,
     val ntpSyncAt: Long? = null,
     val notifPermissionAsked: Boolean = false,
@@ -50,6 +60,9 @@ class SettingsDataStore(private val context: Context) {
         val SRC_PERSIAN_NATIONAL = booleanPreferencesKey("src_persian_national")
         val SRC_IMPORTED = booleanPreferencesKey("src_imported")
         val STATUS_BAR_DATE = booleanPreferencesKey("status_bar_date")
+        val SHOW_HIJRI = booleanPreferencesKey("show_hijri")
+        val SHOW_HOROSCOPE = booleanPreferencesKey("show_horoscope")
+        val HEADER_THEME = stringPreferencesKey("header_theme")
         val NTP_OFFSET = longPreferencesKey("ntp_offset_ms")
         val NTP_SYNC_AT = longPreferencesKey("ntp_sync_at")
         val NOTIF_PERM_ASKED = booleanPreferencesKey("notif_perm_asked")
@@ -74,6 +87,9 @@ class SettingsDataStore(private val context: Context) {
                 imported = p[Keys.SRC_IMPORTED] ?: true,
             ),
             statusBarDate = p[Keys.STATUS_BAR_DATE] ?: true,
+            showHijri = p[Keys.SHOW_HIJRI] ?: true,
+            showHoroscope = p[Keys.SHOW_HOROSCOPE] ?: true,
+            headerTheme = enumOrDefault(p[Keys.HEADER_THEME], HeaderTheme.SEASONAL),
             ntpOffsetMs = p[Keys.NTP_OFFSET]?.takeIf { it != Long.MIN_VALUE },
             ntpSyncAt = p[Keys.NTP_SYNC_AT]?.takeIf { it != 0L },
             notifPermissionAsked = p[Keys.NOTIF_PERM_ASKED] ?: false,
@@ -110,6 +126,9 @@ class SettingsDataStore(private val context: Context) {
     }
 
     suspend fun setStatusBarDate(v: Boolean) = edit { it[Keys.STATUS_BAR_DATE] = v }
+    suspend fun setShowHijri(v: Boolean) = edit { it[Keys.SHOW_HIJRI] = v }
+    suspend fun setShowHoroscope(v: Boolean) = edit { it[Keys.SHOW_HOROSCOPE] = v }
+    suspend fun setHeaderTheme(v: HeaderTheme) = edit { it[Keys.HEADER_THEME] = v.name }
     suspend fun setNotifPermissionAsked() = edit { it[Keys.NOTIF_PERM_ASKED] = true }
     suspend fun setNotifPermissionAsked(v: Boolean) = edit { it[Keys.NOTIF_PERM_ASKED] = v }
 

@@ -6,6 +6,7 @@ import {
 } from '../src/lib/calendar/jalali';
 import { gregorianToHijri, hijriToGregorian } from '../src/lib/calendar/hijri';
 import { gregorianToImperial, imperialToGregorian, ANDARJAH_LABEL } from '../src/lib/calendar/imperial';
+import { systemMonthLength } from '../src/lib/calendar';
 import type { SimpleDate } from '../src/lib/calendar/types';
 
 let pass = 0, fail = 0;
@@ -100,24 +101,45 @@ for (const [g, h] of hijriSpot) {
     `got ${got.year}/${got.month}/${got.day}`);
 }
 
-// ---- 6. Imperial calendar ----
-// Nowruz 1405 = 2026-03-21 -> imperial 1/1/1405, day name Ormazd
+// ---- 6. Imperial (Shahanshahi) calendar ----
+// Epoch: Cyrus the Great's coronation 559 BCE — Shahanshahi = Jalali + 1180
+// (the 1976 reform: Farvardin 1, 1355 AP became 2535).
+// Nowruz 2026 (1405 AP) -> imperial 1/1/2585, day name Ormazd
 const imp = gregorianToImperial({ year: 2026, month: 3, day: 21 });
-check('Imperial 2026-03-21 = 1405/1/1 Ormazd', imp.year === 1405 && imp.month === 1 && imp.day === 1 && imp.dayNameIndex === 0,
+check('Imperial 2026-03-21 = 2585/1/1 Ormazd', imp.year === 2585 && imp.month === 1 && imp.day === 1 && imp.dayNameIndex === 0,
   `got ${imp.year}/${imp.month}/${imp.day}`);
-// Day 361 of the year = Andarjah 1: Nowruz 1405 = 2026-03-21; +360 days = 2027-03-16
+// The reform anchor itself: 1976-03-21 = Farvardin 1, 1355 AP = 2535/1/1
+const reform = gregorianToImperial({ year: 1976, month: 3, day: 21 });
+check('Imperial 1976-03-21 = 2535/1/1 (reform year)', reform.year === 2535 && reform.month === 1 && reform.day === 1,
+  `got ${reform.year}/${reform.month}/${reform.day}`);
+check('Imperial reverse 2535/1/1 -> 1976-03-21',
+  isoDate(imperialToGregorian({ year: 2535, month: 1, day: 1 })) === '1976-03-21');
+// Day 361 of the year = Andarjah 1: Nowruz 1405 AP = 2026-03-21; +360 days = 2027-03-16
 const andar1 = gregorianToImperial({ year: 2027, month: 3, day: 16 });
-check('Imperial 2027-03-16 = Andarjah 1, 1405', andar1.year === 1405 && andar1.month === 13 && andar1.day === 1,
+check('Imperial 2027-03-16 = Andarjah 1, 2585', andar1.year === 2585 && andar1.month === 13 && andar1.day === 1,
   `got ${andar1.year}/${andar1.month}/${andar1.day}`);
-// 2027-03-20 = Andarjah 5 (day before Nowruz 1406)
+// 2027-03-20 = Andarjah 5 (1405 is a common year — day before Nowruz 1406)
 const andar5 = gregorianToImperial({ year: 2027, month: 3, day: 20 });
-check('Imperial 2027-03-20 = Andarjah 5', andar5.month === 13 && andar5.day === 5, `got ${andar5.year}/${andar5.month}/${andar5.day}`);
-// 2027-03-21 = Nowruz 1406 -> imperial 1/1/1406
+check('Imperial 2027-03-20 = Andarjah 5, 2585', andar5.year === 2585 && andar5.month === 13 && andar5.day === 5, `got ${andar5.year}/${andar5.month}/${andar5.day}`);
+// 2027-03-21 = Nowruz 1406 AP -> imperial 1/1/2586
 const n1406 = gregorianToImperial({ year: 2027, month: 3, day: 21 });
-check('Imperial 2027-03-21 = 1406/1/1', n1406.year === 1406 && n1406.month === 1 && n1406.day === 1,
+check('Imperial 2027-03-21 = 2586/1/1', n1406.year === 2586 && n1406.month === 1 && n1406.day === 1,
   `got ${n1406.year}/${n1406.month}/${n1406.day}`);
+// Today-equivalent sanity: 2026-10-11 falls in Jalali Mehr 1405 -> Mehr 2585
+const todayImp = gregorianToImperial({ year: 2026, month: 10, day: 11 });
+check('Imperial 2026-10-11 = Mehr 2585 (month 7)', todayImp.year === 2585 && todayImp.month === 7,
+  `got ${todayImp.year}/${todayImp.month}/${todayImp.day}`);
+// Andarjah length in system space: Shahanshahi year -> Jalali leap test (y-1180)
+check('systemMonthLength imperial 2585/13 = 5 (Jalali 1405 common)', systemMonthLength('imperial', 2585, 13) === 5,
+  `got ${systemMonthLength('imperial', 2585, 13)}`);
+check('systemMonthLength imperial 2588/13 = 6 (Jalali 1408 leap)', systemMonthLength('imperial', 2588, 13) === 6,
+  `got ${systemMonthLength('imperial', 2588, 13)}`);
+// leap-year Andarjah has 6 days: 1408 AP = 2588, Andarjah 6 = 2030-03-20
+const andar6 = gregorianToImperial({ year: 2030, month: 3, day: 20 });
+check('Imperial 2030-03-20 = Andarjah 6, 2588 (leap)', andar6.year === 2588 && andar6.month === 13 && andar6.day === 6,
+  `got ${andar6.year}/${andar6.month}/${andar6.day}`);
 // imperial reverse roundtrip for a few dates
-for (const iso of ['2026-06-15', '2026-12-31', '2027-01-15', '2027-03-19']) {
+for (const iso of ['2026-06-15', '2026-12-31', '2027-01-15', '2027-03-19', '1976-03-21', '2030-03-20']) {
   const [yy, mm, dd] = iso.split('-').map(Number);
   const g = { year: yy, month: mm, day: dd } as SimpleDate;
   const i = gregorianToImperial(g);

@@ -221,4 +221,21 @@
     <string name="zodiac_aquarius">水瓶座</string>
     <string name="zodiac_pisces">魚座</string>
     <string name="zodiac_chip_desc">%1$sの星座：%2$s</string>
+
+    <!-- Header themes / Hijri toggle / daily horoscope (Task 13-d) -->
+    <string name="header_theme">ヘッダーテーマ</string>
+    <string name="theme_seasonal">季節</string>
+    <string name="theme_celestial">天体</string>
+    <string name="theme_magical">マジカル</string>
+    <string name="theme_shahanshahi">シャーハンシャーヒ</string>
+    <string name="theme_japanese">日本風</string>
+    <string name="theme_korean">韓国風</string>
+    <string name="theme_chinese">中国風</string>
+    <string name="show_hijri">ヒジュラ暦の年を表示</string>
+    <string name="show_horoscope">今日の星座占い</string>
+    <string name="horoscope_title">占い</string>
+    <string name="horoscope_mood">気分</string>
+    <string name="horoscope_lucky_number">ラッキーナンバー</string>
+    <string name="horoscope_lucky_color">ラッキーカラー</string>
+    <string name="horoscope_advice">アドバイス</string>
 </resources>

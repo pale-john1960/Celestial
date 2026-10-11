@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { eventColor } from "./CategoryLegend";
 import { EmptyState } from "./EmptyState";
+import { EventGlyph } from "./FlagIcon";
 import {
   formatGregorianDate,
   formatImperialDate,
@@ -175,9 +176,10 @@ export function SearchDialog() {
                     className="size-2 shrink-0 rounded-full"
                     style={{ backgroundColor: eventColor(e) }}
                   />
-                  <span aria-hidden className="text-base leading-none">
-                    {e.emoji}
-                  </span>
+                  <EventGlyph
+                    emoji={e.emoji}
+                    className="text-base leading-none"
+                  />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">
                       {e.names[locale]}

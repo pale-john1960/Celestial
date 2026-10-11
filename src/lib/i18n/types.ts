@@ -74,6 +74,25 @@ export interface LocaleDict {
   // iOS Add-to-Home-Screen hint chip
   iosInstallHint: string;
 
+  // Header artwork theme (round 13)
+  headerTheme: string;
+  themeSeasonal: string;
+  themeCelestial: string;
+  themeMagical: string;
+  themeShahanshahi: string;
+  themeJapanese: string;
+  themeKorean: string;
+  themeChinese: string;
+
+  // Hijri year visibility + horoscope (round 13)
+  showHijri: string;
+  showHoroscope: string;
+  horoscopeTitle: string;
+  horoscopeMood: string;
+  horoscopeLuckyNumber: string;
+  horoscopeLuckyColor: string;
+  horoscopeAdvice: string;
+
   // week-number column labels
   weekNumCol: string;
   /** aria-label per week row — "{n}" = ISO week number */

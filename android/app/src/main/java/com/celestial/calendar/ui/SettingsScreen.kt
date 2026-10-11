@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +53,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.celestial.calendar.data.HeaderTheme
 import com.celestial.calendar.data.ThemeMode
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarSystem
@@ -66,9 +68,10 @@ import java.util.Locale
 
 /**
  * Celestial — settings bottom sheet: calendar system, language, week start,
- * theme, source toggles (with the religious-off note), status-bar date
- * toggle, NTP panel, import panel with the imported/manual events list
- * (per-row delete) and the .ics export.
+ * theme, header artwork theme (round 13) + Hijri/horoscope toggles, source
+ * toggles (with the religious-off note), status-bar date toggle, NTP panel,
+ * import panel with the imported/manual events list (per-row delete) and the
+ * .ics export.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,6 +167,51 @@ fun SettingsSheet(
                         shape = SegmentedButtonDefaults.itemShape(i, entries.size),
                     ) { Text(label, maxLines = 1) }
                 }
+            }
+
+            // ------------------------------------------- header theme (round 13)
+            // 7 artwork themes as chips, two per row (scrollable sheet — the
+            // two-per-row grid keeps every label readable even in fa/ja).
+            CommonUi.SectionLabel(strings.headerTheme)
+            val themePairs = listOf(
+                HeaderTheme.SEASONAL to HeaderTheme.CELESTIAL,
+                HeaderTheme.MAGICAL to HeaderTheme.SHAHANSHAHI,
+                HeaderTheme.JAPANESE to HeaderTheme.KOREAN,
+                HeaderTheme.CHINESE to null,
+            )
+            Column(
+                Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                themePairs.forEach { (first, second) ->
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        HeaderThemeChip(
+                            selected = settings.headerTheme == first,
+                            label = strings.headerThemeName(first),
+                            modifier = Modifier.weight(1f),
+                            onClick = { viewModel.setHeaderTheme(first) },
+                        )
+                        if (second != null) {
+                            HeaderThemeChip(
+                                selected = settings.headerTheme == second,
+                                label = strings.headerThemeName(second),
+                                modifier = Modifier.weight(1f),
+                                onClick = { viewModel.setHeaderTheme(second) },
+                            )
+                        }
+                    }
+                }
+            }
+
+            // --------------------------------- Hijri year / daily horoscope
+            ToggleRow(strings.showHijri, settings.showHijri) { on ->
+                viewModel.setShowHijri(on)
+            }
+            ToggleRow(strings.showHoroscope, settings.showHoroscope) { on ->
+                viewModel.setShowHoroscope(on)
             }
 
             // ---------------------------------------------------- sources
@@ -455,6 +503,21 @@ fun SettingsSheet(
             )
         }
     }
+}
+
+@Composable
+private fun HeaderThemeChip(
+    selected: Boolean,
+    label: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label, maxLines = 1) },
+        modifier = modifier,
+    )
 }
 
 @Composable

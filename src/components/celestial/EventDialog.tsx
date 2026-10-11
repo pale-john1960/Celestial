@@ -21,6 +21,7 @@ import {
   sourceBadgeText,
 } from "./CategoryLegend";
 import { SourceBadge } from "./DayView";
+import { EventGlyph } from "./FlagIcon";
 import {
   formatGregorianDate,
   formatHijriDate,
@@ -31,6 +32,7 @@ import {
 export function EventDialog() {
   const locale = useSettings((s) => s.locale);
   const system = useSettings((s) => s.system);
+  const showHijri = useSettings((s) => s.showHijri);
   const dict = getDict(locale);
   const activeEvent = useUi((s) => s.activeEvent);
   const setEventDialog = useUi((s) => s.setEventDialog);
@@ -88,7 +90,7 @@ export function EventDialog() {
                     backgroundColor: `${eventColor(activeEvent)}14`,
                   }}
                 >
-                  {activeEvent.emoji}
+                  <EventGlyph emoji={activeEvent.emoji} />
                 </span>
                 <span className="min-w-0 break-words">
                   {activeEvent.names[locale]}
@@ -155,9 +157,11 @@ export function EventDialog() {
                   </span>
                 )}
               </DateRow>
-              <DateRow label={dict.hijriLabel}>
-                {formatHijriDate(locale, cell.hijri, dict)}
-              </DateRow>
+              {showHijri && (
+                <DateRow label={dict.hijriLabel}>
+                  {formatHijriDate(locale, cell.hijri, dict)}
+                </DateRow>
+              )}
             </div>
 
             {activeEvent.descriptions[locale] && (

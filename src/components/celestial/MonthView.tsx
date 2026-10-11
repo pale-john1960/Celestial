@@ -406,16 +406,16 @@ export function MonthView() {
           fixed so the header prefix can never drift out of alignment with
           the week cells below */}
       {showWeekNumbers ? (
-        <div className="flex items-stretch gap-0.5 sm:gap-1">
+        <div className="flex items-stretch gap-1 sm:gap-1.5">
           <div className="flex w-6 shrink-0 items-center justify-center rounded py-1 text-[10px] font-medium text-muted-foreground/70">
             {dict.weekNumCol}
           </div>
-          <div className="grid flex-1 grid-cols-7 gap-0.5 sm:gap-1">
+          <div className="grid flex-1 grid-cols-7 gap-1 sm:gap-1.5">
             {weekdayHeaderCells}
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
           {weekdayHeaderCells}
         </div>
       )}
@@ -429,14 +429,14 @@ export function MonthView() {
         key={`${cursor.year}-${cursor.month}`}
         role="grid"
         aria-label={monthLabel}
-        className="grid grid-cols-7 gap-0.5 sm:gap-1"
+        className="grid grid-cols-7 gap-1 sm:gap-1.5"
       >
         {Array.from({ length: 6 }, (_, week) =>
           showWeekNumbers && weekNums ? (
             <div
               key={week}
               role="row"
-              className="col-span-7 flex items-stretch gap-0.5 sm:gap-1"
+              className="col-span-7 flex items-stretch gap-1 sm:gap-1.5"
             >
               {/* non-interactive week number — no touch target needed;
                   stays visible in print (useful on paper) */}
@@ -450,7 +450,7 @@ export function MonthView() {
               >
                 {num(locale, weekNums[week])}
               </div>
-              <div className="grid flex-1 grid-cols-7 gap-0.5 sm:gap-1">
+              <div className="grid flex-1 grid-cols-7 gap-1 sm:gap-1.5">
                 {rowCells(week)}
               </div>
             </div>
@@ -458,7 +458,7 @@ export function MonthView() {
             <div
               key={week}
               role="row"
-              className="col-span-7 grid grid-cols-7 gap-0.5 sm:gap-1"
+              className="col-span-7 grid grid-cols-7 gap-1 sm:gap-1.5"
             >
               {rowCells(week)}
             </div>
@@ -507,6 +507,12 @@ function DayCellButton({
   onClick: (iso: string) => void;
 }) {
   const isHolidayDay = (events ?? []).some((e) => e.isHoliday);
+  // Iran: Friday is the weekly day off — in the fa locale every Friday gets
+  // the full holiday STYLING (red date number + red tint + 🌙 corner glyph),
+  // same as event holidays. STYLING ONLY: no event is fabricated, so the
+  // dots / preview / aria segments below stay purely event-driven.
+  const iranFriday = locale === "fa" && cell.weekday === 5;
+  const dayOff = isHolidayDay || iranFriday;
   const dots = (events ?? []).filter((e) => !e.holidayOnly).slice(0, 4);
   const hasRecurring = (events ?? []).some(
     (e) => !e.holidayOnly && e.recurring,
@@ -561,18 +567,19 @@ function DayCellButton({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.16, delay: Math.min(index * 0.006, 0.25) }}
       className={cn(
-        "relative flex min-h-11 aspect-square flex-col items-center justify-start gap-0.5 rounded-lg p-1 text-center transition-colors",
+        "relative flex min-h-11 aspect-square flex-col items-center justify-start gap-0.5 rounded-lg border border-border/60 p-1 text-center transition-colors",
         "hover:bg-accent hover:z-10 hover:shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         cell.inMonth ? "" : "opacity-40",
-        // selection WINS over the holiday tint (explicit precedence: two bg-*
-        // utilities would otherwise be resolved by stylesheet order, not class
-        // order) — selected keeps the red date number + 🌙 corner below
-        isHolidayDay && !selected && "bg-red-50 dark:bg-red-950/30",
+        // background precedence — explicit, because two bg-* utilities would
+        // otherwise be resolved by stylesheet order, not class order:
+        //   selected > holiday / Iran-Friday tint > plain tile
+        !selected && !dayOff && "bg-card",
+        dayOff && !selected && "bg-red-50 dark:bg-red-950/30",
         selected && "bg-primary/15 ring-2 ring-primary",
       )}
     >
-      {isHolidayDay && (
+      {dayOff && (
         <span
           aria-hidden
           className="absolute end-0.5 top-0 text-[10px] leading-none"
@@ -583,7 +590,7 @@ function DayCellButton({
       <span
         className={cn(
           "flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
-          isHolidayDay && "text-red-600 dark:text-red-400",
+          dayOff && "text-red-600 dark:text-red-400",
         )}
       >
         <span

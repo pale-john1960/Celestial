@@ -221,4 +221,21 @@
     <string name="zodiac_aquarius">Aquarius</string>
     <string name="zodiac_pisces">Pisces</string>
     <string name="zodiac_chip_desc">Zodiac of %1$s: %2$s</string>
+
+    <!-- Header themes / Hijri toggle / daily horoscope (Task 13-d) -->
+    <string name="header_theme">Header theme</string>
+    <string name="theme_seasonal">Seasonal</string>
+    <string name="theme_celestial">Celestial</string>
+    <string name="theme_magical">Magical</string>
+    <string name="theme_shahanshahi">Shahanshahi</string>
+    <string name="theme_japanese">Japanese</string>
+    <string name="theme_korean">Korean</string>
+    <string name="theme_chinese">Chinese</string>
+    <string name="show_hijri">Show Hijri year</string>
+    <string name="show_horoscope">Daily horoscope</string>
+    <string name="horoscope_title">Horoscope</string>
+    <string name="horoscope_mood">Mood</string>
+    <string name="horoscope_lucky_number">Lucky number</string>
+    <string name="horoscope_lucky_color">Lucky color</string>
+    <string name="horoscope_advice">Advice</string>
 </resources>

@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { eventColor } from "./CategoryLegend";
 import { EmptyState } from "./EmptyState";
+import { EventGlyph } from "./FlagIcon";
 import {
   formatGregorianDate,
   formatImperialDate,
@@ -312,9 +313,10 @@ export function AgendaView() {
                             borderInlineStartColor: eventColor(e),
                           }}
                         >
-                          <span className="text-xl leading-none" aria-hidden>
-                            {e.emoji}
-                          </span>
+                          <EventGlyph
+                            emoji={e.emoji}
+                            className="text-xl leading-none"
+                          />
                           <span className="min-w-0 flex-1 truncate text-sm font-medium">
                             {e.names[locale]}
                           </span>

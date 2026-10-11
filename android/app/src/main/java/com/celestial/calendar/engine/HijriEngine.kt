@@ -10,8 +10,8 @@ import java.util.GregorianCalendar
 /**
  * Celestial — Hijri (Islamic lunar) conversions via `android.icu.util.IslamicCalendar`.
  *
- * The CIVIL (tabular / "Kuwaiti") variant is used — `setCivil(true)` — which
- * matches CLDR `islamic-civil`. Note:
+ * The CIVIL (tabular / "Kuwaiti") variant is used — `setCalculationType(ISLAMIC_CIVIL)` —
+ * which matches CLDR `islamic-civil`. Note:
  *  * The web engine uses ICU `islamic-umalqura` (Umm al-Qura tables). The two
  *    calendars occasionally differ by ±1 day around a month boundary.
  *  * Iranian official dates depend on moon sighting and may shift ±1 day
@@ -29,7 +29,9 @@ object HijriEngine {
     private fun newCivilCalendar(): IslamicCalendar {
         val cal = IslamicCalendar(utc)
         cal.clear()
-        cal.isCivil = true // CIVIL variant (tabular)
+        // CIVIL variant (tabular) — android.icu's API is setCalculationType
+        // (there is no isCivil property setter on android.icu.util.IslamicCalendar)
+        cal.setCalculationType(IslamicCalendar.CalculationType.ISLAMIC_CIVIL)
         return cal
     }
 

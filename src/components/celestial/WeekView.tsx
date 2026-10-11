@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { eventColor } from "./CategoryLegend";
+import { EventGlyph } from "./FlagIcon";
 import {
   formatGregorianDate,
   formatHijriDate,
@@ -269,6 +270,7 @@ function WeekDayCard({
   onOpenDay: () => void;
 }) {
   const setEventDialog = useUi((s) => s.setEventDialog);
+  const showHijri = useSettings((s) => s.showHijri);
   const isHolidayDay = (events ?? []).some((e) => e.isHoliday);
   const visible = (events ?? []).filter((e) => !e.holidayOnly);
 
@@ -364,18 +366,20 @@ function WeekDayCard({
         >
           {secondary}
         </span>
-        <span
-          className="truncate text-[10px] text-muted-foreground/75"
-          dir="auto"
-        >
-          {formatHijriDate(locale, cell.hijri, dict)}
-          {system === "imperial" && (
-            <span className="text-muted-foreground/60">
-              {" · "}
-              {imperialDayName(locale, cell.imperial)}
-            </span>
-          )}
-        </span>
+        {(showHijri || system === "imperial") && (
+          <span
+            className="truncate text-[10px] text-muted-foreground/75"
+            dir="auto"
+          >
+            {showHijri && formatHijriDate(locale, cell.hijri, dict)}
+            {system === "imperial" && (
+              <span className="text-muted-foreground/60">
+                {showHijri ? " · " : ""}
+                {imperialDayName(locale, cell.imperial)}
+              </span>
+            )}
+          </span>
+        )}
       </button>
 
       {/* event list — skeleton rows while the events query is in flight */}
@@ -400,9 +404,10 @@ function WeekDayCard({
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               )}
             >
-              <span aria-hidden className="text-lg leading-none">
-                {e.emoji}
-              </span>
+              <EventGlyph
+                emoji={e.emoji}
+                className="text-lg leading-none"
+              />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
                   <span

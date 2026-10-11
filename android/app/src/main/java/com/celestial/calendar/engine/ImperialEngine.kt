@@ -3,14 +3,26 @@ package com.celestial.calendar.engine
 import kotlin.math.floor
 
 /**
- * Celestial — Persian Imperial (ancient royal / Zoroastrian) calendar.
+ * Celestial — Persian Imperial (Shahanshahi) calendar.
  *
- * Kotlin port of `src/lib/calendar/imperial.ts`:
- * derived from the Jalali year anchor — 12 fixed 30-day months + 5 (6 in leap
- * years) Andarjah epagomenal days at the end of the year. Each day carries one
- * of the 30 devotional day names (the cycle repeats every month).
+ * Shahanshahi era: Cyrus the Great's coronation 559 BCE (Wikipedia:
+ * Shahanshahi calendar / Iranian calendars). Year = Jalali + 1180;
+ * Farvardin 1, 1355 AP = 2535 — the official conversion introduced by the
+ * 1976 Pahlavi reform (1355 AP became 2535 Imperial). So Nowruz 2026
+ * (1405 AP) is Imperial year 2585.
+ *
+ * Month/day structure (Fasli-aligned, unchanged): 12 fixed 30-day months +
+ * 5(6) Andarjah epagomenal days at the end of the year (6 in Jalali leap
+ * years). Each day carries one of the 30 devotional day names (the cycle
+ * repeats every month).
+ *
+ * Kotlin port of `src/lib/calendar/imperial.ts`.
  */
 object ImperialEngine {
+
+    /** Shahanshahi = Jalali + 1180 (Farvardin 1, 1355 AP = 2535). */
+    const val IMPERIAL_EPOCH_OFFSET = 1180
+
 
     val IMPERIAL_DAY_NAMES: Map<AppLocale, List<String>> = mapOf(
         AppLocale.EN to listOf(
@@ -58,12 +70,13 @@ object ImperialEngine {
             anchor = JalaliEngine.farvardin1Jdn(jy)
         }
         val offset = jdn - anchor // 0-based day of the Jalali year
+        val iy = jy + IMPERIAL_EPOCH_OFFSET // Shahanshahi = Jalali + 1180
         if (offset >= 360) {
-            return ImperialDate(year = jy, month = 13, day = offset - 360 + 1, dayNameIndex = null)
+            return ImperialDate(year = iy, month = 13, day = offset - 360 + 1, dayNameIndex = null)
         }
         val month = offset / 30 + 1
         val day = offset % 30 + 1
-        return ImperialDate(year = jy, month = month, day = day, dayNameIndex = day - 1)
+        return ImperialDate(year = iy, month = month, day = day, dayNameIndex = day - 1)
     }
 
     private fun isJyLeap(jy: Int): Boolean =
@@ -71,7 +84,9 @@ object ImperialEngine {
 
     /** Imperial -> Gregorian (for navigation). */
     fun imperialToGregorian(i: ImperialDate): SimpleDate {
-        val anchor = JalaliEngine.farvardin1Jdn(i.year)
+        // Imperial year -> underlying Jalali year, then its Farvardin 1 anchor
+        val jy = i.year - IMPERIAL_EPOCH_OFFSET
+        val anchor = JalaliEngine.farvardin1Jdn(jy)
         return if (i.month == 13) {
             Jdn.d2g(anchor + 360 + i.day - 1)
         } else {

@@ -80,6 +80,7 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             settings.collect { s ->
+                val s = s ?: return@collect
                 if (!navReady) {
                     navReady = true
                     val sd = CalendarFacade.systemDateOf(s.system, todayGregorian())
@@ -150,6 +151,9 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- navigation ------------------------------------------------------
 
+    // @JvmName avoids the platform clash with the delegated `var view` setter
+    // (mutableStateOf private set generates a setView(ViewKind) JVM method too)
+    @JvmName("switchView")
     fun setView(v: ViewKind) {
         view = v
         if (v == ViewKind.DAY && selectedIso == null) {
@@ -261,6 +265,13 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
     fun setWeekStart(v: WeekStart) = viewModelScope.launch { store.setWeekStart(v) }
 
     fun setThemeMode(v: ThemeMode) = viewModelScope.launch { store.setThemeMode(v) }
+
+    fun setShowHijri(v: Boolean) = viewModelScope.launch { store.setShowHijri(v) }
+
+    fun setShowHoroscope(v: Boolean) = viewModelScope.launch { store.setShowHoroscope(v) }
+
+    fun setHeaderTheme(v: com.celestial.calendar.data.HeaderTheme) =
+        viewModelScope.launch { store.setHeaderTheme(v) }
 
     fun setSource(transform: (SourceSettings) -> SourceSettings) =
         viewModelScope.launch { store.setSource(transform) }

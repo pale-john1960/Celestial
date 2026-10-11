@@ -48,3 +48,16 @@ fun zodiacGlyph(jalaliMonth: Int): String = ZodiacGlyphs.getOrNull(jalaliMonth -
 
 /** Localized zodiac sign name for a Jalali month 1-12; "" when out of range. */
 fun zodiacName(strings: LocalStrings, jalaliMonth: Int): String = strings.zodiacName(jalaliMonth)
+
+/**
+ * Web zodiac sign key ("aries".."pisces", web `zodiac.ts` ZODIAC_KEYS order)
+ * for a Jalali month 1-12 — the deterministic horoscope seed is keyed by this
+ * string, identical to the web's `zodiac.key`.
+ */
+private val ZodiacKeys = arrayOf(
+    "aries", "taurus", "gemini", "cancer", "leo", "virgo",
+    "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces",
+)
+
+/** Horoscope sign key for a Jalali month 1-12; null when out of range. */
+fun zodiacKey(jalaliMonth: Int): String? = ZodiacKeys.getOrNull(jalaliMonth - 1)

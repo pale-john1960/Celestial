@@ -4,7 +4,7 @@ import {
   gregorianToJalali, jalaliToGregorian, jalaliMonthLength, jalaliMonthLengths,
   farvardin1Jdn, jalaliYearLength, isJalaliLeap,
 } from './jalali';
-import { gregorianToImperial, imperialToGregorian, IMPERIAL_DAY_NAMES, ANDARJAH_LABEL } from './imperial';
+import { gregorianToImperial, imperialToGregorian, IMPERIAL_DAY_NAMES, ANDARJAH_LABEL, IMPERIAL_EPOCH_OFFSET } from './imperial';
 import { gregorianToHijri } from './hijri';
 import type { CalendarSystem, DayCell, ImperialDate, SimpleDate, WeekStart } from './types';
 
@@ -14,7 +14,7 @@ export {
   gregorianToJalali, jalaliToGregorian, jalaliMonthLength, jalaliMonthLengths,
   farvardin1Jdn, jalaliYearLength, isJalaliLeap,
 } from './jalali';
-export { gregorianToImperial, imperialToGregorian, IMPERIAL_DAY_NAMES, ANDARJAH_LABEL } from './imperial';
+export { gregorianToImperial, imperialToGregorian, IMPERIAL_DAY_NAMES, ANDARJAH_LABEL, IMPERIAL_EPOCH_OFFSET } from './imperial';
 export { gregorianToHijri, hijriToGregorian, hijriMode } from './hijri';
 export { moonInfo, moonPhaseName, MOON_EMOJI, MOON_MAJOR_EMOJI } from './moon';
 export type { MoonInfo, MoonMajor } from './moon';
@@ -41,8 +41,10 @@ export function systemDateOf(system: CalendarSystem, g: SimpleDate): SystemDate 
 export function systemMonthLength(system: CalendarSystem, y: number, m: number): number {
   if (system === 'gregorian') return daysInMonth(y, m);
   if (system === 'jalali') return m === 13 ? 0 : jalaliMonthLength(y, m);
-  // imperial: months 1-12 = 30 days; 13 = 5 (6 in leap years)
-  if (m === 13) return isJalaliLeap(y) ? 6 : 5;
+  // imperial: months 1-12 = 30 days; 13 = 5 (6 in Jalali leap years).
+  // y is a SHAHANSHAI year — the Andarjah leap test runs on the UNDERLYING
+  // Jalali year (y - 1180): Shahanshahi = Jalali + 1180.
+  if (m === 13) return isJalaliLeap(y - IMPERIAL_EPOCH_OFFSET) ? 6 : 5;
   return 30;
 }
 

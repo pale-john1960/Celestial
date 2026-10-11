@@ -59,6 +59,7 @@ const MAX_DATE = "2100-12-31";
 
 export function AddEventDialog() {
   const locale = useSettings((s) => s.locale);
+  const showHijri = useSettings((s) => s.showHijri);
   const dict = getDict(locale);
 
   const open = useUi((s) => s.addEventOpen || s.editEvent !== null);
@@ -235,7 +236,9 @@ export function AddEventDialog() {
                     ? ` · ${dict.dayNameLabel}: ${conversion.imperialDay}`
                     : ""}
                 </p>
-                <p className="tabular-nums">{conversion.hijri}</p>
+                {showHijri && (
+                  <p className="tabular-nums">{conversion.hijri}</p>
+                )}
               </div>
             )}
           </div>

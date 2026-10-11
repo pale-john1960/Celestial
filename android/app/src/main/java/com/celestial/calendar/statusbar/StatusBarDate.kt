@@ -98,7 +98,7 @@ object StatusBarDate {
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setSilent()
+            .setSilent(true)
             .setCategory(Notification.CATEGORY_STATUS)
             .setContentIntent(contentIntent)
             .build()

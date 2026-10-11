@@ -11,8 +11,44 @@ object RuleDataset {
 
     // ------------------------------------------------------------------
     // International observances (built-in, not legal holidays unless noted)
+    // Round 13: full world-observance dataset — all 32 entries, sorted by
+    // (month, day), mirroring the web's international.ts verbatim.
     // ------------------------------------------------------------------
     val internationalRules: List<EventRule> = listOf(
+        EventRule(
+            "int-education-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 1, day = 24, emoji = "📚",
+            names = L10n("International Day of Education", "国際教育デー", "روز جهانی آموزش"),
+            descriptions = L10n(
+                "A UN day celebrating the role of education in peace and development.",
+                "教育が平和と発展に果たす役割を称える国連の記念日。",
+                "روز جهانی نقش آموزش در صلح و توسعه.",
+            ),
+        ),
+        EventRule(
+            "int-cancer-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 2, day = 4, emoji = "🎗️",
+            names = L10n("World Cancer Day", "世界がんデー", "روز جهانی سرطان"),
+            descriptions = L10n(
+                "Raising worldwide awareness of cancer prevention, detection and treatment.",
+                "がんの予防・早期発見・治療への意識を高める日。",
+                "روز افزایش آگاهی درباره پیشگیری و درمان سرطان.",
+            ),
+        ),
+        EventRule(
+            "int-women-science-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 2, day = 11, emoji = "🔬",
+            names = L10n(
+                "International Day of Women and Girls in Science",
+                "女性及び少女の科学分野への参加のための国際デー",
+                "روز جهانی زنان و دختران در علم",
+            ),
+            descriptions = L10n(
+                "Promoting equal access and participation of women and girls in science.",
+                "科学の分野における女性と少女の平等な参加を促す国際デー。",
+                "روز ترویج مشارکت برابر زنان و دختران در علم.",
+            ),
+        ),
         EventRule(
             "int-valentines", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
             month = 2, day = 14, emoji = "💝",
@@ -34,6 +70,46 @@ object RuleDataset {
             ),
         ),
         EventRule(
+            "int-happiness-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 3, day = 20, emoji = "🙂",
+            names = L10n("International Day of Happiness", "国際幸福デー", "روز جهانی شادکامی"),
+            descriptions = L10n(
+                "Recognising happiness and well-being as universal goals for all people.",
+                "幸福と福祉をすべての人の普遍的な目標と認める日。",
+                "روز به رسمیت شناختن شادکامی و بهزیستی به‌عنوان هدفی جهانی.",
+            ),
+        ),
+        EventRule(
+            "int-persian-newyear-eve", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 3, day = 20, emoji = "🌱",
+            names = L10n("Spring Equinox", "春分", "اعتدال بهاری"),
+            descriptions = L10n(
+                "The March equinox — the astronomical first moment of spring in the northern hemisphere, and the moment Nowruz begins.",
+                "3月の春分点。北半球の春の始まりであり、ノウルーズの始まりの瞬間。",
+                "لحظه اعتدال بهاری — آغاز فصل بهار و لحظه تحویل سال نو شمسی.",
+            ),
+        ),
+        EventRule(
+            "int-poetry-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 3, day = 21, emoji = "🖋️",
+            names = L10n("World Poetry Day", "世界詩歌デー", "روز جهانی شعر"),
+            descriptions = L10n(
+                "Celebrating poetry as one of humanity’s most treasured forms of expression.",
+                "人類の宝である詩の表現を祝う日。",
+                "جشن شعر به‌عنوان گنجینه بیان انسانی.",
+            ),
+        ),
+        EventRule(
+            "int-water-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 3, day = 22, emoji = "💧",
+            names = L10n("World Water Day", "世界水の日", "روز جهانی آب"),
+            descriptions = L10n(
+                "Highlighting the importance of fresh water and sustainable management of water resources.",
+                "淡水の大切さと水資源の持続可能な管理を訴える日。",
+                "روز تأکید بر اهمیت آب شیرین و مدیریت پایدار منابع آب.",
+            ),
+        ),
+        EventRule(
             "int-april-fools", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
             month = 4, day = 1, emoji = "🃏",
             names = L10n("April Fools' Day", "エイプリルフール", "روز دروغ اول آوریل"),
@@ -41,6 +117,26 @@ object RuleDataset {
                 "An annual custom of practical jokes and hoaxes.",
                 "悪ふざけやいたずらの年中行事。",
                 "روز شوخی و مزاحمت سالانه.",
+            ),
+        ),
+        EventRule(
+            "int-autism-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 4, day = 2, emoji = "🧩",
+            names = L10n("World Autism Awareness Day", "世界自閉症啓発デー", "روز جهانی آگاهی درباره اوتیسم"),
+            descriptions = L10n(
+                "Improving understanding and acceptance of people on the autism spectrum.",
+                "自閉スペクトラムの人々への理解と受容を深める日。",
+                "روز ارتقای شناخت و پذیرش افراد دارای اوتیسم.",
+            ),
+        ),
+        EventRule(
+            "int-health-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 4, day = 7, emoji = "🩺",
+            names = L10n("World Health Day", "世界保健デー", "روز جهانی بهداشت"),
+            descriptions = L10n(
+                "Marking the founding of the WHO and drawing attention to global health issues.",
+                "WHOの設立を記念し、世界の健康課題に目を向ける日。",
+                "سالروز تأسیس سازمان جهانی بهداشت و توجه به سلامت جهانی.",
             ),
         ),
         EventRule(
@@ -64,6 +160,16 @@ object RuleDataset {
             ),
         ),
         EventRule(
+            "int-nurses-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 5, day = 12, emoji = "🩹",
+            names = L10n("International Nurses Day", "国際看護師デー", "روز جهانی پرستاران"),
+            descriptions = L10n(
+                "Honouring nurses on Florence Nightingale’s birthday for their care and courage.",
+                "ナイチンゲールの誕生日に看護師の貢献を称える日。",
+                "سالروز تولد نایتینگل — روز بزرگداشت پرستاران.",
+            ),
+        ),
+        EventRule(
             "int-childrens-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
             month = 6, day = 1, emoji = "🎈",
             names = L10n("International Children’s Day", "国際こどもの日", "روز جهانی کودک"),
@@ -71,6 +177,56 @@ object RuleDataset {
                 "A day honouring children and promoting their welfare.",
                 "子どもを称え、福祉を推進する日。",
                 "روز بزرگداشت کودکان و ترویج حقوق آنان.",
+            ),
+        ),
+        EventRule(
+            "int-environment-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 6, day = 5, emoji = "🌳",
+            names = L10n("World Environment Day", "世界環境デー", "روز جهانی محیط زیست"),
+            descriptions = L10n(
+                "The UN’s principal vehicle for encouraging awareness and action for the environment.",
+                "環境保護への意識と行動を促す国連最大の記念日。",
+                "مهم‌ترین رویداد سازمان ملل برای تشویق حمایت از محیط زیست.",
+            ),
+        ),
+        EventRule(
+            "int-oceans-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 6, day = 8, emoji = "🌊",
+            names = L10n("World Oceans Day", "世界海洋デー", "روز جهانی اقیانوس‌ها"),
+            descriptions = L10n(
+                "Celebrating the ocean and reminding everyone of its role in our lives.",
+                "海の恵みと海洋保護の大切さを再認識する日。",
+                "روز گرامیداشت اقیانوس‌ها و نقش آنان در زندگی ما.",
+            ),
+        ),
+        EventRule(
+            "int-population-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 7, day = 11, emoji = "👥",
+            names = L10n("World Population Day", "世界人口デー", "روز جهانی جمعیت"),
+            descriptions = L10n(
+                "Focusing attention on the urgency and importance of population issues.",
+                "人口問題の緊急性と重要性に目を向ける日。",
+                "روز توجه به اهمیت و فوریت مسائل جمعیتی.",
+            ),
+        ),
+        EventRule(
+            "int-youth-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 8, day = 12, emoji = "🎓",
+            names = L10n("International Youth Day", "国際青年デー", "روز جهانی جوانان"),
+            descriptions = L10n(
+                "Celebrating the potential of young people as partners in change.",
+                "社会の変化を担う若者の力を祝う国際デー。",
+                "روز ستایش توانمندی جوانان به‌عنوان یاران تغییر.",
+            ),
+        ),
+        EventRule(
+            "int-literacy-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 9, day = 8, emoji = "📖",
+            names = L10n("International Literacy Day", "国際識字デー", "روز جهانی سوادآموزی"),
+            descriptions = L10n(
+                "Reminding the world of the value of literacy for individuals and societies.",
+                "識字の価値を個人と社会の両面で再確認する日。",
+                "روز یادآوری ارزش سوادآموزی برای فرد و جامعه.",
             ),
         ),
         EventRule(
@@ -84,6 +240,46 @@ object RuleDataset {
             ),
         ),
         EventRule(
+            "int-older-persons", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 10, day = 1, emoji = "👵",
+            names = L10n("International Day of Older Persons", "国際高齢者デー", "روز جهانی سالمندان"),
+            descriptions = L10n(
+                "Honouring the contributions of older people and their human rights.",
+                "高齢者の貢献と人権に敬意を表する日。",
+                "روز بزرگداشت نقش و حقوق سالمندان.",
+            ),
+        ),
+        EventRule(
+            "int-nonviolence-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 10, day = 2, emoji = "✌️",
+            names = L10n("International Day of Non-Violence", "国際非暴力デー", "روز جهانی عدم خشونت"),
+            descriptions = L10n(
+                "Marking Gandhi’s birthday and the universal message of non-violence.",
+                "ガンジーの誕生日に非暴力の精神を広める日。",
+                "سالروز تولد گاندی — روز گسترش پیام عدم خشونت.",
+            ),
+        ),
+        EventRule(
+            "int-teachers-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 10, day = 5, emoji = "🍎",
+            names = L10n("World Teachers' Day", "世界教師デー", "روز جهانی معلم"),
+            descriptions = L10n(
+                "Celebrating teachers and the transformation of education worldwide.",
+                "世界の教師と教育の変革を称える日。",
+                "روز بزرگداشت معلمان و تحول آموزش.",
+            ),
+        ),
+        EventRule(
+            "int-food-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 10, day = 16, emoji = "🌾",
+            names = L10n("World Food Day", "世界食料デー", "روز جهانی غذا"),
+            descriptions = L10n(
+                "Commemorating the founding of the FAO and promoting action against hunger.",
+                "FAO設立を記念し、飢餓への取り組みを促す日。",
+                "سالروز تأسیس فائو — روز اقدام علیه گرسنگی.",
+            ),
+        ),
+        EventRule(
             "int-halloween", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
             month = 10, day = 31, emoji = "🎃",
             names = L10n("Halloween", "ハロウィン", "هالووین"),
@@ -94,6 +290,46 @@ object RuleDataset {
             ),
         ),
         EventRule(
+            "int-aids-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 12, day = 1, emoji = "🎈",
+            names = L10n("World AIDS Day", "世界エイズデー", "روز جهانی ایدز"),
+            descriptions = L10n(
+                "Uniting in the fight against HIV, remembering those lost and supporting those living with it.",
+                "HIVとの闘いで団結し、亡くなった人々を偲ぶ日。",
+                "روز همبستگی در مبارزه با ایدز و یادبود درگذشتگان.",
+            ),
+        ),
+        EventRule(
+            "int-disabilities-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 12, day = 3, emoji = "♿",
+            names = L10n("International Day of Persons with Disabilities", "国際障害者デー", "روز جهانی معلولان"),
+            descriptions = L10n(
+                "Promoting the rights and well-being of persons with disabilities.",
+                "障害者の権利と福祉の促進を図る国際デー。",
+                "روز ترویج حقوق و بهزیستی افراد دارای معلولیت.",
+            ),
+        ),
+        EventRule(
+            "int-human-rights-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 12, day = 10, emoji = "⚖️",
+            names = L10n("Human Rights Day", "世界人権デー", "روز جهانی حقوق بشر"),
+            descriptions = L10n(
+                "Commemorating the adoption of the Universal Declaration of Human Rights in 1948.",
+                "1948年の世界人権宣言採択を記念する日。",
+                "سالروز تصویب اعلامیه جهانی حقوق بشر (۱۹۴۸).",
+            ),
+        ),
+        EventRule(
+            "int-migrants-day", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
+            month = 12, day = 18, emoji = "🧳",
+            names = L10n("International Migrants Day", "国際移住者デー", "روز جهانی مهاجران"),
+            descriptions = L10n(
+                "Recognising the contributions of migrants and protecting their rights.",
+                "移民の貢献を認め、その権利を守る日。",
+                "روز قدردانی از مشارکت مهاجران و دفاع از حقوقشان.",
+            ),
+        ),
+        EventRule(
             "int-nye", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
             month = 12, day = 31, emoji = "🎆",
             names = L10n("New Year's Eve", "大晦日", "شب سال نو میلادی"),
@@ -101,16 +337,6 @@ object RuleDataset {
                 "The last day of the Gregorian year, celebrated with fireworks.",
                 "グレゴリオ暦年の最後の日。花火で祝う。",
                 "آخرین روز سال میلادی؛ جشن با آتش‌بازی.",
-            ),
-        ),
-        EventRule(
-            "int-persian-newyear-eve", EventCategory.INTERNATIONAL, RuleKind.GREGORIAN_FIXED,
-            month = 3, day = 20, emoji = "🌱",
-            names = L10n("Spring Equinox", "春分", "اعتدال بهاری"),
-            descriptions = L10n(
-                "The March equinox — the astronomical first moment of spring in the northern hemisphere, and the moment Nowruz begins.",
-                "3月の春分点。北半球の春の始まりであり、ノウルーズの始まりの瞬間。",
-                "لحظه اعتدال بهاری — آغاز فصل بهار و لحظه تحویل سال نو شمسی.",
             ),
         ),
     )

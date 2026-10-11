@@ -49,19 +49,11 @@
 }
 
 @theme {
-  /* Celestial motion — utilities: animate-kenburns / animate-fade-swap / animate-pulse-soft */
-  --animate-kenburns: kenburns 24s ease-in-out infinite alternate;
+  /* Celestial motion — utilities: animate-fade-swap / animate-pulse-soft
+     (round 13: kenburns removed — hero imagery is static by design) */
   --animate-fade-swap: fade-swap 0.8s ease-in-out both;
   --animate-pulse-soft: pulse-soft 3s ease-in-out infinite;
 
-  @keyframes kenburns {
-    from {
-      transform: scale(1);
-    }
-    to {
-      transform: scale(1.08);
-    }
-  }
   @keyframes fade-swap {
     from {
       opacity: 0;
@@ -111,23 +103,6 @@
     }
     50% {
       opacity: 0.5;
-    }
-  }
-  /* Falling seasonal particles — driven by per-particle CSS custom props */
-  @keyframes fall {
-    0% {
-      transform: translate3d(0, -40px, 0) rotate(0deg);
-      opacity: 0;
-    }
-    8% {
-      opacity: var(--p-opacity, 0.9);
-    }
-    85% {
-      opacity: var(--p-opacity, 0.9);
-    }
-    100% {
-      transform: translate3d(var(--drift-x, 30px), 400px, 0) rotate(var(--rot, 280deg));
-      opacity: 0;
     }
   }
 }
@@ -214,24 +189,264 @@
 
 /* ---------- Celestial layer: particles, scrollbar, reduced motion ---------- */
 
+/* Round-13 particle system — every particle carries `.celestial-particle`
+   (base placement + the reduced-motion/print kill switches) plus ONE variant
+   class that binds the animation. Motion is wind-driven and natural:
+   falling things sway on multi-phase paths WHILE descending (not one
+   constant diagonal), petals/leaves tumble (rotate + rotateY), gust leaves
+   blow across the header (translateX-dominant), fireflies/sparkles wander
+   closed loops with an independent glow pulse, stars only twinkle, gold
+   dust drifts diagonally with a shimmer. All distances/phases arrive as
+   per-particle custom props (see SeasonalParticles.tsx) — pure CSS, no JS. */
+
 .celestial-particle {
   position: absolute;
   top: 0;
   will-change: transform, opacity;
-  animation-name: fall;
-  animation-duration: var(--dur, 12s);
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-delay: var(--delay, 0s);
   pointer-events: none;
 }
 
+/* Petals — multi-phase sway while falling + tumbling (rotate & rotateY) */
+.celestial-petal {
+  animation: petal-fall var(--dur, 12s) ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes petal-fall {
+  0% {
+    transform: translate3d(0, -40px, 0) rotate(0deg) rotateY(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  25% {
+    transform: translate3d(
+        calc(-1 * var(--sway, 40px)),
+        calc(var(--fall-y, 400px) * 0.25),
+        0
+      ) rotate(calc(var(--rot, 300deg) * 0.3)) rotateY(180deg);
+  }
+  50% {
+    transform: translate3d(
+        var(--sway, 40px),
+        calc(var(--fall-y, 400px) * 0.5),
+        0
+      ) rotate(calc(var(--rot, 300deg) * 0.6)) rotateY(360deg);
+  }
+  75% {
+    transform: translate3d(
+        calc(-0.6 * var(--sway, 40px)),
+        calc(var(--fall-y, 400px) * 0.75),
+        0
+      ) rotate(calc(var(--rot, 300deg) * 0.85)) rotateY(540deg);
+  }
+  90% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  100% {
+    transform: translate3d(0, var(--fall-y, 400px), 0) rotate(var(--rot, 300deg))
+      rotateY(720deg);
+    opacity: 0;
+  }
+}
+
+/* Leaves — same sway-tumble, sharper spin; a few ride the gust instead
+   (blown across the header: translateX-dominant with a slight rise/dip) */
+.celestial-leaf {
+  animation: leaf-fall var(--dur, 9s) ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes leaf-fall {
+  0% {
+    transform: translate3d(0, -40px, 0) rotate(0deg) rotateY(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  22% {
+    transform: translate3d(
+        calc(-1.2 * var(--sway, 45px)),
+        calc(var(--fall-y, 400px) * 0.22),
+        0
+      ) rotate(calc(var(--rot, 480deg) * 0.25)) rotateY(200deg);
+  }
+  48% {
+    transform: translate3d(
+      var(--sway, 45px),
+      calc(var(--fall-y, 400px) * 0.48),
+      0
+    ) rotate(calc(var(--rot, 480deg) * 0.55)) rotateY(430deg);
+  }
+  74% {
+    transform: translate3d(
+      calc(-0.8 * var(--sway, 45px)),
+      calc(var(--fall-y, 400px) * 0.74),
+      0
+    ) rotate(calc(var(--rot, 480deg) * 0.82)) rotateY(610deg);
+  }
+  90% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  100% {
+    transform: translate3d(0, var(--fall-y, 400px), 0) rotate(var(--rot, 480deg))
+      rotateY(840deg);
+    opacity: 0;
+  }
+}
+.celestial-leaf-blow {
+  animation: leaf-blow var(--dur, 7s) ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes leaf-blow {
+  0% {
+    transform: translate3d(-12vw, var(--blow-y, 120px), 0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  30% {
+    transform: translate3d(
+        28vw,
+        calc(var(--blow-y, 120px) - var(--blow-rise, 40px)),
+        0
+      ) rotate(calc(var(--rot, 480deg) * 0.35));
+  }
+  55% {
+    transform: translate3d(
+        58vw,
+        calc(var(--blow-y, 120px) + calc(var(--blow-rise, 40px) * 0.4)),
+        0
+      ) rotate(calc(var(--rot, 480deg) * 0.6));
+  }
+  85% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  100% {
+    transform: translate3d(
+        118vw,
+        calc(var(--blow-y, 120px) - calc(var(--blow-rise, 40px) * 0.2)),
+        0
+      ) rotate(var(--rot, 480deg));
+    opacity: 0;
+  }
+}
+
+/* Snow — near-linear fall with a gentle horizontal jitter */
+.celestial-snow {
+  animation: snow-fall var(--dur, 12s) linear var(--delay, 0s) infinite;
+}
+@keyframes snow-fall {
+  0% {
+    transform: translate3d(0, -20px, 0);
+    opacity: 0;
+  }
+  6% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  20% {
+    transform: translate3d(var(--jit, 12px), calc(var(--fall-y, 400px) * 0.2), 0);
+  }
+  40% {
+    transform: translate3d(
+      calc(-0.7 * var(--jit, 12px)),
+      calc(var(--fall-y, 400px) * 0.4),
+      0
+    );
+  }
+  60% {
+    transform: translate3d(var(--jit, 12px), calc(var(--fall-y, 400px) * 0.6), 0);
+  }
+  80% {
+    transform: translate3d(
+      calc(-0.7 * var(--jit, 12px)),
+      calc(var(--fall-y, 400px) * 0.8),
+      0
+    );
+  }
+  94% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  100% {
+    transform: translate3d(0, var(--fall-y, 400px), 0);
+    opacity: 0;
+  }
+}
+
+/* Fireflies & sparkles — slow closed-loop wander (ease-in-out per leg) +
+   an independent glow pulse on its own period (glow in/out out of phase) */
 .celestial-firefly {
-  animation-name: fall, pulse-soft;
-  animation-duration: var(--dur, 12s), 3.2s;
-  animation-timing-function: linear, ease-in-out;
-  animation-iteration-count: infinite, infinite;
-  animation-delay: var(--delay, 0s), 0s;
+  animation: firefly-wander var(--dur, 14s) ease-in-out var(--delay, 0s) infinite,
+    glow-pulse var(--glow-dur, 3.4s) ease-in-out var(--glow-delay, 0s) infinite;
+}
+.celestial-sparkle {
+  animation: firefly-wander var(--dur, 16s) ease-in-out var(--delay, 0s) infinite,
+    glow-pulse var(--glow-dur, 2.8s) ease-in-out var(--glow-delay, 0s) infinite;
+}
+@keyframes firefly-wander {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(var(--wx1, 30px), var(--wy1, -20px), 0);
+  }
+  50% {
+    transform: translate3d(
+      calc(var(--wx1, 30px) + var(--wx2, -25px)),
+      calc(var(--wy1, -20px) + var(--wy2, 25px)),
+      0
+    );
+  }
+  75% {
+    transform: translate3d(var(--wx2, -25px), var(--wy2, 25px), 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Stars — fixed positions, opacity twinkle only */
+.celestial-star {
+  animation: star-twinkle var(--dur, 5s) ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Gold dust — slow diagonal drift + shimmering opacity */
+.celestial-dust {
+  animation: dust-drift var(--dur, 22s) linear var(--delay, 0s) infinite,
+    dust-shimmer var(--shim-dur, 4s) ease-in-out var(--shim-delay, 0s) infinite;
+}
+@keyframes dust-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(var(--dx, 60px), var(--dy, 150px), 0);
+  }
+}
+@keyframes dust-shimmer {
+  0%,
+  100% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: var(--p-opacity, 0.9);
+  }
 }
 
 /* Thin rounded scrollbars — token-driven so the thumb tracks the active
@@ -272,14 +487,12 @@
 
 /* Respect users who prefer no motion */
 @media (prefers-reduced-motion: reduce) {
-  .animate-kenburns,
   .animate-fade-swap,
   .animate-pulse-soft,
   .animate-twinkle-1,
   .animate-twinkle-2,
   .animate-twinkle-3,
-  .celestial-particle,
-  .celestial-firefly {
+  .celestial-particle {
     animation: none !important;
   }
 }
@@ -344,8 +557,7 @@
     max-height: none !important;
     overflow: visible !important;
   }
-  .celestial-particle,
-  .celestial-firefly {
+  .celestial-particle {
     display: none !important;
   }
 }
