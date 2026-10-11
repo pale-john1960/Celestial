@@ -1,7 +1,8 @@
-// Celestial — settings sheet (system / language / week start / sources / theme / time / import)
+// Celestial — settings sheet (system / language / week start / sources / theme / app / time / import)
 "use client";
 
-import { Upload } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, MonitorDown, Upload } from "lucide-react";
 import { getDict } from "@/lib/i18n";
 import type { LocaleDict } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
@@ -20,6 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useInstallState, promptInstall } from "@/lib/client/install";
 import { CategoryLegend } from "./CategoryLegend";
 import { TimeSyncPanel } from "./TimeSyncPanel";
 
@@ -88,6 +90,79 @@ const THEME_LABELS: Record<"en" | "ja" | "fa", Record<string, string>> = {
   ja: { title: "テーマ", light: "ライト", dark: "ダーク", system: "システム" },
   fa: { title: "پوسته", light: "روشن", dark: "تاریک", system: "سیستم" },
 };
+
+/** app-section labels — THEME_LABELS pattern */
+const APP_LABELS: Record<"en" | "ja" | "fa", { title: string }> = {
+  en: { title: "App" },
+  ja: { title: "アプリ" },
+  fa: { title: "برنامه" },
+};
+
+/** true once a service worker is active (static assets are offline-ready) */
+function useOfflineReady(): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
+      return;
+    }
+    let alive = true;
+    navigator.serviceWorker.ready
+      .then(() => {
+        if (alive) setReady(true);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return ready;
+}
+
+/** App section — install button (shared deferred capture) + offline status */
+function AppSection() {
+  const locale = useSettings((s) => s.locale);
+  const dict = getDict(locale) as LocaleDict;
+  const install = useInstallState();
+  const offlineReady = useOfflineReady();
+
+  // nothing to offer yet — keep the sheet unchanged
+  if (!install.canInstall && !offlineReady) return null;
+
+  return (
+    <>
+      <Separator className="my-4" />
+      <h3 className={sectionTitle()}>{APP_LABELS[locale].title}</h3>
+      <div className="mt-1.5">
+        {install.canInstall && (
+          <button
+            type="button"
+            onClick={() => void promptInstall()}
+            className="flex w-full items-start justify-between gap-3 rounded-xl p-2.5 text-start transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span className="text-sm font-medium leading-tight">
+              {dict.installApp}
+            </span>
+            <MonitorDown
+              className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+          </button>
+        )}
+        {offlineReady && (
+          <div className="flex items-center gap-2.5 rounded-xl p-2.5 text-sm text-muted-foreground">
+            <span
+              aria-hidden
+              className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-600 dark:text-green-400"
+            >
+              <Check className="size-3" />
+            </span>
+            {dict.offlineReady}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
 
 export function SettingsSheet() {
   const locale = useSettings((s) => s.locale);
@@ -241,6 +316,9 @@ export function SettingsSheet() {
               radioRow(mode, `theme-${mode}`, THEME_LABELS[locale][mode]),
             )}
           </RadioGroup>
+
+          {/* app (install + offline) */}
+          <AppSection />
 
           <Separator className="my-4" />
 

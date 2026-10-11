@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Celestial app icon — night-sky rounded square, cream crescent moon,
+     magenta star sparkles + tiny star dust. Design tokens: bg #15130F,
+     ink #F5F2EC, accent #C2185B (light variant swaps bg -> #FDFBF7). -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- soft radial glow behind the moon -->
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#C2185B" stop-opacity="0.28"/>
+      <stop offset="0.55" stop-color="#C2185B" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#C2185B" stop-opacity="0"/>
+    </radialGradient>
+    <!-- moon body: warm cream with a faint top-light -->
+    <linearGradient id="moon" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#FBF7EF"/>
+      <stop offset="1" stop-color="#EDE5D5"/>
+    </linearGradient>
+    <!-- four-point star sparkle -->
+    <symbol id="spark" viewBox="-10 -10 20 20">
+      <path d="M0,-10 C1.2,-3.6 3.6,-1.2 10,0 C3.6,1.2 1.2,3.6 0,10
+               C-1.2,3.6 -3.6,1.2 -10,0 C-3.6,-1.2 -1.2,-3.6 0,-10 Z"/>
+    </symbol>
+  </defs>
+
+  <!-- background -->
+  <rect width="512" height="512" rx="108" fill="#15130F"/>
+  <rect x="24" y="24" width="464" height="464" rx="88" fill="url(#glow)"/>
+
+  <!-- crescent moon: big circle minus offset circle -->
+  <g transform="translate(256,246)">
+    <circle r="128" fill="url(#moon)"/>
+    <circle cx="52" cy="-34" r="112" fill="#15130F"/>
+    <!-- craters (subtle, ink at low alpha) -->
+    <circle cx="-62" cy="38" r="14" fill="#15130F" opacity="0.07"/>
+    <circle cx="-24" cy="88" r="9"  fill="#15130F" opacity="0.06"/>
+    <circle cx="-92" cy="-28" r="7" fill="#15130F" opacity="0.05"/>
+  </g>
+
+  <!-- magenta guide star (top right of moon) -->
+  <use href="#spark" x="0" y="0" width="76" height="76"
+       transform="translate(318,118)" fill="#C2185B"/>
+
+  <!-- cream minor stars -->
+  <use href="#spark" x="0" y="0" width="34" height="34"
+       transform="translate(150,110)" fill="#F5F2EC" opacity="0.9"/>
+  <use href="#spark" x="0" y="0" width="22" height="22"
+       transform="translate(404,282)" fill="#F5F2EC" opacity="0.75"/>
+
+  <!-- star dust: tiny round dots -->
+  <circle cx="120" cy="236" r="6"  fill="#F5F2EC" opacity="0.55"/>
+  <circle cx="398" cy="150" r="5"  fill="#F5F2EC" opacity="0.45"/>
+  <circle cx="356" cy="392" r="7"  fill="#C2185B" opacity="0.55"/>
+  <circle cx="188" cy="330" r="4"  fill="#F5F2EC" opacity="0.4"/>
+  <circle cx="96"  cy="140" r="4"  fill="#C2185B" opacity="0.4"/>
+
+  <!-- horizon arc: magenta sliver at the bottom -->
+  <path d="M96,470 C176,432 336,432 416,470" fill="none"
+        stroke="#C2185B" stroke-width="14" stroke-linecap="round"
+        opacity="0.85"/>
+</svg>

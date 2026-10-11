@@ -24,10 +24,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.celestial.calendar.engine.AppLocale
+import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.events.EventCategory
 import com.celestial.calendar.events.EventInstance
 import com.celestial.calendar.events.EventSource
@@ -147,6 +150,48 @@ object CommonUi {
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
             )
+        }
+    }
+
+    /**
+     * Small zodiac chip for the month-view header: the displayed Jalali
+     * month's constellation glyph + localized sign name (Task 10 parity with
+     * the web app). Styled after [RecurringChip] (rounded-full outline pill,
+     * padded label row) but tinted for the dark seasonal banner it sits on.
+     * Static text only — no animations (low-power rules). The chip carries
+     * a localized contentDescription ("Zodiac of <month>: <sign>").
+     */
+    @Composable
+    fun ZodiacChip(
+        strings: LocalStrings,
+        locale: AppLocale,
+        jalaliMonth: Int,
+        modifier: Modifier = Modifier,
+    ) {
+        if (jalaliMonth !in 1..12) return
+        val sign = zodiacName(strings, jalaliMonth)
+        val monthName = I18n.jalaliMonthName(locale, jalaliMonth)
+        Surface(
+            shape = RoundedCornerShape(50),
+            color = Color.Black.copy(alpha = 0.25f),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)),
+            modifier = modifier.semantics {
+                contentDescription = strings.zodiacChipDesc(monthName, sign)
+            },
+        ) {
+            Row(
+                Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(zodiacGlyph(jalaliMonth), fontSize = 13.sp, color = Color.White)
+                Text(
+                    sign,
+                    fontSize = 12.sp,
+                    color = Color.White.copy(alpha = 0.92f),
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
         }
     }
 

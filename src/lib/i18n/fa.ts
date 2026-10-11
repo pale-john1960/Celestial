@@ -189,6 +189,24 @@ export const fa: LocaleDict = {
   statsDayOffs: '{n} روز تعطیل',
   statsBusiest: 'پررویدادترین ماه: {month}',
   statsRecurring: '{n} تکرارشونده',
+
+  installApp: 'نصب برنامه',
+  installDone: 'Celestial نصب شد — در صفحهٔ اصلی می‌بینیمتان',
+  offlineReady: 'آمادهٔ حالت آفلاین',
+
+  zodiacAries: 'حمل',
+  zodiacTaurus: 'ثور',
+  zodiacGemini: 'جوزا',
+  zodiacCancer: 'سرطان',
+  zodiacLeo: 'اسد',
+  zodiacVirgo: 'سنبله',
+  zodiacLibra: 'میزان',
+  zodiacScorpio: 'عقرب',
+  zodiacSagittarius: 'قوس',
+  zodiacCapricorn: 'جدی',
+  zodiacAquarius: 'دلو',
+  zodiacPisces: 'حوت',
+  zodiacChipDesc: 'برج {sign} برای {month}',
 };
 
 export const faGregorianMonths = [

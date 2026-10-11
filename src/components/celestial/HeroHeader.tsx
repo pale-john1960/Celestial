@@ -113,12 +113,13 @@ export function seasonOf(gMonth: number): Season {
   return "winter";
 }
 
-/** season tint layer under the dark scrim — subtle, non-blue */
+/** season tint layer under the dark scrim — token-based (adapts to dark
+ *  mode: spring = brand magenta, summer = amber, autumn = copper, winter = stone) */
 const SEASON_TINT: Record<Season, string> = {
-  spring: "bg-[#EC4899]/15",
-  summer: "bg-[#F59E0B]/15",
-  autumn: "bg-[#D97706]/20",
-  winter: "bg-[#78716C]/15",
+  spring: "bg-primary/15",
+  summer: "bg-chart-4/15",
+  autumn: "bg-chart-2/20",
+  winter: "bg-muted-foreground/15",
 };
 
 /** /seasonal/{season}-{1|2}.jpg — consecutive months alternate variants */
@@ -129,6 +130,77 @@ export function seasonImageSrc(gMonth: number): string {
   const variant = (idxInSeason % 2) + 1;
   return `/seasonal/${season}-${variant}.jpg`;
 }
+
+/* ---------------- dark-mode starfield (deterministic, CSS-only) ---------------- */
+
+/** warm-white star dot #F5F2EC at a given alpha + magenta #C2185B @ 60% */
+const STAR = (a: number) => `rgba(245,242,236,${a})`;
+const STAR_MAGENTA = "rgba(194,24,91,0.6)";
+
+/** Three star layers over the hero's clear-sky area (top ~55%): each layer is
+ *  a single 1-2px span whose box-shadow list paints the dots — fixed
+ *  positions (vw across / px down), no JS, one opacity tween per layer.
+ *  Layer order: 1 = 1px mid stars, 2 = 2px bright stars, 3 = 1px distant.
+ *  Brightness tuned for the deepened dark-mode night scrim (from-black/65). */
+const STARS_1 = [
+  `2vw 14px 0 0 ${STAR(0.7)}`,
+  `6vw 88px 0 0 ${STAR(0.45)}`,
+  `11vw 34px 0 0 ${STAR(0.8)}`,
+  `16vw 120px 0 0 ${STAR(0.35)}`,
+  `21vw 10px 0 0 ${STAR(0.6)}`,
+  `26vw 62px 0 0 ${STAR_MAGENTA}`,
+  `31vw 142px 0 0 ${STAR(0.5)}`,
+  `36vw 26px 0 0 ${STAR(0.75)}`,
+  `42vw 104px 0 0 ${STAR(0.4)}`,
+  `47vw 48px 0 0 ${STAR(0.85)}`,
+  `53vw 16px 0 0 ${STAR(0.55)}`,
+  `58vw 128px 0 0 ${STAR(0.45)}`,
+  `63vw 70px 0 0 ${STAR(0.8)}`,
+  `68vw 30px 0 0 ${STAR_MAGENTA}`,
+  `74vw 112px 0 0 ${STAR(0.5)}`,
+  `79vw 8px 0 0 ${STAR(0.7)}`,
+  `84vw 92px 0 0 ${STAR(0.4)}`,
+  `89vw 40px 0 0 ${STAR(0.65)}`,
+  `94vw 124px 0 0 ${STAR(0.45)}`,
+  `97vw 58px 0 0 ${STAR(0.75)}`,
+].join(", ");
+
+const STARS_2 = [
+  `4vw 44px 0 0 ${STAR(0.9)}`,
+  `13vw 96px 0 0 ${STAR(0.65)}`,
+  `19vw 22px 0 0 ${STAR_MAGENTA}`,
+  `28vw 134px 0 0 ${STAR(0.75)}`,
+  `34vw 12px 0 0 ${STAR(0.85)}`,
+  `40vw 76px 0 0 ${STAR(0.6)}`,
+  `49vw 116px 0 0 ${STAR(0.95)}`,
+  `56vw 38px 0 0 ${STAR_MAGENTA}`,
+  `61vw 8px 0 0 ${STAR(0.7)}`,
+  `66vw 148px 0 0 ${STAR(0.55)}`,
+  `72vw 56px 0 0 ${STAR(0.9)}`,
+  `77vw 20px 0 0 ${STAR(0.65)}`,
+  `82vw 106px 0 0 ${STAR(0.8)}`,
+  `88vw 28px 0 0 ${STAR_MAGENTA}`,
+  `92vw 84px 0 0 ${STAR(0.7)}`,
+  `96vw 132px 0 0 ${STAR(0.6)}`,
+].join(", ");
+
+const STARS_3 = [
+  `7vw 70px 0 0 ${STAR(0.5)}`,
+  `15vw 118px 0 0 ${STAR(0.35)}`,
+  `24vw 6px 0 0 ${STAR(0.55)}`,
+  `33vw 90px 0 0 ${STAR(0.4)}`,
+  `38vw 150px 0 0 ${STAR(0.3)}`,
+  `45vw 60px 0 0 ${STAR(0.5)}`,
+  `51vw 108px 0 0 ${STAR(0.35)}`,
+  `59vw 24px 0 0 ${STAR(0.55)}`,
+  `64vw 138px 0 0 ${STAR(0.4)}`,
+  `70vw 84px 0 0 ${STAR(0.3)}`,
+  `76vw 46px 0 0 ${STAR(0.5)}`,
+  `81vw 12px 0 0 ${STAR(0.45)}`,
+  `86vw 126px 0 0 ${STAR(0.35)}`,
+  `91vw 66px 0 0 ${STAR(0.5)}`,
+  `95vw 100px 0 0 ${STAR(0.4)}`,
+].join(", ");
 
 /* ---------------- hero header ---------------- */
 
@@ -217,6 +289,32 @@ export function HeroHeader() {
         aria-hidden
         className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/25 to-black/10"
       />
+      {/* dark mode only: deepen the clear-sky area into a night sky so the
+          starfield + white text read clearly against the photo (light mode
+          keeps the photo as-is) */}
+      <div
+        aria-hidden
+        className="absolute inset-0 hidden dark:block bg-gradient-to-b from-black/65 via-black/30 to-black/5"
+      />
+      {/* dark-mode night sky: 3 deterministic star layers over the photo's
+          upper ~55%, UNDER the date text; opacity-only twinkle (globals.css) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[55%] hidden dark:block"
+      >
+        <span
+          className="absolute left-0 top-0 size-px rounded-full bg-transparent animate-twinkle-1"
+          style={{ boxShadow: STARS_1 }}
+        />
+        <span
+          className="absolute left-0 top-0 size-[2px] rounded-full bg-transparent animate-twinkle-2"
+          style={{ boxShadow: STARS_2 }}
+        />
+        <span
+          className="absolute left-0 top-0 size-px rounded-full bg-transparent animate-twinkle-3"
+          style={{ boxShadow: STARS_3 }}
+        />
+      </div>
       <SeasonalParticles season={season} />
 
       {/* top row: brand + actions (flex flips naturally in RTL) */}
@@ -332,7 +430,7 @@ export function HeroHeader() {
               <TabsTrigger
                 key={key}
                 value={key}
-                className="rounded-lg border-transparent px-2 py-1.5 text-xs font-medium text-white/85 transition-colors hover:text-white data-[state=active]:bg-white data-[state=active]:text-foreground sm:text-sm"
+                className="rounded-lg border-transparent px-2 py-1.5 text-xs font-medium text-white/85 transition-[color,box-shadow,transform] hover:text-white active:scale-[0.97] data-[state=active]:bg-white data-[state=active]:text-foreground sm:text-sm"
               >
                 {label}
               </TabsTrigger>

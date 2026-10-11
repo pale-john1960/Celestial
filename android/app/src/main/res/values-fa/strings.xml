@@ -207,4 +207,18 @@
     <string name="event_color_teal">سبزآبی</string>
     <string name="event_color_violet">بنفش</string>
     <string name="event_color_slate">خاکستری</string>
+    <!-- Persian zodiac month chips (Task 10) -->
+    <string name="zodiac_aries">حمل</string>
+    <string name="zodiac_taurus">ثور</string>
+    <string name="zodiac_gemini">جوزا</string>
+    <string name="zodiac_cancer">سرطان</string>
+    <string name="zodiac_leo">اسد</string>
+    <string name="zodiac_virgo">سنبله</string>
+    <string name="zodiac_libra">میزان</string>
+    <string name="zodiac_scorpio">عقرب</string>
+    <string name="zodiac_sagittarius">قوس</string>
+    <string name="zodiac_capricorn">جدی</string>
+    <string name="zodiac_aquarius">دلو</string>
+    <string name="zodiac_pisces">حوت</string>
+    <string name="zodiac_chip_desc">برج %2$s برای %1$s</string>
 </resources>

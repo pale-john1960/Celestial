@@ -57,3 +57,6 @@ upload/
 # dev artifacts
 dev.log
 *.pid
+
+# transient tool read/bash artifacts
+tool-results/

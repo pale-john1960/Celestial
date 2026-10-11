@@ -15,8 +15,9 @@ import org.json.JSONObject
  * Gregorian (explicit `calendar` field wins). Persian digits ۰-۹ are
  * normalized. JSON is parsed via org.json; CSV supports quoted fields (""
  * escapes). ICS (RFC 5545) files are unfolded, VEVENTs parsed for
- * DTSTART/DTEND/SUMMARY/DESCRIPTION/RRULE with multi-day expansion (≤ 30
- * days) and FREQ=YEARLY → recurYearly.
+ * DTSTART/DTEND/DURATION/SUMMARY/DESCRIPTION/RRULE with multi-day
+ * expansion (≤ 30 days; DURATION is consulted only when DTEND is absent —
+ * DTEND wins per RFC 5545) and FREQ=YEARLY → recurYearly.
  *
  * Per-event colors (Task 9) are deliberately NOT parsed from any import
  * format — the color override is editor-only (same policy as the web app);
@@ -41,6 +42,10 @@ object ImportParser {
     )
 
     private val faDigits = "۰۱۲۳۴۵۶۷۸۹"
+
+    /** RFC 5545 §3.3.6 DURATION value (ISO 8601 subset) — see [icsDurationDays]. */
+    private val ICS_DURATION =
+        Regex("""P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?""", RegexOption.IGNORE_CASE)
 
     private fun resolveDate(raw: String, calendar: String?): SimpleDate? {
         val s = raw.trim().map { c -> val i = faDigits.indexOf(c); if (i >= 0) ('0' + i) else c }
@@ -259,7 +264,12 @@ object ImportParser {
      * (VALUE=DATE or the date part of a date-time), SUMMARY/DESCRIPTION
      * (TEXT unescaping) and RRULE (FREQ=YEARLY → recurYearly; any other
      * FREQ → imported as a single event + warning). DTEND is exclusive;
-     * multi-day VEVENTs expand to one event per day, capped at 30 days.
+     * DURATION (RFC 5545 §3.3.6 ISO 8601 subset: P{n}W / P{n}D /
+     * P{n}DT{hms} / PT{hms}) is used when DTEND is absent — DTEND wins when
+     * both are present (RFC 5545); any time component > 0 rounds the span
+     * up to the next whole day (e.g. P1DT12H → 2 days, PT12H → 1 day),
+     * weeks ×7. Multi-day VEVENTs expand to one event per day, capped at
+     * 30 days.
      */
     fun parseIcs(text: String, sourceName: String? = null): ParsedImportResult {
         val out = ArrayList<ImportedEventInput>()
@@ -358,6 +368,19 @@ object ImportParser {
                 continue
             }
             var days = if (endJdn != null && endJdn - startJdn >= 1) endJdn - startJdn else 1
+            // DURATION is consulted only when DTEND yields no usable date
+            // (DTEND wins per RFC 5545) — same semantics as the web parser.
+            if (endJdn == null) {
+                val durProp = props["DURATION"]
+                if (durProp != null) {
+                    val dur = icsDurationDays(durProp)
+                    if (dur == null) {
+                        errors.add("VEVENT $no: invalid DURATION \"$durProp\" — imported as single event")
+                    } else if (dur > days) {
+                        days = dur
+                    }
+                }
+            }
             if (days > 30) {
                 warnings.add("VEVENT $no: multi-day span capped at 30 days")
                 days = 30
@@ -379,6 +402,38 @@ object ImportParser {
             }
         }
         return ParsedImportResult(out, errors, warnings)
+    }
+
+    /**
+     * RFC 5545 §3.3.6 DURATION (ISO 8601 subset): P{n}W / P{n}D / P{n}DT{hms}
+     * / PT{hms} — no sign, no months/years. Returns the span in WHOLE days:
+     * weeks ×7 + days, and any time component > 0 rounds up one extra day
+     * (P1DT12H → 2, PT12H → 1, P3D → 3, P2W → 14). Returns null when
+     * invalid (bare "P"/"PT", months, a sign, …). Mirrors the web
+     * `icsDurationDays` exactly for cross-platform round-trip consistency;
+     * the result is clamped to 366 days so absurd spans stay sane (the
+     * caller's 30-event expansion cap limits them further anyway).
+     */
+    private fun icsDurationDays(raw: String): Int? {
+        val m = ICS_DURATION.matchEntire(raw.trim()) ?: return null
+        // at least one component must be present (bare "P" / "PT" are invalid)
+        if ((1..5).all { m.groups[it] == null }) return null
+        val weeks = durNum(m.groups[1])
+        val days = durNum(m.groups[2])
+        val hours = durNum(m.groups[3])
+        val mins = durNum(m.groups[4])
+        val secs = durNum(m.groups[5])
+        val whole = weeks * 7 + days
+        val hasTime = hours + mins + secs > 0
+        val span = whole + if (hasTime) 1L else 0L
+        return if (span > 366L) 366 else span.toInt()
+    }
+
+    /** Numeric DURATION group → Long; null group → 0; absurdly long digits → huge (clamped later). */
+    private fun durNum(g: MatchGroup?): Long = when {
+        g == null -> 0L
+        g.value.length > 15 -> 1_000_000_000L // > any sane span; clamped by the 366 cap
+        else -> g.value.toLong()
     }
 
     /** `DTSTART;VALUE=DATE:...` → `DTSTART` (uppercase, params stripped). */

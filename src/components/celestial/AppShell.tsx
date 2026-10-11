@@ -6,6 +6,7 @@ import { getDict } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
 import { useNtpSync } from "@/lib/client/api";
 import { HeroHeader } from "./HeroHeader";
+import { InstallChip } from "./InstallChip";
 
 function useLiveClock() {
   const [now, setNow] = useState(() => new Date());
@@ -72,6 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="sr-only">{dict.timeSync}</span>
               {ntpLabel}
             </span>
+            <InstallChip />
           </div>
         </div>
         <div className="h-[env(safe-area-inset-bottom)]" aria-hidden />

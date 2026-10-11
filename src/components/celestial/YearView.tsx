@@ -122,7 +122,7 @@ export function YearView() {
           <Button
             variant="outline"
             size="icon"
-            className="size-8 rounded-lg border-border bg-card"
+            className="size-8 rounded-lg border-border bg-card transition-transform active:scale-95"
             aria-label={dict.prevMonth}
             onClick={() => setCursorMonth(cursor.year - 1, cursor.month)}
           >
@@ -131,7 +131,7 @@ export function YearView() {
           <Button
             variant="outline"
             size="icon"
-            className="size-8 rounded-lg border-border bg-card"
+            className="size-8 rounded-lg border-border bg-card transition-transform active:scale-95"
             aria-label={dict.nextMonth}
             onClick={() => setCursorMonth(cursor.year + 1, cursor.month)}
           >
@@ -144,7 +144,7 @@ export function YearView() {
         <Button
           variant="secondary"
           size="sm"
-          className="h-8 rounded-lg font-semibold"
+          className="h-8 rounded-lg font-semibold transition-transform active:scale-95"
           onClick={goToday}
         >
           <CalendarDays className="size-4" aria-hidden />
@@ -360,6 +360,10 @@ function MonthCard({
                 className={cn(
                   "flex h-6 flex-col items-center justify-center rounded",
                   cell.isToday && "bg-primary font-bold text-primary-foreground",
+                  // holiday tint — same red family as the month grid cells
+                  isHoliday &&
+                    !cell.isToday &&
+                    "bg-red-50 dark:bg-red-950/30",
                 )}
                 title={cell.iso}
               >

@@ -50,10 +50,11 @@ No API keys, no secrets — the app is fully offline-capable by design.
 | Solstice & equinox | `SolsticeEngine` — low-precision solar apparent-longitude series (Meeus ch. 25 truncated: mean longitude 280.46646 + 0.9856474°/d + equation of centre 1.914602/0.019993/0.000289), Newton ×6 solve per event seeded at 12:00 UTC on the canonical date, residual guard 0.5°. **Constants identical to the web `solstice.ts`** — validated 8/8 anchors (2024 + 2026) within ±17 min. Day-marker convention = the moon engine's local-day window. Day view: ♈♋♎♑ row on the astronomy card (localized name, “Occurs at HH:MM” device-local, day/night note); month cells + week cards: glyph in the bottom-end cluster (9/14 sp, α 0.6) |
 | Manual events | ✛ button in the hero header → AddEventDialog (title 1–120, description ≤500, “day off” switch, “Repeats yearly” switch, Gregorian `yyyy-mm-dd` field pre-filled with the selected day + live active-system conversion + validation) → Room `ImportedEvent` with sourceName `"manual"`, ✍️ badge everywhere (📥 for file imports); **editable** — ✎ pencil on every imported/manual event card (Day view) and on the settings manager rows, with a destructive Delete in edit mode; jalaliIso recomputed on date change |
 | Per-event colors (Task 9) | User-selectable color for manual/imported events: fixed 8-swatch palette (**magenta `#C2185B` · rose `#D95970` · orange `#E07B39` · gold `#B8860B` · green `#2BA84A` · teal `#5B8C85` · violet `#8E7CC3` · slate `#64748B`** — shared spec with the web, no indigo/blue) + a “default” option (null = the category default, teal for imported). Room schema **v3** adds a nullable `color` column (6-digit lowercase hex; non-destructive migration). The override flows through every instance (incl. yearly expansions) and renders in month/Year dots, Day/Week card chips, and agenda rows; the editor preselects it in edit mode (ring + check, TalkBack labels per swatch) |
+| Persian zodiac chips (Task 10) | Month-view header shows a small chip with the displayed Jalali month's zodiac glyph + localized sign name — ♈ Aries/牡羊座/حمل for Farvardin … ♓ Pisces/魚座/حوت for Esfand (shared data table with the web; glyphs are the exact Unicode run U+2648..U+2653, the same code points the season markers use). Works in every calendar system: the cursor month's middle day is converted to a Jalali month via the engine facade (day 15 always lands in the majority month and agrees with the Imperial header month name; Andarjah → Esfand). Localized content description (“Zodiac of <month>: <sign>”), RTL-correct, purely static text — no animations |
 | Recurring annual events | Rows flagged `recurYearly` (Room schema **v2**, non-destructive `ALTER TABLE … ADD COLUMN recurYearly INTEGER NOT NULL DEFAULT 0` migration) expand like the web: anchor instance `imp-{id}` + synthetic `imp-{id}-y{y}` per year in view (same month/day, **Feb 29 → Feb 28** in non-leap years) — 🔁 outlined chip on the cards, 🔁 badge in the manager; delete-row kills the whole series. ICS export writes only the anchor + `RRULE:FREQ=YEARLY` |
-| ICS import | `parseIcs` (port of the web 8-a parser): continuation-line unfolding, VEVENT DTSTART/DTEND (`VALUE=DATE` or date-part; exclusive end), multi-day expansion ≤30 days, TEXT unescaping (`,`, `;`, `\`, `\n`), `RRULE:FREQ=YEARLY` → recurring row, other FREQ → single event + warning count in the result line. SAF picker accepts `.ics` (`text/calendar` + octet-stream fallback) |
+| ICS import | `parseIcs` (port of the web 8-a parser): continuation-line unfolding, VEVENT DTSTART/DTEND (`VALUE=DATE` or date-part; exclusive end), **DURATION** (RFC 5545 §3.3.6 ISO 8601 subset `P{n}W` / `P{n}D` / `P{n}DT{hms}` / `PT{hms}` — consulted only when DTEND is absent, **DTEND wins** per RFC 5545; any time component > 0 rounds the span up to the next whole day, weeks ×7; invalid → single event + error entry), multi-day expansion ≤30 days, TEXT unescaping (`,`, `;`, `\`, `\n`), `RRULE:FREQ=YEARLY` → recurring row, other FREQ → single event + warning count in the result line. SAF picker accepts `.ics` (`text/calendar` + octet-stream fallback) |
 | ICS export | Settings → “Export events (.ics)” — SAF `CreateDocument("text/calendar")`, next 90 days of events + one anchor VEVENT per yearly series with `RRULE:FREQ=YEARLY` (expanded instances skipped; `holidayOnly` text never exported), RFC 5545 escaping (`\ ; ,` + newlines), 74-octet line folding, CRLF endings, `DTEND` exclusive |
-| Hero header | Static seasonal banner per season (2 variants each, swap at day 1/15), month+year in the active system, secondary systems line, ✛ add-event button |
+| Hero header | Static seasonal banner per season (2 variants each, swap at day 1/15), month+year in the active system, zodiac chip (month view), secondary systems line, ✛ add-event button |
 | Widgets | **Date widget** (4×2 RemoteViews: today in active system + secondary systems + next event) and **Month widget** (4×5 GridView via `RemoteViewsService`, today highlighted, tap-a-day opens the app) |
 | Status-bar date | Persistent silent ongoing notification (IMPORTANCE_LOW) with today's date in the active system; toggle in Settings |
 | NTP | `NtpClient` — UDP SNTP to `pool.ntp.org` (3 s timeout, `Dispatchers.IO`), offset persisted in DataStore; syncs on app open (when online) + manual button |
@@ -108,7 +109,7 @@ android/
 │  ├─ widgets/     DateWidget, MonthWidget + MonthWidgetService, WidgetUpdater
 │  ├─ work/        RefreshScheduler/RefreshWorker + BootReceiver
 │  └─ ui/          CelestialApp, CelestialViewModel, Hero/Month/Week/Year/Day/Agenda views,
-│                  AddEventDialog, SettingsSheet, CommonUi, Strings, theme/
+│                  AddEventDialog, SettingsSheet, CommonUi, Strings, Zodiac, theme/
 └─ app/src/main/res/ values{,-ja,-fa}/strings.xml · drawable/ · layout/ · xml/
 ```
 
@@ -138,8 +139,9 @@ android/
   Gregorian date each year. Editing the anchor edits the whole series.
 - ICS import is a minimal reader: parameters on DTSTART/DTEND are ignored
   (VALUE=DATE or date-part only), BYMONTH/BYMONTHDAY are assumed to match
-  DTSTART, DURATION is not supported, and non-YEARLY RRULEs import as single
-  events (reported as warnings).
+  DTSTART, DURATION accepts no sign/months/years and is clamped to 366 days
+  (the expansion cap limits it to 30 anyway), and non-YEARLY RRULEs import
+  as single events (reported as warnings).
 - Per-event colors never cross the import/export boundary: ICS (and every
   other import format) does not carry the app's color column, and the ICS
   export emits no color property — parity with the web. Invalid stored hex

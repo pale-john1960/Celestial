@@ -189,6 +189,24 @@ export const en: LocaleDict = {
   statsDayOffs: '{n} day-offs',
   statsBusiest: 'Busiest: {month}',
   statsRecurring: '{n} recurring',
+
+  installApp: 'Install app',
+  installDone: 'Celestial installed — see you on your home screen',
+  offlineReady: 'Offline-ready',
+
+  zodiacAries: 'Aries',
+  zodiacTaurus: 'Taurus',
+  zodiacGemini: 'Gemini',
+  zodiacCancer: 'Cancer',
+  zodiacLeo: 'Leo',
+  zodiacVirgo: 'Virgo',
+  zodiacLibra: 'Libra',
+  zodiacScorpio: 'Scorpio',
+  zodiacSagittarius: 'Sagittarius',
+  zodiacCapricorn: 'Capricorn',
+  zodiacAquarius: 'Aquarius',
+  zodiacPisces: 'Pisces',
+  zodiacChipDesc: 'Zodiac of {month}: {sign}',
 };
 
 // Gregorian month names (en)

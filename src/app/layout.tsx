@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Vazirmatn, Noto_Sans_JP } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { ServiceWorkerRegister } from "@/components/celestial/ServiceWorkerRegister";
 import "./globals.css";
 
 // Persian + Latin — Vazirmatn has full Latin coverage, acts as the base font
@@ -34,7 +35,26 @@ export const metadata: Metadata = {
     "تقویم",
     "カレンダー",
   ],
-  icons: { icon: "/logo.svg" },
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/logo.svg" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/favicon-48.png", sizes: "48x48", type: "image/png" },
+    ],
+    apple: [
+      {
+        url: "/icons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Celestial",
+  },
 };
 
 export const viewport: Viewport = {
@@ -61,6 +81,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <ServiceWorkerRegister />
         </ThemeProvider>
       </body>
     </html>

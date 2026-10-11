@@ -189,6 +189,24 @@ export const ja: LocaleDict = {
   statsDayOffs: '休日 {n}日',
   statsBusiest: '最多の月: {month}',
   statsRecurring: '繰り返し {n}件',
+
+  installApp: 'アプリを追加',
+  installDone: 'Celestial を追加しました。ホーム画面でお会いしましょう',
+  offlineReady: 'オフライン対応',
+
+  zodiacAries: '牡羊座',
+  zodiacTaurus: '牡牛座',
+  zodiacGemini: '双子座',
+  zodiacCancer: '蟹座',
+  zodiacLeo: '獅子座',
+  zodiacVirgo: '乙女座',
+  zodiacLibra: '天秤座',
+  zodiacScorpio: '蠍座',
+  zodiacSagittarius: '射手座',
+  zodiacCapricorn: '山羊座',
+  zodiacAquarius: '水瓶座',
+  zodiacPisces: '魚座',
+  zodiacChipDesc: '{month}の星座：{sign}',
 };
 
 export const jaGregorianMonths = [

@@ -79,6 +79,40 @@
       opacity: 0.3;
     }
   }
+  /* Dark-mode hero starfield — 3 twinkle layers (opacity only, 6-9s periods,
+     staggered negative delays so the layers start mid-phase; static stars stay
+     visible under prefers-reduced-motion via the kill switch below) */
+  --animate-twinkle-1: twinkle-1 7s ease-in-out infinite;
+  --animate-twinkle-2: twinkle-2 8.5s ease-in-out -3.5s infinite;
+  --animate-twinkle-3: twinkle-3 6s ease-in-out -1.5s infinite;
+
+  @keyframes twinkle-1 {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @keyframes twinkle-2 {
+    0%,
+    100% {
+      opacity: 0.9;
+    }
+    50% {
+      opacity: 0.2;
+    }
+  }
+  @keyframes twinkle-3 {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
   /* Falling seasonal particles — driven by per-particle CSS custom props */
   @keyframes fall {
     0% {
@@ -235,6 +269,9 @@
   .animate-kenburns,
   .animate-fade-swap,
   .animate-pulse-soft,
+  .animate-twinkle-1,
+  .animate-twinkle-2,
+  .animate-twinkle-3,
   .celestial-particle,
   .celestial-firefly {
     animation: none !important;

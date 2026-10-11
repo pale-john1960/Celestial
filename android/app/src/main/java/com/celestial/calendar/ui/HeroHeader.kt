@@ -41,17 +41,21 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.celestial.calendar.engine.AppLocale
+import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CelestialDate
 import com.celestial.calendar.engine.CalendarSystem
 import com.celestial.calendar.engine.DateFormats
+import com.celestial.calendar.engine.JalaliEngine
 
 /**
  * Celestial — seasonal hero header.
  *
  * Static seasonal banner (image per season, 2 variants alternating through the
  * month — no cross-fade animation on Android, per the low-power rules), month
- * name + year in the active system, secondary line with the other systems,
- * and the Month/Week/Year/Day/Agenda view switcher.
+ * name + year in the active system, a small zodiac chip with the displayed
+ * Jalali month's constellation glyph + sign name (Task 10; month view only),
+ * secondary line with the other systems, and the Month/Week/Year/Day/Agenda
+ * view switcher.
  */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +80,18 @@ fun HeroHeader(
 
     val navMonthName = DateFormats.monthNameOf(system, locale, navYear, navMonth)
     val navYearText = com.celestial.calendar.engine.I18n.num(locale, navYear)
+    // Jalali month of the displayed (cursor) month regardless of the active
+    // system — the middle day of the system month converted via the engine
+    // facade. Drives the zodiac chip (Task 10). Sampling the middle day
+    // always lands in the Jalali month covering the majority of the
+    // displayed month (and agrees with the header month name for the
+    // Imperial system's fixed 30-day months).
+    val zodiacMonth = JalaliEngine.gregorianToJalali(
+        CalendarFacade.systemToGregorian(
+            system, navYear, navMonth,
+            minOf(15, CalendarFacade.systemMonthLength(system, navYear, navMonth)),
+        )
+    ).month
     val seasonLabel = strings.seasonName(season)
 
     val secondary = buildString {
@@ -190,6 +206,15 @@ fun HeroHeader(
                                 tint = Color.White,
                             )
                         }
+                    }
+                    // zodiac of the displayed Jalali month (month view only)
+                    if (view == ViewKind.MONTH) {
+                        CommonUi.ZodiacChip(
+                            strings = strings,
+                            locale = locale,
+                            jalaliMonth = zodiacMonth,
+                            modifier = Modifier.padding(start = 2.dp),
+                        )
                     }
                 }
                 Text(

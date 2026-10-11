@@ -207,4 +207,25 @@ export interface LocaleDict {
   statsDayOffs: string;
   statsBusiest: string;
   statsRecurring: string;
+
+  // PWA install
+  installApp: string;
+  installDone: string;
+  offlineReady: string;
+
+  // Persian zodiac month chips (month view toolbar)
+  zodiacAries: string;
+  zodiacTaurus: string;
+  zodiacGemini: string;
+  zodiacCancer: string;
+  zodiacLeo: string;
+  zodiacVirgo: string;
+  zodiacLibra: string;
+  zodiacScorpio: string;
+  zodiacSagittarius: string;
+  zodiacCapricorn: string;
+  zodiacAquarius: string;
+  zodiacPisces: string;
+  /** chip a11y label — "{month}" = displayed month name, "{sign}" = sign name */
+  zodiacChipDesc: string;
 }

@@ -247,6 +247,28 @@ class LocalStrings(private val res: Resources) {
         Season.AUTUMN -> seasonAutumn
         Season.WINTER -> seasonWinter
     }
+
+    // ---- Persian zodiac month chips (Task 10) ----
+
+    /** Localized zodiac sign name for a Jalali month 1-12 ("" when out of range). */
+    fun zodiacName(jalaliMonth: Int): String = when (jalaliMonth) {
+        1 -> res.getString(R.string.zodiac_aries)
+        2 -> res.getString(R.string.zodiac_taurus)
+        3 -> res.getString(R.string.zodiac_gemini)
+        4 -> res.getString(R.string.zodiac_cancer)
+        5 -> res.getString(R.string.zodiac_leo)
+        6 -> res.getString(R.string.zodiac_virgo)
+        7 -> res.getString(R.string.zodiac_libra)
+        8 -> res.getString(R.string.zodiac_scorpio)
+        9 -> res.getString(R.string.zodiac_sagittarius)
+        10 -> res.getString(R.string.zodiac_capricorn)
+        11 -> res.getString(R.string.zodiac_aquarius)
+        12 -> res.getString(R.string.zodiac_pisces)
+        else -> ""
+    }
+
+    /** a11y label for the header zodiac chip: "Zodiac of <month>: <sign>". */
+    fun zodiacChipDesc(month: String, sign: String) = res.getString(R.string.zodiac_chip_desc, month, sign)
 }
 
 /** Season of the year (Gregorian months) + seasonal banner resources. */

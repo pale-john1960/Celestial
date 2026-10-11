@@ -10,13 +10,17 @@ import {
   ChevronRight,
 } from "lucide-react";
 import {
+  gregorianToJalali,
   monthGrid,
   shiftMonth,
+  systemMonthLength,
+  systemToGregorian,
   todayGregorian,
   weekdayOrder,
 } from "@/lib/calendar";
 import { moonInfo, moonPhaseName, MOON_MAJOR_EMOJI } from "@/lib/calendar/moon";
 import type { MoonMajor } from "@/lib/calendar/moon";
+import { zodiacOf, zodiacName } from "@/lib/calendar/zodiac";
 import {
   SEASON_EVENT_EMOJI,
   seasonEventName,
@@ -142,6 +146,27 @@ export function MonthView() {
       ? gregorianMonthName(locale, cursor.month)
       : jalaliMonthName(locale, cursor.month);
 
+  // Persian zodiac chip: the Jalali month underlying the DISPLAYED month.
+  // Middle-day sampling (min(15, length)) — matches the Android derivation:
+  // identical for Gregorian/Jalali, agrees with the header month name for
+  // Imperial (day 1 of imperial month 7 is still Jalali Shahrivar → Virgo
+  // under a "Mehr" title; day 15 lands in Mehr), Andarjah → Esfand → Pisces.
+  const zodiacSampleDay = Math.max(
+    1,
+    Math.min(15, systemMonthLength(system, cursor.year, cursor.month)),
+  );
+  const zodiac = zodiacOf(
+    gregorianToJalali(
+      systemToGregorian(system, cursor.year, cursor.month, zodiacSampleDay),
+    ).month,
+  );
+  const zodiacSign = zodiac ? zodiacName(dict, zodiac.key) : "";
+  const zodiacLabel = zodiac
+    ? dict.zodiacChipDesc
+        .replace("{month}", monthLabel)
+        .replace("{sign}", zodiacSign)
+    : "";
+
   // ---- navigation ----
   const shift = (delta: number) => {
     const next = shiftMonth(system, cursor.year, cursor.month, delta);
@@ -218,7 +243,7 @@ export function MonthView() {
           <Button
             variant="ghost"
             size="icon"
-            className="size-7 rounded-none rounded-s-lg"
+            className="size-7 rounded-none rounded-s-lg transition-transform active:scale-95"
             aria-label={`${dict.prevMonth} ${num(locale, cursor.year - 1)}`}
             onClick={() => setCursorMonth(cursor.year - 1, cursor.month)}
           >
@@ -238,13 +263,31 @@ export function MonthView() {
           <Button
             variant="ghost"
             size="icon"
-            className="size-7 rounded-none rounded-e-lg"
+            className="size-7 rounded-none rounded-e-lg transition-transform active:scale-95"
             aria-label={`${dict.nextMonth} ${num(locale, cursor.year + 1)}`}
             onClick={() => setCursorMonth(cursor.year + 1, cursor.month)}
           >
             <ChevronRight className="size-3.5 rtl:-scale-x-100" aria-hidden />
           </Button>
         </div>
+
+        {/* Persian zodiac month chip — reflects the displayed month in every
+            calendar mode (web counterpart of the Android month-hero chip) */}
+        {zodiac && (
+          <span
+            title={zodiacLabel}
+            aria-label={zodiacLabel}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+          >
+            <span
+              aria-hidden
+              className="text-[13px] leading-none text-primary"
+            >
+              {zodiac.glyph}
+            </span>
+            {zodiacSign}
+          </span>
+        )}
 
         <Button
           variant="secondary"
