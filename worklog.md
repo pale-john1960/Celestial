@@ -1062,3 +1062,30 @@ Stage Summary:
 - Build: BUILD SUCCESSFUL in 1m33s (2nd attempt; 1st failed on a Kotlin CJK-template identifier quirk + unqualified facade call — both fixed). APK 17,441,248 bytes; 32 hero drawables verified in the bundle; served at /celestial-debug.apk (HTTP 200, full download verified).
 - Parity: 48/48 anchor/format checks via the web engine + Tehran manual trace (dawn 04:42, sunrise 06:06, noon 11:51, sunset 17:36, dusk 19:00); strings 240×3 with 37 round-14 keys byte-identical to web i18n.
 - Deviations/risks: (1) geolocation skipped on Android (permission-free 10-city picker) — sun_use_my_location/sun_locating/sun_loc_error strings not added; can be added next round with a FusedLocation recipe. (2) Sun/world-clock icons are emoji (no material-icons-extended dependency — avoids ~20MB debug-APK bloat); consistent with the app's existing emoji glyph usage. (3) The today chip is NEW surface (Android had an icon-only Today button; replaced by the web-parity locale-composed pill — "today chip in HeroHeader" was an explicit T4 site). (4) YearView month cards had no artwork before → added 44dp banners (the themeImageSrc port). (5) DateConverterDialog has no Android equivalent — skipped. (6) ZodiacChip's a11y month label still uses the plain Jalali month name (pre-existing, cosmetic, a11y-only). (7) APK untested on a real device (no emulator in the sandbox) — user QA pending; expect layout/ICU-on-device reports. (8) The dev-server OOM during the gradle build was recovered (double-fork relaunch); documented for future rounds: run gradle with the memory constraint BEFORE heavy web activity, and relaunch the dev server with the orphan pattern if reaped.
+
+---
+Task ID: 14-final (coordinator)
+Agent: Main Coordinator (Z.ai Code)
+Task: Round 14 wrap-up — READMEs, final QA, commit & push (6ae9ed7)
+
+Work Log:
+- READMEs updated: main README (five calendar systems section, royal names, configurable weekend, locale date formats, sun times, world clock, 4-image pools, APK download, RTL toggle fix) + android/README.md round-14 parity block (SunEngine, world clock, systems, 240×3 strings).
+- Final verification after 14-d's dev-server OOM/restart: web 200, APK HTTP 200 (fresh 17.4MB), SMOKE 9/9 PASS, lint clean, tsc src/ 0 errors; Day view re-checked live (Sun times Tehran 04:42–19:00 + World clock Tehran 21:41 / Tokyo next-day 03:11 / NY 14:11 — coherent). NOTE: innerText reflects CSS uppercase — search for 'SUN TIMES' not 'Sun times' in DOM checks.
+- Committed 84 files (3542 insertions) incl. public/celestial-debug.apk (now shipped in the repo) + pushed to origin/main (937698e..6ae9ed7).
+
+Stage Summary — ROUND 14 COMPLETE (all 10 user items, web + Android):
+1. fa day-first date order + full weekday names (ja 年月日+（曜日）) ✓
+2. APK downloadable: repo + footer chip + Settings App row ✓
+3. 12 new hero artworks; 4-image fixed-theme pools ✓
+4. RTL Switch knob inside track (measured) ✓
+5. Year view follows active theme (central themeImageSrc) ✓
+6. Weekend day-off configurable (auto/Fri/Sat/Sun/none) ✓
+7. Royal month names toggle (امرداد/اسپندارمذ) ✓
+8. NEW systems: imperialSolar (2585 on Shamsi months) + ancient (Fasli, 30-day + ancient names) ✓
+9. Sun times (NOAA) + World clock cards, web + Android ✓
+10. Persian weekday abbreviations eliminated outside the month grid ✓
+
+Risks / next-round priorities:
+1. APK still UNTESTED on a real device — user will test; expect first-device reports (geolocation-free city picker on Android this round; Android DateConverterDialog does not exist).
+2. Dev server was OOM-killed during the gradle build — if the preview dies again, relaunch with the double-fork orphan pattern (see 14-d entry).
+3. Possible follow-ups: royal names in notification labels (cosmetic), seasonal theme could also get more images, Hijri-off state inside converter rows, release-signed APK recipe.
