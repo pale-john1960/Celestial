@@ -12,11 +12,13 @@ import {
 import { motion } from "framer-motion";
 import {
   buildDayCell,
+  gregorianToJalali,
   imperialDayName,
   isoDate,
   parseIso,
   todayGregorian,
 } from "@/lib/calendar";
+import { zodiacOf, zodiacName } from "@/lib/calendar/zodiac";
 import { fromJdn, toJdn } from "@/lib/calendar/jdn";
 import { moonInfo, moonPhaseName, MOON_EMOJI } from "@/lib/calendar/moon";
 import {
@@ -25,7 +27,13 @@ import {
   seasonEventNote,
   seasonEventOn,
 } from "@/lib/calendar/solstice";
-import { getDict, num, weekdayLong } from "@/lib/i18n";
+import {
+  getDict,
+  gregorianMonthName,
+  jalaliMonthName,
+  num,
+  weekdayLong,
+} from "@/lib/i18n";
 import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
@@ -95,8 +103,35 @@ export function DayView() {
         ? formatJalaliDate(locale, cell.jalali, dict)
         : formatImperialDate(locale, cell.imperial, dict);
 
+  // Persian zodiac chip (MonthView parity): the sign of THIS day's underlying
+  // Jalali month — the day itself is the sample, no middle-day sampling. The
+  // label's month name is the displayed month in the ACTIVE system (jalali
+  // month names double as Imperial's; 13 = Andarjah handled by the facade).
+  const zodiac = zodiacOf(gregorianToJalali(g).month);
+  const zodiacMonthLabel =
+    system === "gregorian"
+      ? gregorianMonthName(locale, cell.gregorian.month)
+      : system === "jalali"
+        ? jalaliMonthName(locale, cell.jalali.month)
+        : jalaliMonthName(locale, cell.imperial.month);
+  const zodiacSign = zodiac ? zodiacName(dict, zodiac.key) : "";
+  const zodiacLabel = zodiac
+    ? dict.zodiacChipDesc
+        .replace("{month}", zodiacMonthLabel)
+        .replace("{sign}", zodiacSign)
+    : "";
+
   return (
     <section aria-label={dict.viewDay} className="flex flex-col gap-3">
+      {/* print-only masthead — the hero h1 is [data-no-print], so paper needs
+          its own title (hidden removes it from screen AND the a11y tree) */}
+      <div className="hidden print:block border-b border-border pb-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {dict.appName} · {dict.tagline}
+        </p>
+        <h2 className="mt-1 text-2xl font-bold">{activeDateText}</h2>
+      </div>
+
       {/* date hero */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
         <div className="flex items-center justify-between gap-2">
@@ -117,6 +152,25 @@ export function DayView() {
             <h2 className="mt-0.5 truncate text-xl font-bold tabular-nums sm:text-2xl">
               {activeDateText}
             </h2>
+            {/* zodiac chip — visually subordinate to the date, same styling
+                as MonthView's toolbar chip so the two read as siblings */}
+            {zodiac && (
+              <div className="mt-1.5 flex justify-center">
+                <span
+                  title={zodiacLabel}
+                  aria-label={zodiacLabel}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
+                  <span
+                    aria-hidden
+                    className="text-[13px] leading-none text-primary"
+                  >
+                    {zodiac.glyph}
+                  </span>
+                  {zodiacSign}
+                </span>
+              </div>
+            )}
           </div>
           <Button
             variant="outline"

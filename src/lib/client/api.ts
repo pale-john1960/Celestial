@@ -8,6 +8,9 @@ export interface EventsResponse {
   events: EventInstance[];
   usOnline: boolean;
   japanOnline: boolean;
+  /** present (true) only when this response was computed client-side from
+   *  builtins because the network was down — absent on normal responses */
+  offline?: boolean;
 }
 
 export interface NtpResponse {
@@ -68,6 +71,33 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+// ---- offline-data signal (drives the footer OfflineChip) ----
+// True when the most recent events response was computed client-side from
+// builtins because the network was down. External-store pattern (same as
+// src/lib/client/install.ts) so any component can subscribe without
+// prop-drilling through view files.
+let eventsOffline = false;
+const offlineListeners = new Set<() => void>();
+
+function setEventsOffline(value: boolean): void {
+  if (eventsOffline === value) return;
+  eventsOffline = value;
+  for (const listener of offlineListeners) listener();
+}
+
+/** Subscribe to the offline-data signal (useSyncExternalStore). */
+export function subscribeEventsOffline(listener: () => void): () => void {
+  offlineListeners.add(listener);
+  return () => {
+    offlineListeners.delete(listener);
+  };
+}
+
+/** Snapshot: was the last events response the client-side builtin fallback? */
+export function getEventsOffline(): boolean {
+  return eventsOffline;
+}
+
 export async function fetchEvents(
   from: string,
   to: string,
@@ -75,7 +105,38 @@ export async function fetchEvents(
 ): Promise<EventsResponse> {
   const params = new URLSearchParams({ from, to });
   for (const key of SOURCE_KEYS) params.set(key, sources[key] ? "1" : "0");
-  return fetchJson<EventsResponse>(`/api/events?${params.toString()}`);
+  try {
+    const res = await fetchJson<EventsResponse>(`/api/events?${params.toString()}`);
+    setEventsOffline(false);
+    return res;
+  } catch (err) {
+    // OFFLINE FALLBACK — only when the browser is offline or the request
+    // died at the network level (fetch rejects with TypeError, e.g. the
+    // request was aborted/no network path; the service worker's 503 while
+    // navigator.onLine is false). HTTP errors while the browser claims to
+    // be ONLINE (server 500/503 with a body) are real failures: rethrow so
+    // genuine problems are never masked by builtin data.
+    const offline =
+      (typeof navigator !== "undefined" && !navigator.onLine) ||
+      err instanceof TypeError;
+    if (!offline) throw err;
+
+    // Lazy dynamic import: the events engine (pure TS, no db/fetch at module
+    // scope) is only pulled into the running page the first time the
+    // calendar is actually used offline — online users never pay for it.
+    const { builtinInstancesForRange } = await import("@/lib/events");
+    // Dedupe by id — mirrors the server route's post-aggregate dedupe.
+    const seen = new Set<string>();
+    const events = builtinInstancesForRange(from, to, sources)
+      .filter((e) => {
+        if (seen.has(e.id)) return false;
+        seen.add(e.id);
+        return true;
+      })
+      .sort((a, b) => a.iso.localeCompare(b.iso));
+    setEventsOffline(true);
+    return { events, usOnline: false, japanOnline: false, offline: true };
+  }
 }
 
 /** Aggregated events for an iso range, keyed by [from, to, sourcesHash] */
@@ -91,6 +152,12 @@ export function useEvents(
     queryFn: () => fetchEvents(from, to, sources),
     staleTime: 5 * 60 * 1000,
     enabled: enabled && from.length > 0 && to.length > 0 && from <= to,
+    // offlineFirst: queryFn must RUN while offline — fetchEvents has its own
+    // builtin-events fallback, so pausing the query on browser "offline"
+    // (TanStack's default networkMode: "online") would show an EMPTY grid
+    // exactly when the offline fallback exists to prevent it. Retries still
+    // wait for reconnect; a paused-then-resumed query refetches on "online".
+    networkMode: "offlineFirst",
   });
 }
 

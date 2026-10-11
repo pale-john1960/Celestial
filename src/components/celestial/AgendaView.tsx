@@ -108,6 +108,15 @@ export function AgendaView() {
     [locale],
   );
 
+  // print masthead range: first → last visible ACTIVE-system month labels
+  // (single label when the whole 90-day window falls inside one month)
+  const agendaRange =
+    monthGroups.length > 0
+      ? monthGroups[0].label === monthGroups[monthGroups.length - 1].label
+        ? monthGroups[0].label
+        : `${monthGroups[0].label} – ${monthGroups[monthGroups.length - 1].label}`
+      : "";
+
   const onExportIcs = () => {
     // currently loaded events of the active query, incl. source filters
     const list = groups.flatMap((grp) => grp.events);
@@ -127,6 +136,23 @@ export function AgendaView() {
 
   return (
     <section aria-label={dict.viewAgenda} className="flex flex-col gap-3">
+      {/* print-only masthead — the hero h1 is [data-no-print], so paper needs
+          its own title (hidden removes it from screen AND the a11y tree) */}
+      <div className="hidden print:block border-b border-border pb-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {dict.appName} · {dict.tagline}
+        </p>
+        <h2 className="mt-1 text-2xl font-bold">
+          {dict.viewAgenda}
+          {agendaRange && (
+            <span className="text-base font-semibold text-muted-foreground">
+              {" · "}
+              {agendaRange}
+            </span>
+          )}
+        </h2>
+      </div>
+
       {/* toolbar (hidden in print — the agenda rows themselves stay printable) */}
       <div
         data-no-print
@@ -230,7 +256,14 @@ export function AgendaView() {
 
                 return (
                   <div key={iso} className="mt-2">
-                    <div className="sticky top-[29px] z-10 -mx-1 bg-card/95 px-1 py-1.5 backdrop-blur-sm">
+                    <div
+                      className={cn(
+                        "sticky top-[29px] z-10 -mx-1 px-1 py-1.5 backdrop-blur-sm",
+                        // today's group header gets the accent tint (same 95%
+                        // opacity as the default) so it stands out in the list
+                        cell.isToday ? "bg-accent/95" : "bg-card/95",
+                      )}
+                    >
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                         <span className="text-sm font-bold tabular-nums">
                           {weekdayShort(locale, cell.weekday)} · {activeDateText}

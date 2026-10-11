@@ -279,7 +279,25 @@
 }
 
 /* ---------- Print: clean paper output (Ctrl+P) ---------- */
+
+/* Paper setup: size auto respects the user's paper choice in the print
+   dialog (landscape is the user's decision there — never forced); 10mm
+   margins keep the grid clear of the printer's hardware margin. */
+@page {
+  size: auto;
+  margin: 10mm;
+}
+
 @media print {
+  /* Color fidelity: browsers strip background colors by default, which would
+     wash out the semantic colors (holiday red dates + red-50 cell tints,
+     event dot colors, today's primary ring/tints, agenda badges). Exact
+     print-color-adjust keeps them — dark scrims etc. are irrelevant here
+     (that chrome is [data-no-print] and hidden below). */
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
   :root {
     color-scheme: light;
   }

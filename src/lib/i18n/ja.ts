@@ -207,6 +207,34 @@ export const ja: LocaleDict = {
   zodiacAquarius: '水瓶座',
   zodiacPisces: '魚座',
   zodiacChipDesc: '{month}の星座：{sign}',
+
+  // Offline indicator (PWA round 2)
+  offlineTitle: 'オフライン',
+  offlineDesc: 'キャッシュと内蔵データを表示中',
+
+  // Event notifications (opt-in, settings toggle)
+  settingsNotifications: 'イベント通知',
+  notifDesc: '今日の祝日・イベントを通知する',
+  notifPermissionDenied: '通知がブラウザーに拒否されました',
+  notifGranted: '通知を有効にしました',
+  notifTest: 'テスト通知を送信',
+  notifTitle: 'Celestial — {date}',
+  notifBody: '今日: {names}',
+
+  // Backup / restore (settings → data section)
+  settingsDataSection: 'データ',
+  backupDesc: 'イベントと設定の書き出し・復元',
+  exportData: 'データを書き出す',
+  importBackup: 'バックアップを読み込む',
+  backupExported: 'バックアップをダウンロードしました（{count}件）',
+  backupImported: '{count}件を復元しました',
+  backupImportError: 'バックアップファイルが無効です',
+  backupReplaceConfirm: '既存のイベントをすべてバックアップで置き換えますか？この操作は取り消せません。',
+
+  // Print (month view toolbar + shortcuts dialog)
+  printMonth: '印刷',
+  printDesc: '今月を印刷',
+  shortcutPrint: '現在の表示を印刷',
 };
 
 export const jaGregorianMonths = [

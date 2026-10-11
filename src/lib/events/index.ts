@@ -122,6 +122,81 @@ export function onlineStatus(): { cached: boolean } {
   return { cached: onlineCache.size > 0 };
 }
 
+/** Online US/JP holiday layers for one Gregorian year (from Nager.Date). */
+export type OnlineYearLayers = Record<'us' | 'japan', EventInstance[]>;
+
+/**
+ * PURE builtin-range computation — no db access, no network fetch (the
+ * nager/online cache code above is only exercised through aggregateEvents
+ * on the server). Returns every builtin instance inside [fromIso, toIso]
+ * that the source settings allow, plus the per-year online US/JP layers when
+ * provided. Category semantics (byte-identical to the historical inline
+ * switch of aggregateEvents, which now calls this internally):
+ *   - international / persian-cultural / persian-national: gated by flag;
+ *   - persian-religious: full instances when ON, holiday-only pass-through
+ *     (`holidayOnly: true`, day-off marker without the event) when OFF;
+ *   - us / japan builtins: only when the ONLINE layer has nothing for that
+ *     year (`!onlineUs.length` / `!onlineJp.length`) — with no onlineByYear
+ *     (the client offline-fallback path) the builtin US/JP rules apply.
+ * Order: per-year builtin (iso-sorted by expandBuiltinYear) then that year's
+ * online layers — callers sort the final aggregate. Also imported by the
+ * client-side offline fallback in src/lib/client/api.ts (lazy dynamic
+ * import), so this module must stay client-safe.
+ */
+export function builtinInstancesForRange(
+  fromIso: string,
+  toIso: string,
+  settings: SourceSettings,
+  onlineByYear?: ReadonlyMap<number, OnlineYearLayers>,
+): EventInstance[] {
+  const y1 = Number(fromIso.slice(0, 4));
+  const y2 = Number(toIso.slice(0, 4));
+  const out: EventInstance[] = [];
+  for (let y = y1; y <= y2; y++) {
+    const builtin = expandBuiltinYear(y);
+    // Per-year online availability (fetched once per year, used at most once)
+    const onlineUs = settings.online ? (onlineByYear?.get(y)?.us ?? []) : [];
+    const onlineJp = settings.online ? (onlineByYear?.get(y)?.japan ?? []) : [];
+
+    for (const inst of builtin) {
+      if (inst.iso < fromIso || inst.iso > toIso) continue;
+      switch (inst.category) {
+        case 'international':
+          if (settings.international) out.push(inst);
+          break;
+        case 'persian-cultural':
+          if (settings.persianCultural) out.push(inst);
+          break;
+        case 'persian-national':
+          if (settings.persianNational) out.push(inst);
+          break;
+        case 'persian-religious':
+          if (settings.persianReligious) out.push(inst);
+          else if (inst.isHoliday) out.push({ ...inst, holidayOnly: true });
+          break;
+        case 'us':
+          // builtin US only used when the online layer has nothing for this year
+          if (!onlineUs.length && settings.us) out.push(inst);
+          break;
+        case 'japan':
+          if (!onlineJp.length && settings.japan) out.push(inst);
+          break;
+        default:
+          break;
+      }
+    }
+
+    // online events for this year (pushed once per year, not per instance)
+    if (settings.us && onlineUs.length) {
+      out.push(...onlineUs.filter((e) => e.iso >= fromIso && e.iso <= toIso));
+    }
+    if (settings.japan && onlineJp.length) {
+      out.push(...onlineJp.filter((e) => e.iso >= fromIso && e.iso <= toIso));
+    }
+  }
+  return out;
+}
+
 export interface AggregateResult {
   events: EventInstance[];
   /** true when US/JP came from the live online source */
@@ -141,12 +216,10 @@ export async function aggregateEvents(
   const years: number[] = [];
   for (let y = y1; y <= y2; y++) years.push(y);
 
-  const all: EventInstance[] = [];
-  let usOnline = false;
-  let japanOnline = false;
-
-  // online layer for US/JP
-  const onlineByYear = new Map<number, Record<'us' | 'japan', EventInstance[]>>();
+  // online layer for US/JP (only years where the US fetch succeeded get an
+  // entry — historical quirk kept: a year with only JP data online is
+  // treated as offline for BOTH layers)
+  const onlineByYear = new Map<number, OnlineYearLayers>();
   if (settings.online && (settings.us || settings.japan)) {
     await Promise.all(
       years.map(async (y) => {
@@ -158,48 +231,18 @@ export async function aggregateEvents(
     );
   }
 
-  for (const y of years) {
-    const builtin = expandBuiltinYear(y);
-    // Per-year online availability (fetched once per year, used at most once)
-    const onlineUs = settings.online ? (onlineByYear.get(y)?.us ?? []) : [];
-    const onlineJp = settings.online ? (onlineByYear.get(y)?.japan ?? []) : [];
-    if (onlineUs.length) usOnline = true;
-    if (onlineJp.length) japanOnline = true;
+  // Builtin + online layers via the shared pure function (identical output
+  // to the former inline switch — see builtinInstancesForRange).
+  const all = builtinInstancesForRange(fromIso, toIso, settings, onlineByYear);
 
-    for (const inst of builtin) {
-      if (inst.iso < fromIso || inst.iso > toIso) continue;
-      switch (inst.category) {
-        case 'international':
-          if (settings.international) all.push(inst);
-          break;
-        case 'persian-cultural':
-          if (settings.persianCultural) all.push(inst);
-          break;
-        case 'persian-national':
-          if (settings.persianNational) all.push(inst);
-          break;
-        case 'persian-religious':
-          if (settings.persianReligious) all.push(inst);
-          else if (inst.isHoliday) all.push({ ...inst, holidayOnly: true });
-          break;
-        case 'us':
-          // builtin US only used when the online layer has nothing for this year
-          if (!onlineUs.length && settings.us) all.push(inst);
-          break;
-        case 'japan':
-          if (!onlineJp.length && settings.japan) all.push(inst);
-          break;
-        default:
-          break;
-      }
-    }
-
-    // online events for this year (pushed once per year, not per instance)
-    if (settings.us && onlineUs.length) {
-      all.push(...onlineUs.filter((e) => e.iso >= fromIso && e.iso <= toIso));
-    }
-    if (settings.japan && onlineJp.length) {
-      all.push(...onlineJp.filter((e) => e.iso >= fromIso && e.iso <= toIso));
+  let usOnline = false;
+  let japanOnline = false;
+  if (settings.online) {
+    for (const y of years) {
+      const layers = onlineByYear.get(y);
+      if (!layers) continue;
+      if (layers.us.length) usOnline = true;
+      if (layers.japan.length) japanOnline = true;
     }
   }
 

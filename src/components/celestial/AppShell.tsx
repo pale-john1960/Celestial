@@ -7,6 +7,7 @@ import { useSettings } from "@/store/settings";
 import { useNtpSync } from "@/lib/client/api";
 import { HeroHeader } from "./HeroHeader";
 import { InstallChip } from "./InstallChip";
+import { OfflineChip } from "./OfflineChip";
 
 function useLiveClock() {
   const [now, setNow] = useState(() => new Date());
@@ -74,6 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {ntpLabel}
             </span>
             <InstallChip />
+            <OfflineChip />
           </div>
         </div>
         <div className="h-[env(safe-area-inset-bottom)]" aria-hidden />

@@ -117,7 +117,29 @@ export function YearView() {
 
   return (
     <section aria-label={dict.yearOverview} className="flex flex-col gap-3">
-      <nav aria-label={dict.yearOverview} className="flex items-center gap-2">
+      {/* print-only masthead — the hero h1 is [data-no-print], so paper needs
+          its own title (hidden removes it from screen AND the a11y tree) */}
+      <div className="hidden print:block border-b border-border pb-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {dict.appName} · {dict.tagline}
+        </p>
+        <h2 className="mt-1 text-2xl font-bold">
+          {num(locale, cursor.year)}{" "}
+          <span className="text-base font-semibold text-muted-foreground">
+            {system === "gregorian"
+              ? dict.eraGregorian
+              : system === "jalali"
+                ? dict.eraJalali
+                : dict.eraImperial}
+          </span>
+        </h2>
+      </div>
+
+      <nav
+        data-no-print
+        aria-label={dict.yearOverview}
+        className="flex items-center gap-2"
+      >
         <div className="flex items-center gap-1">
           <Button
             variant="outline"

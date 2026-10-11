@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Printer,
 } from "lucide-react";
 import {
   gregorianToJalali,
@@ -145,6 +146,12 @@ export function MonthView() {
     system === "gregorian"
       ? gregorianMonthName(locale, cursor.month)
       : jalaliMonthName(locale, cursor.month);
+  const era =
+    system === "gregorian"
+      ? dict.eraGregorian
+      : system === "jalali"
+        ? dict.eraJalali
+        : dict.eraImperial;
 
   // Persian zodiac chip: the Jalali month underlying the DISPLAYED month.
   // Middle-day sampling (min(15, length)) — matches the Android derivation:
@@ -191,6 +198,20 @@ export function MonthView() {
 
   return (
     <section aria-label={dict.viewMonth} className="flex flex-col gap-3">
+      {/* print-only masthead — the hero h1 is [data-no-print], so paper needs
+          its own title (hidden removes it from screen AND the a11y tree) */}
+      <div className="hidden print:block border-b border-border pb-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {dict.appName} · {dict.tagline}
+        </p>
+        <h2 className="mt-1 text-2xl font-bold">
+          {monthLabel} {num(locale, cursor.year)}{" "}
+          <span className="text-base font-semibold text-muted-foreground">
+            {era}
+          </span>
+        </h2>
+      </div>
+
       {/* month navigation */}
       <nav
         data-no-print
@@ -297,6 +318,18 @@ export function MonthView() {
         >
           <CalendarDays className="size-4" aria-hidden />
           {dict.goToday}
+        </Button>
+
+        {/* print — pushed to the toolbar's end, away from the nav group */}
+        <Button
+          variant="outline"
+          size="icon"
+          className="ms-auto size-8 rounded-lg border-border bg-card transition-transform active:scale-95"
+          aria-label={dict.printDesc}
+          title={dict.printMonth}
+          onClick={() => window.print()}
+        >
+          <Printer className="size-4" aria-hidden />
         </Button>
       </nav>
 

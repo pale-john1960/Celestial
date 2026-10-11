@@ -207,6 +207,34 @@ export const en: LocaleDict = {
   zodiacAquarius: 'Aquarius',
   zodiacPisces: 'Pisces',
   zodiacChipDesc: 'Zodiac of {month}: {sign}',
+
+  // Offline indicator (PWA round 2)
+  offlineTitle: 'Offline',
+  offlineDesc: 'Showing cached and built-in data',
+
+  // Event notifications (opt-in, settings toggle)
+  settingsNotifications: 'Event notifications',
+  notifDesc: 'Notify me about today\u2019s holidays and events',
+  notifPermissionDenied: 'Notification permission was denied by the browser',
+  notifGranted: 'Notifications enabled',
+  notifTest: 'Send test notification',
+  notifTitle: 'Celestial — {date}',
+  notifBody: 'Today: {names}',
+
+  // Backup / restore (settings → data section)
+  settingsDataSection: 'Data',
+  backupDesc: 'Export or restore your events and settings',
+  exportData: 'Export data',
+  importBackup: 'Import backup',
+  backupExported: 'Backup downloaded ({count} events)',
+  backupImported: 'Restored {count} events',
+  backupImportError: 'Invalid backup file',
+  backupReplaceConfirm: 'Replace all existing events with the backup? This cannot be undone.',
+
+  // Print (month view toolbar + shortcuts dialog)
+  printMonth: 'Print',
+  printDesc: 'Print the current month',
+  shortcutPrint: 'Print current view',
 };
 
 // Gregorian month names (en)

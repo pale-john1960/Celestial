@@ -207,6 +207,34 @@ export const fa: LocaleDict = {
   zodiacAquarius: 'دلو',
   zodiacPisces: 'حوت',
   zodiacChipDesc: 'برج {sign} برای {month}',
+
+  // Offline indicator (PWA round 2)
+  offlineTitle: 'آفلاین',
+  offlineDesc: 'نمایش داده‌های ذخیره‌شده و داخلی',
+
+  // Event notifications (opt-in, settings toggle)
+  settingsNotifications: 'اطلاع‌رسانی رویدادها',
+  notifDesc: 'درباره تعطیلات و رویدادهای امروز به من اطلاع بده',
+  notifPermissionDenied: 'مجوز اعلان‌ها توسط مرورگر رد شد',
+  notifGranted: 'اعلان‌ها فعال شد',
+  notifTest: 'ارسال اعلان آزمایشی',
+  notifTitle: 'سلستیال — {date}',
+  notifBody: 'امروز: {names}',
+
+  // Backup / restore (settings → data section)
+  settingsDataSection: 'داده‌ها',
+  backupDesc: 'برون‌بری یا بازگردانی رویدادها و تنظیمات',
+  exportData: 'برون‌بری داده‌ها',
+  importBackup: 'درون‌بری پشتیبان',
+  backupExported: 'پشتیبان دریافت شد ({count} رویداد)',
+  backupImported: '{count} رویداد بازگردانی شد',
+  backupImportError: 'فایل پشتیبان نامعتبر است',
+  backupReplaceConfirm: 'همه رویدادهای فعلی با پشتیبان جایگزین شود؟ این کار قابل بازگشت نیست.',
+
+  // Print (month view toolbar + shortcuts dialog)
+  printMonth: 'چاپ',
+  printDesc: 'چاپ ماه جاری',
+  shortcutPrint: 'چاپ نمای فعلی',
 };
 
 export const faGregorianMonths = [

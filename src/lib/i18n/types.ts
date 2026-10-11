@@ -228,4 +228,37 @@ export interface LocaleDict {
   zodiacPisces: string;
   /** chip a11y label — "{month}" = displayed month name, "{sign}" = sign name */
   zodiacChipDesc: string;
+
+  // Offline indicator (PWA round 2)
+  offlineTitle: string;
+  offlineDesc: string;
+
+  // Event notifications (opt-in, settings toggle)
+  settingsNotifications: string;
+  notifDesc: string;
+  notifPermissionDenied: string;
+  notifGranted: string;
+  notifTest: string;
+  /** notification title — "{date}" = localized today label */
+  notifTitle: string;
+  /** notification body — "{names}" = comma-joined event names */
+  notifBody: string;
+
+  // Backup / restore (settings → data section)
+  settingsDataSection: string;
+  backupDesc: string;
+  exportData: string;
+  importBackup: string;
+  /** toast — "{count}" = number of exported events */
+  backupExported: string;
+  /** toast — "{count}" = number of restored events */
+  backupImported: string;
+  backupImportError: string;
+  backupReplaceConfirm: string;
+
+  // Print (month view toolbar + shortcuts dialog)
+  printMonth: string;
+  /** aria-label for the print button */
+  printDesc: string;
+  shortcutPrint: string;
 }

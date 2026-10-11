@@ -27,11 +27,16 @@
 - **ICS export** — download the agenda as a standards-compliant `.ics` (RFC 5545: CRLF, octet folding, escaped text) for Google/Apple/Outlook; yearly events export with `RRULE:FREQ=YEARLY`
 - **Next-day-off countdown** — a pill in the header shows the next holiday and how many days away (respects your source toggles)
 - **NTP time sync** — live UDP query to `pool.ntp.org` with offset display
+- **PWA** 📲 — installable (manifest + service worker): works offline — the SW caches visited event ranges and the app shell, and a **client-side builtin engine** serves every builtin event even with no network (an "Offline" chip flags degraded data; data refreshes automatically on reconnect)
+- **Event notifications** 🔔 — opt-in browser notifications for today's holidays & events (settings toggle + test button; fires once per day, respects your source toggles)
+- **Backup & restore** — one-click JSON export of all your events + settings, and restore (replace-all) on any device
+- **Print** 🖨 — `Ctrl+P` or the toolbar printer button prints a clean paper month: print-only masthead, red holidays, colored event dots preserved
+- **Persian zodiac chips** ♎ — month view (zodiac of the month) and Day view (zodiac of the day), all languages incl. RTL
 - **Seasonal artwork** — 2 illustrations per season with gentle CSS animations (spring cherry petals, summer fireflies, autumn leaves, winter snow); respects `prefers-reduced-motion`
 - **Views**: Month (dual-date cells: big Shamsi + small Gregorian), **Week** (7 day-cards), Year, Day (all systems at once), Agenda (90 days)
 - **Keyboard navigation** — arrows to move, `T` today, `M/W/Y/D/A` views, `/` search, `?` shortcut help (works in RTL too)
 - **Flexible settings**: week start (Sat/Sun/Mon), theme (light/dark), per-source toggles, online mode
-- **Motion & polish** — Framer Motion view transitions, staggered month-cell entrance, card hover lifts (all killed under `prefers-reduced-motion`); print-friendly month grid via `Ctrl+P`
+- **Motion & polish** — Framer Motion view transitions, staggered month-cell entrance, card hover lifts, dark-mode hero starfield (all killed under `prefers-reduced-motion`); print-friendly month grid via `Ctrl+P`
 - Android: home-screen **widgets** (date 4×2 + month grid 4×5), **status-bar date** via persistent notification, **manual events + .ics export**, low-power design (no continuous animations)
 
 ## Repository layout

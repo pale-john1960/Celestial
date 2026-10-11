@@ -23,6 +23,7 @@ import { AddEventDialog } from "@/components/celestial/AddEventDialog";
 import { ShortcutsDialog } from "@/components/celestial/ShortcutsDialog";
 import { EventDialog } from "@/components/celestial/EventDialog";
 import { SettingsSheet } from "@/components/celestial/SettingsSheet";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const MIN_YEAR = 1;
 const MAX_YEAR = 3000;
@@ -89,6 +90,10 @@ function CelestialApp() {
   const system = useSettings((s) => s.system);
   const theme = useSettings((s) => s.theme);
   const dict = getDict(locale);
+
+  // opt-in event notifications (permission-gated; checks today's events on
+  // mount / day rollover / tab focus — see src/hooks/use-notifications.ts)
+  useNotifications();
 
   const view = useUi((s) => s.view);
   const rederive = useUi((s) => s.rederive);

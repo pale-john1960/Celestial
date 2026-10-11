@@ -131,6 +131,15 @@ export function WeekView() {
 
   return (
     <section aria-label={dict.viewWeek} className="flex flex-col gap-3">
+      {/* print-only masthead — the hero h1 is [data-no-print], so paper needs
+          its own title (hidden removes it from screen AND the a11y tree) */}
+      <div className="hidden print:block border-b border-border pb-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {dict.appName} · {dict.tagline}
+        </p>
+        <h2 className="mt-1 text-2xl font-bold">{weekLabel}</h2>
+      </div>
+
       {/* week navigation */}
       <nav
         data-no-print

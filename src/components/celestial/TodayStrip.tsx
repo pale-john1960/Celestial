@@ -61,7 +61,7 @@ export function TodayStrip({
         <Button
           size="sm"
           variant="outline"
-          className="rounded-lg font-semibold"
+          className="rounded-lg font-semibold print:hidden"
           onClick={onOpenDay}
         >
           {dict.viewDay}

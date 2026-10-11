@@ -42,6 +42,7 @@ function shortcutRows(dict: LocaleDict): { keys: string[]; label: string }[] {
     { keys: ["D"], label: dict.viewDay },
     { keys: ["A"], label: dict.viewAgenda },
     { keys: ["/", "Ctrl", "K"], label: dict.search },
+    { keys: ["Ctrl", "P"], label: dict.shortcutPrint },
     { keys: ["S"], label: dict.settings },
     { keys: ["?"], label: dict.shortcuts },
   ];

@@ -1,9 +1,10 @@
-// Celestial — settings sheet (system / language / week start / sources / theme / app / time / import)
+// Celestial — settings sheet (system / language / week start / sources / theme / app / notifications / data / time / import)
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, MonitorDown, Upload } from "lucide-react";
-import { getDict } from "@/lib/i18n";
+import { useEffect, useReducer, useRef, useState } from "react";
+import { BellRing, Check, FileDown, MonitorDown, Upload, UploadCloud } from "lucide-react";
+import { toast } from "sonner";
+import { getDict, num } from "@/lib/i18n";
 import type { LocaleDict } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
 import type { SourceFlags } from "@/store/settings";
@@ -22,6 +23,29 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useInstallState, promptInstall } from "@/lib/client/install";
+import { fetchEvents, useInvalidateEvents } from "@/lib/client/api";
+import {
+  exportBackup,
+  parseBackupText,
+  restoreBackup,
+} from "@/lib/client/backup";
+import type { ParsedBackup } from "@/lib/client/backup";
+import { isoDate, todayGregorian } from "@/lib/calendar";
+import {
+  currentPermission,
+  decideNotification,
+  localizedTodayLabel,
+} from "@/hooks/use-notifications";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CategoryLegend } from "./CategoryLegend";
 import { TimeSyncPanel } from "./TimeSyncPanel";
 
@@ -160,6 +184,258 @@ function AppSection() {
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+/**
+ * Event notifications section — opt-in daily "today's events" notification.
+ * Hidden entirely on browsers without the Notification API (Safari < 16 etc.
+ * — documented choice: no dead UI). requestPermission runs INSIDE the change
+ * handler so it stays a user gesture.
+ */
+function NotificationsSection() {
+  const locale = useSettings((s) => s.locale);
+  const notifyEvents = useSettings((s) => s.notifyEvents);
+  const setNotifyEvents = useSettings((s) => s.setNotifyEvents);
+  const dict = getDict(locale) as LocaleDict;
+
+  // permission is read fresh on every render; the reducer forces a re-render
+  // after each toggle attempt (a denied result may not change the flag)
+  const permission = currentPermission();
+  const [, refresh] = useReducer((x: number) => x + 1, 0);
+
+  if (permission === "unsupported") return null;
+
+  // hard-blocked by the browser: keep the switch usable so an enabled flag
+  // can still be turned OFF, but block re-enabling
+  const hardDenied = permission === "denied" && !notifyEvents;
+
+  const onToggle = async (v: boolean) => {
+    if (!v) {
+      setNotifyEvents(false);
+      refresh();
+      return;
+    }
+    // must run inside the user gesture (this change handler)
+    let result: NotificationPermission;
+    try {
+      result = await Notification.requestPermission();
+    } catch {
+      result = "denied";
+    }
+    if (result === "granted") {
+      setNotifyEvents(true);
+      toast.success(dict.notifGranted);
+    } else {
+      setNotifyEvents(false);
+      toast.error(dict.notifPermissionDenied);
+    }
+    refresh();
+  };
+
+  const sendTest = async () => {
+    const s = useSettings.getState();
+    const today = todayGregorian();
+    const todayIso = isoDate(today);
+    const todayLabel = localizedTodayLabel(s.system, s.locale, dict, today);
+    // honest sample: today's real events when cheaply available, tagline else
+    let title = dict.notifTitle.replace("{date}", () => todayLabel);
+    let body: string = dict.tagline;
+    try {
+      const res = await fetchEvents(todayIso, todayIso, s.sources);
+      const decision = decideNotification({
+        notifyEvents: true,
+        permission: "granted",
+        lastNotifiedIso: null, // a test is never blocked by the daily marker
+        todayIso,
+        todayLabel,
+        locale: s.locale,
+        dict,
+        events: res.events,
+      });
+      if (decision?.notify) {
+        title = decision.title;
+        body = decision.body;
+      }
+    } catch {
+      // offline → keep the tagline body
+    }
+    try {
+      new Notification(title, {
+        body,
+        tag: "celestial-today",
+        icon: "/icons/icon-192.png",
+      });
+    } catch {
+      toast.error(dict.error);
+    }
+  };
+
+  return (
+    <>
+      <Separator className="my-4" />
+      <h3 className={sectionTitle()}>{dict.settingsNotifications}</h3>
+      <div className="mt-1.5">
+        <div className="flex items-start justify-between gap-3 rounded-xl p-2.5 hover:bg-accent">
+          <div className="min-w-0">
+            <Label
+              htmlFor="notify-events"
+              className="cursor-pointer text-sm font-medium leading-tight"
+            >
+              {dict.settingsNotifications}
+            </Label>
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+              {dict.notifDesc}
+            </p>
+            {permission === "denied" && (
+              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                {dict.notifPermissionDenied}
+              </p>
+            )}
+          </div>
+          <Switch
+            id="notify-events"
+            checked={notifyEvents}
+            disabled={hardDenied}
+            onCheckedChange={(v) => void onToggle(v)}
+            className="mt-0.5 shrink-0"
+          />
+        </div>
+        {notifyEvents && permission === "granted" && (
+          <div className="px-2.5 pb-1.5 pt-0.5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 rounded-lg text-xs"
+              onClick={() => void sendTest()}
+            >
+              <BellRing className="size-3.5" aria-hidden />
+              {dict.notifTest}
+            </Button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/**
+ * Data section — backup (export) / restore (import) of events + settings.
+ * Restore is replace-all on the server; a confirm dialog guards it.
+ */
+function DataSection() {
+  const locale = useSettings((s) => s.locale);
+  const dict = getDict(locale) as LocaleDict;
+  const invalidate = useInvalidateEvents();
+  const backupInputRef = useRef<HTMLInputElement>(null);
+  const [pendingBackup, setPendingBackup] = useState<ParsedBackup | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const onExport = async () => {
+    setBusy(true);
+    try {
+      const count = await exportBackup();
+      toast.success(
+        dict.backupExported.replace("{count}", () => num(locale, count)),
+      );
+    } catch {
+      toast.error(dict.error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onBackupFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file
+    if (!file) return;
+    void (async () => {
+      try {
+        const backup = parseBackupText(await file.text());
+        setPendingBackup(backup); // → confirm dialog
+      } catch {
+        toast.error(dict.backupImportError);
+      }
+    })();
+  };
+
+  const confirmRestore = async () => {
+    const backup = pendingBackup;
+    setPendingBackup(null);
+    if (!backup) return;
+    setBusy(true);
+    try {
+      const count = await restoreBackup(backup);
+      invalidate();
+      toast.success(
+        dict.backupImported.replace("{count}", () => num(locale, count)),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      toast.error(message || dict.backupImportError);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <Separator className="my-4" />
+      <h3 className={sectionTitle()}>{dict.settingsDataSection}</h3>
+      <p className="mt-1.5 px-2.5 text-xs leading-snug text-muted-foreground">
+        {dict.backupDesc}
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
+        <Button
+          variant="outline"
+          className="justify-start rounded-xl"
+          disabled={busy}
+          onClick={() => void onExport()}
+        >
+          <FileDown className="size-4" aria-hidden />
+          {dict.exportData}
+        </Button>
+        <Button
+          variant="outline"
+          className="justify-start rounded-xl"
+          disabled={busy}
+          onClick={() => backupInputRef.current?.click()}
+        >
+          <UploadCloud className="size-4" aria-hidden />
+          {dict.importBackup}
+        </Button>
+      </div>
+      <input
+        ref={backupInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="sr-only"
+        onChange={onBackupFile}
+      />
+
+      {/* replace-all confirmation */}
+      <AlertDialog
+        open={pendingBackup !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingBackup(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dict.importBackup}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dict.backupReplaceConfirm}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{dict.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmRestore()}>
+              {dict.importBackup}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -319,6 +595,12 @@ export function SettingsSheet() {
 
           {/* app (install + offline) */}
           <AppSection />
+
+          {/* event notifications (opt-in daily notification) */}
+          <NotificationsSection />
+
+          {/* data (backup / restore) */}
+          <DataSection />
 
           <Separator className="my-4" />
 

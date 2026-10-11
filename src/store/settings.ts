@@ -29,11 +29,14 @@ interface SettingsState {
   weekStart: WeekStartCode;
   sources: SourceFlags;
   theme: ThemeCode;
+  /** event notifications (opt-in) — daily "today's events" browser notification */
+  notifyEvents: boolean;
   setLocale: (locale: Locale) => void;
   setSystem: (system: SystemCode) => void;
   setWeekStart: (weekStart: WeekStartCode) => void;
   setSource: (key: keyof SourceFlags, value: boolean) => void;
   setTheme: (theme: ThemeCode) => void;
+  setNotifyEvents: (value: boolean) => void;
 }
 
 const allSources: SourceFlags = {
@@ -55,6 +58,10 @@ export const useSettings = create<SettingsState>()(
       weekStart: defaultWeekStartFor("en"),
       sources: { ...allSources },
       theme: "light",
+      // persisted version stays 1 — zustand's persist default-merges the
+      // stored state over these defaults, so existing users simply gain the
+      // new `notifyEvents: false` key without any migration
+      notifyEvents: false,
       setLocale: (locale) => {
         const prev = get().locale;
         const prevDefault = defaultWeekStartFor(prev);
@@ -69,6 +76,7 @@ export const useSettings = create<SettingsState>()(
       setSource: (key, value) =>
         set((s) => ({ sources: { ...s.sources, [key]: value } })),
       setTheme: (theme) => set({ theme }),
+      setNotifyEvents: (value) => set({ notifyEvents: value }),
     }),
     {
       name: "celestial-settings",
