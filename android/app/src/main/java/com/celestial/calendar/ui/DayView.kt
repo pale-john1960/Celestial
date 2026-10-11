@@ -22,16 +22,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CalendarSystem
 import com.celestial.calendar.engine.CelestialDate
 import com.celestial.calendar.engine.DateFormats
+import com.celestial.calendar.engine.MoonEngine
 import com.celestial.calendar.events.EventInstance
+import kotlin.math.roundToInt
 
 /**
  * Celestial — day view: full date in all systems + hijri + (imperial:
- * devotional day name), "Day off" banner for holidays, and the event list.
+ * devotional day name), "Day off" banner for holidays, the moon phase card
+ * and the event list.
  */
 @Composable
 fun DayView(
@@ -92,6 +96,10 @@ fun DayView(
 
         item {
             AllSystemsCard(system, locale, date, strings)
+        }
+
+        item {
+            MoonCard(date, strings)
         }
 
         item {
@@ -176,5 +184,46 @@ private fun SystemLine(label: String, value: String, active: Boolean) {
             fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
             color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         )
+    }
+}
+
+/** Moon phase card: emoji, localized phase name, illumination % and moon age. */
+@Composable
+private fun MoonCard(date: CelestialDate, strings: LocalStrings) {
+    val moon = remember(date.iso) { MoonEngine.infoFor(date.gregorian) }
+    val illum = (moon.illum * 100).roundToInt()
+    val age = moon.ageDays.roundToInt()
+    androidx.compose.material3.Surface(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+    ) {
+        Row(
+            Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(MoonEngine.PHASE_EMOJI[moon.phaseIndex], fontSize = 22.sp)
+            Column {
+                Text(
+                    strings.moonPhaseTitle,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    strings.moonPhaseName(moon.phaseIndex),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    "${strings.moonIllumination(illum)} · ${strings.moonAge(age)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }

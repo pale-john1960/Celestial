@@ -2,6 +2,7 @@ package com.celestial.calendar.ui
 
 import android.Manifest
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -65,6 +66,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
         CelestialTheme(themeMode = s.themeMode) {
             val strings = rememberStrings(s.locale)
             var showSettings by remember { mutableStateOf(false) }
+            var showAddEvent by remember { mutableStateOf(false) }
             val todayIso = remember { viewModel.todayIso() }
             val eventsByIso by viewModel.eventsByIso.collectAsState()
 
@@ -93,6 +95,17 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                     ViewKind.MONTH, ViewKind.YEAR -> {
                         val months = CalendarFacade.yearMonths(s.system, viewModel.navYear)
                         setOf(months.first().second.year, months.last().second.year)
+                    }
+                    ViewKind.WEEK -> {
+                        // load the years spanned by the displayed week
+                        val base = viewModel.selectedIso?.let { Jdn.parseIso(it) }
+                            ?: viewModel.todayGregorian()
+                        val baseJdn = Jdn.toJdn(base)
+                        val offset = ((Jdn.jdnWeekday(baseJdn) - s.weekStart.weekday) % 7 + 7) % 7
+                        setOf(
+                            Jdn.d2g(baseJdn - offset).year,
+                            Jdn.d2g(baseJdn - offset + 6).year,
+                        )
                     }
                     ViewKind.DAY -> {
                         val g = viewModel.selectedIso?.let { Jdn.parseIso(it) }
@@ -127,6 +140,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                             onNextMonth = { viewModel.shiftMonth(1) },
                             onGoToday = { viewModel.goToday() },
                             onOpenSettings = { showSettings = true },
+                            onAddEvent = { showAddEvent = true },
                         )
 
                         // view content — single 300 ms alpha transition (no other animations)
@@ -158,6 +172,20 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                             else -> viewModel.selectDay(iso)
                                         }
                                     },
+                                )
+
+                                ViewKind.WEEK -> WeekView(
+                                    system = s.system,
+                                    locale = s.locale,
+                                    weekStart = s.weekStart,
+                                    todayIso = todayIso,
+                                    selectedIso = viewModel.selectedIso ?: todayIso,
+                                    eventsByIso = eventsByIso,
+                                    strings = strings,
+                                    onPrevWeek = { viewModel.shiftWeek(-1) },
+                                    onNextWeek = { viewModel.shiftWeek(1) },
+                                    onThisWeek = { viewModel.goThisWeek() },
+                                    onOpenDay = { iso -> viewModel.openDay(iso) },
                                 )
 
                                 ViewKind.YEAR -> YearView(
@@ -222,6 +250,21 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                     viewModel = viewModel,
                     settings = s,
                     onDismiss = { showSettings = false },
+                )
+            }
+
+            if (showAddEvent) {
+                AddEventDialog(
+                    system = s.system,
+                    locale = s.locale,
+                    selectedIso = viewModel.selectedIso ?: todayIso,
+                    strings = strings,
+                    onSave = { title, description, isHoliday, iso ->
+                        viewModel.addManualEvent(title, description, isHoliday, iso)
+                        showAddEvent = false
+                        Toast.makeText(context, strings.addEventSaved, Toast.LENGTH_SHORT).show()
+                    },
+                    onDismiss = { showAddEvent = false },
                 )
             }
         }

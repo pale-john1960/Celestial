@@ -40,6 +40,9 @@ interface ImportedEventDao {
     @Insert
     suspend fun insertAll(events: List<ImportedEvent>)
 
+    @Query("DELETE FROM imported_events WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     @Query("DELETE FROM imported_events")
     suspend fun clear()
 

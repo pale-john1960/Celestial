@@ -128,7 +128,9 @@ export function EventDialog() {
             )}
 
             <p className="text-xs text-muted-foreground">
-              {sourceBadgeText(dict, locale)}
+              {activeEvent.source === "manual"
+                ? `✍️ ${dict.sourceManual}`
+                : sourceBadgeText(dict, locale)}
               {activeEvent.source === "online" && activeEvent.provider
                 ? ` · ${activeEvent.provider}`
                 : ""}

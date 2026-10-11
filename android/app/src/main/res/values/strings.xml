@@ -139,4 +139,38 @@
     <string name="prev_year">Previous year</string>
     <string name="next_year">Next year</string>
     <string name="select_date">Select date</string>
+
+    <!-- Week view (Task 6-b) -->
+    <string name="view_week">Week</string>
+    <string name="this_week">This week</string>
+    <string name="prev_week">Previous week</string>
+    <string name="next_week">Next week</string>
+
+    <!-- Moon phases (Task 6-b) -->
+    <string name="moon_phase_title">Moon phase</string>
+    <string name="moon_new">New moon</string>
+    <string name="moon_waxing_crescent">Waxing crescent</string>
+    <string name="moon_first_quarter">First quarter</string>
+    <string name="moon_waxing_gibbous">Waxing gibbous</string>
+    <string name="moon_full">Full moon</string>
+    <string name="moon_waning_gibbous">Waning gibbous</string>
+    <string name="moon_last_quarter">Last quarter</string>
+    <string name="moon_waning_crescent">Waning crescent</string>
+    <string name="moon_illumination">Illumination %1$d%%</string>
+    <string name="moon_age">Moon age %1$d days</string>
+
+    <!-- Manual events (Task 6-b) -->
+    <string name="add_event">Add event</string>
+    <string name="add_event_title">New event</string>
+    <string name="add_event_name">Title</string>
+    <string name="add_event_desc">Description</string>
+    <string name="add_event_holiday">Mark as day off</string>
+    <string name="add_event_date">Date (Gregorian yyyy-mm-dd)</string>
+    <string name="add_event_saved">Event added</string>
+    <string name="add_event_invalid_date">Invalid date</string>
+    <string name="source_manual">Manual</string>
+
+    <!-- ICS export (Task 6-b) -->
+    <string name="export_ics">Export events (.ics)</string>
+    <string name="export_ics_done">Exported %1$d events</string>
 </resources>

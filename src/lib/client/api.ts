@@ -136,6 +136,25 @@ export async function importEventsFile(file: File): Promise<ImportResult> {
   return data;
 }
 
+export interface CustomEventInput {
+  iso: string;
+  title: string;
+  description?: string;
+  isHoliday?: boolean;
+}
+
+/** Create a single manual event (✍️) — POST /api/events/custom */
+export async function createCustomEvent(
+  input: CustomEventInput,
+): Promise<ImportedRow> {
+  const res = await fetchJson<{ event: ImportedRow }>("/api/events/custom", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return res.event;
+}
+
 export async function deleteImportedEvents(opts: {
   id?: string;
   all?: boolean;

@@ -154,6 +154,43 @@ class LocalStrings(private val res: Resources) {
     val nextYear get() = res.getString(R.string.next_year)
     val selectDate get() = res.getString(R.string.select_date)
 
+    // ---- Week view / moon phases / manual events / ICS export (Task 6-b) ----
+    val viewWeek get() = res.getString(R.string.view_week)
+    val thisWeek get() = res.getString(R.string.this_week)
+    val prevWeek get() = res.getString(R.string.prev_week)
+    val nextWeek get() = res.getString(R.string.next_week)
+
+    val moonPhaseTitle get() = res.getString(R.string.moon_phase_title)
+
+    fun moonPhaseName(phaseIndex: Int): String = res.getString(
+        when (phaseIndex) {
+            0 -> R.string.moon_new
+            1 -> R.string.moon_waxing_crescent
+            2 -> R.string.moon_first_quarter
+            3 -> R.string.moon_waxing_gibbous
+            4 -> R.string.moon_full
+            5 -> R.string.moon_waning_gibbous
+            6 -> R.string.moon_last_quarter
+            else -> R.string.moon_waning_crescent
+        },
+    )
+
+    fun moonIllumination(percent: Int) = res.getString(R.string.moon_illumination, percent)
+    fun moonAge(days: Int) = res.getString(R.string.moon_age, days)
+
+    val addEvent get() = res.getString(R.string.add_event)
+    val addEventTitle get() = res.getString(R.string.add_event_title)
+    val addEventName get() = res.getString(R.string.add_event_name)
+    val addEventDesc get() = res.getString(R.string.add_event_desc)
+    val addEventHoliday get() = res.getString(R.string.add_event_holiday)
+    val addEventDate get() = res.getString(R.string.add_event_date)
+    val addEventSaved get() = res.getString(R.string.add_event_saved)
+    val addEventInvalidDate get() = res.getString(R.string.add_event_invalid_date)
+    val sourceManual get() = res.getString(R.string.source_manual)
+
+    val exportIcs get() = res.getString(R.string.export_ics)
+    fun exportIcsDone(count: Int) = res.getString(R.string.export_ics_done, count)
+
     fun seasonName(season: Season): String = when (season) {
         Season.SPRING -> seasonSpring
         Season.SUMMER -> seasonSummer

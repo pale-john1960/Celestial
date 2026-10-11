@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 function rowToInstance(row: ImportedEvent): EventInstance {
   const g = parseIso(row.iso) ?? { year: 1970, month: 1, day: 1 };
+  const manual = row.sourceName === "manual";
   return {
     id: `imp-${row.id}`,
     ruleId: "imported",
@@ -18,14 +19,15 @@ function rowToInstance(row: ImportedEvent): EventInstance {
     iso: row.iso,
     gregorian: g,
     isHoliday: row.isHoliday,
-    emoji: "📥",
+    emoji: manual ? "✍️" : "📥",
     names: { en: row.title, ja: row.title, fa: row.title },
     descriptions: {
       en: row.description ?? "",
       ja: row.description ?? "",
       fa: row.description ?? "",
     },
-    source: "imported",
+    source: manual ? "manual" : "imported",
+    provider: manual ? "manual" : undefined,
     dbId: row.id,
   };
 }

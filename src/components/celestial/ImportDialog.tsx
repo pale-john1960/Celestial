@@ -140,6 +140,7 @@ export function ImportDialog() {
           {...dropHandlers}
           className={cn(
             "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
             dragging
               ? "border-primary bg-primary/10"
               : "border-border hover:border-primary/50 hover:bg-accent/50",
@@ -313,7 +314,7 @@ function ImportedRowItem({
   return (
     <li className="flex items-center gap-2.5 rounded-xl border border-border bg-card p-2.5">
       <span aria-hidden className="text-lg leading-none">
-        {row.isHoliday ? "🌙" : "📥"}
+        {row.sourceName === "manual" ? "✍️" : row.isHoliday ? "🌙" : "📥"}
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium" dir="auto">

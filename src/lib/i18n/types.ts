@@ -12,12 +12,17 @@ export interface LocaleDict {
 
   // navigation / views
   viewMonth: string;
+  viewWeek: string;
   viewYear: string;
   viewDay: string;
   viewAgenda: string;
   today: string;
   search: string;
   settings: string;
+  refresh: string;
+  prevWeek: string;
+  nextWeek: string;
+  thisWeek: string;
   close: string;
   save: string;
   cancel: string;
@@ -123,4 +128,38 @@ export interface LocaleDict {
   prevMonth: string;
   nextMonth: string;
   selectDate: string;
+
+  // moon phases
+  moonPhaseTitle: string;
+  moonNew: string;
+  moonWaxingCrescent: string;
+  moonFirstQuarter: string;
+  moonWaxingGibbous: string;
+  moonFull: string;
+  moonWaningGibbous: string;
+  moonLastQuarter: string;
+  moonWaningCrescent: string;
+  moonIllumination: string;
+  moonAge: string;
+
+  // manual event creation
+  addEvent: string;
+  addEventTitle: string;
+  addEventDate: string;
+  addEventName: string;
+  addEventNamePh: string;
+  addEventDesc: string;
+  addEventHoliday: string;
+  addEventSaved: string;
+  sourceManual: string;
+
+  // keyboard shortcuts
+  shortcuts: string;
+  shortcutsPrev: string;
+  shortcutsNext: string;
+  shortcutsNote: string;
+
+  // ICS export
+  exportIcs: string;
+  exportIcsDone: string;
 }

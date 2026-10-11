@@ -226,6 +226,11 @@
   background: hsl(336 30% 55% / 0.6);
 }
 
+/* Text selection — magenta tint (works in light & dark) */
+::selection {
+  background: rgba(194, 24, 91, 0.25);
+}
+
 /* Respect users who prefer no motion */
 @media (prefers-reduced-motion: reduce) {
   .animate-kenburns,
@@ -234,5 +239,53 @@
   .celestial-particle,
   .celestial-firefly {
     animation: none !important;
+  }
+}
+
+/* ---------- Print: clean paper output (Ctrl+P) ---------- */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+  body {
+    background: #fff !important;
+  }
+  /* dark theme → print with the light palette */
+  .dark {
+    --background: hsl(40 60% 98%);
+    --foreground: hsl(0 0% 10%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(0 0% 10%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(0 0% 10%);
+    --primary: hsl(336 78% 43%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(34 25% 92%);
+    --secondary-foreground: hsl(336 45% 30%);
+    --muted: hsl(35 30% 95%);
+    --muted-foreground: hsl(0 0% 40%);
+    --accent: hsl(336 65% 95%);
+    --accent-foreground: hsl(336 78% 35%);
+    --border: hsl(34 25% 89%);
+    --input: hsl(34 25% 86%);
+    --ring: hsl(336 78% 52%);
+  }
+  /* chrome hidden in print: hero, toolbars, tabs, footer, legend */
+  [data-no-print] {
+    display: none !important;
+  }
+  /* month grid cells must not split across pages */
+  [role="gridcell"],
+  [role="row"] {
+    break-inside: avoid;
+  }
+  /* agenda list: unclip the scroll container so all rows print */
+  [data-agenda-scroll] {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .celestial-particle,
+  .celestial-firefly {
+    display: none !important;
   }
 }

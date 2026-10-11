@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
@@ -50,7 +51,7 @@ import com.celestial.calendar.engine.DateFormats
  * Static seasonal banner (image per season, 2 variants alternating through the
  * month — no cross-fade animation on Android, per the low-power rules), month
  * name + year in the active system, secondary line with the other systems,
- * and the Month/Year/Day/Agenda view switcher.
+ * and the Month/Week/Year/Day/Agenda view switcher.
  */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +68,7 @@ fun HeroHeader(
     onNextMonth: () -> Unit,
     onGoToday: () -> Unit,
     onOpenSettings: () -> Unit,
+    onAddEvent: () -> Unit,
 ) {
     val season = Season.ofGregorianMonth(today.gregorian.month)
     val variant = if (today.gregorian.day >= 15) 2 else 1
@@ -129,6 +131,12 @@ fun HeroHeader(
                     .align(Alignment.TopEnd)
                     .padding(4.dp)
             ) {
+                IconButton(onClick = onAddEvent) {
+                    Icon(
+                        Icons.Filled.Add, contentDescription = strings.addEvent,
+                        tint = Color.White,
+                    )
+                }
                 IconButton(onClick = onGoToday) {
                     Icon(
                         Icons.Filled.Today, contentDescription = strings.goToday,
@@ -204,6 +212,7 @@ fun HeroHeader(
             ) {
                 val entries = listOf(
                     ViewKind.MONTH to strings.viewMonth,
+                    ViewKind.WEEK to strings.viewWeek,
                     ViewKind.YEAR to strings.viewYear,
                     ViewKind.DAY to strings.viewDay,
                     ViewKind.AGENDA to strings.viewAgenda,

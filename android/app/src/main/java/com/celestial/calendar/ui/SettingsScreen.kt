@@ -6,20 +6,29 @@ import android.Manifest
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -46,6 +55,8 @@ import com.celestial.calendar.data.ThemeMode
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarSystem
 import com.celestial.calendar.engine.WeekStart
+import com.celestial.calendar.events.IcsBuilder
+import com.celestial.calendar.events.IcsEvent
 import com.celestial.calendar.events.SourceSettings
 import com.celestial.calendar.statusbar.StatusBarDate
 import java.text.SimpleDateFormat
@@ -55,7 +66,8 @@ import java.util.Locale
 /**
  * Celestial — settings bottom sheet: calendar system, language, week start,
  * theme, source toggles (with the religious-off note), status-bar date
- * toggle, NTP panel, import panel and the imported events list.
+ * toggle, NTP panel, import panel with the imported/manual events list
+ * (per-row delete) and the .ics export.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -336,15 +348,27 @@ fun SettingsSheet(
                             .padding(vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            if (ev.isHoliday) "🌙 ${ev.jalaliIso}" else ev.jalaliIso,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            "  ${ev.title}",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                buildString {
+                                    append(if (ev.sourceName == "manual") "✍️" else "📥")
+                                    if (ev.isHoliday) append(" 🌙")
+                                    append("  ").append(ev.jalaliIso)
+                                    ev.sourceName?.takeIf { it.isNotBlank() }?.let {
+                                        append("  ·  ").append(it)
+                                    }
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                "  ${ev.title}",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                        IconButton(onClick = { viewModel.deleteImported(ev.id) }) {
+                            Icon(Icons.Filled.Close, contentDescription = strings.remove)
+                        }
                     }
                 }
                 if (imported.size > 12) {
@@ -360,6 +384,52 @@ fun SettingsSheet(
                 ) {
                     Text(strings.deleteImported, color = MaterialTheme.colorScheme.error)
                 }
+            }
+
+            // ---------------------------------------------------- export (.ics)
+            val icsLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.CreateDocument("text/calendar")
+            ) { uri: Uri? ->
+                if (uri != null) {
+                    try {
+                        val events = viewModel.exportableEvents()
+                        val content = IcsBuilder.build(
+                            events.map { ev ->
+                                IcsEvent(
+                                    uid = ev.id,
+                                    iso = ev.iso,
+                                    title = ev.localName(locale.code),
+                                    description = ev.localDescription(locale.code),
+                                    isHoliday = ev.isHoliday,
+                                    sourceLabel = CommonUi.sourceLabel(ev, strings),
+                                )
+                            },
+                            System.currentTimeMillis(),
+                        )
+                        context.contentResolver.openOutputStream(uri)?.use { out ->
+                            out.write(content.toByteArray(Charsets.UTF_8))
+                        }
+                        Toast.makeText(
+                            context,
+                            strings.exportIcsDone(events.size),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    } catch (_: Exception) {
+                        Toast.makeText(context, strings.errorGeneric, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            OutlinedButton(
+                onClick = { icsLauncher.launch("celestial-events.ics") },
+                modifier = Modifier.padding(top = 4.dp),
+            ) {
+                Icon(
+                    Icons.Outlined.Share,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(strings.exportIcs)
             }
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))

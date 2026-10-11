@@ -2,7 +2,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { AlertTriangle, CalendarClock } from "lucide-react";
+import { motion } from "framer-motion";
+import { AlertTriangle, CalendarClock, Download, RotateCw } from "lucide-react";
+import { toast } from "sonner";
 import {
   buildDayCell,
   isoDate,
@@ -14,6 +16,7 @@ import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { useEvents } from "@/lib/client/api";
+import { buildIcs } from "@/lib/client/ics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,7 +42,11 @@ export function AgendaView() {
   const from = isoDate(today);
   const to = isoDate(fromJdn(todayJdn + DAYS_AHEAD - 1));
 
-  const { data, isLoading, isError, refetch } = useEvents(from, to, sources);
+  const { data, isLoading, isError, isFetching, refetch } = useEvents(
+    from,
+    to,
+    sources,
+  );
 
   const groups = useMemo(() => {
     const map = new Map<string, EventInstance[]>();
@@ -67,13 +74,61 @@ export function AgendaView() {
     [locale],
   );
 
+  const onExportIcs = () => {
+    // currently loaded events of the active query, incl. source filters
+    const list = groups.flatMap((grp) => grp.events);
+    if (list.length === 0) return;
+    const ics = buildIcs(list, locale, dict);
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `celestial-agenda-${from}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(dict.exportIcsDone.replace("{n}", num(locale, list.length)));
+  };
+
   return (
     <section aria-label={dict.viewAgenda} className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <CalendarClock className="size-4" aria-hidden />
-        <span>
-          {dict.upcoming} · {num(locale, DAYS_AHEAD)} {dict.days}
-        </span>
+      {/* toolbar (hidden in print — the agenda rows themselves stay printable) */}
+      <div
+        data-no-print
+        className="flex flex-wrap items-center justify-between gap-2"
+      >
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <CalendarClock className="size-4" aria-hidden />
+          <span>
+            {dict.upcoming} · {num(locale, DAYS_AHEAD)} {dict.days}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-8 rounded-lg border-border bg-card transition-transform active:scale-95"
+            aria-label={dict.refresh}
+            onClick={() => void refetch()}
+          >
+            <RotateCw
+              className={cn("size-4", isFetching && "animate-spin")}
+              aria-hidden
+            />
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 rounded-lg font-semibold transition-transform active:scale-95"
+            onClick={onExportIcs}
+            disabled={groups.length === 0}
+            title={groups.length === 0 ? dict.noEvents : dict.exportIcs}
+          >
+            <Download className="size-4" aria-hidden />
+            {dict.exportIcs}
+          </Button>
+        </div>
       </div>
 
       {isLoading && (
@@ -96,13 +151,19 @@ export function AgendaView() {
         </div>
       )}
       {!isLoading && !isError && groups.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          {dict.noEvents}
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-muted-foreground">
+          <span aria-hidden className="text-3xl leading-none">
+            🗓️
+          </span>
+          <p className="text-sm">{dict.noEvents}</p>
         </div>
       )}
 
       {groups.length > 0 && (
-        <div className="max-h-[70vh] overflow-y-auto rounded-2xl border border-border bg-card p-2 sm:p-3">
+        <div
+          data-agenda-scroll
+          className="max-h-[70vh] overflow-y-auto rounded-2xl border border-border bg-card p-2 sm:p-3"
+        >
           {groups.map(({ iso, events }) => {
             const g = {
               year: Number(iso.slice(0, 4)),
@@ -129,7 +190,7 @@ export function AgendaView() {
               <div key={iso} className="mb-2 last:mb-0">
                 <div className="sticky top-0 z-10 -mx-1 bg-card/95 px-1 py-1.5 backdrop-blur-sm">
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <span className="text-sm font-bold">
+                    <span className="text-sm font-bold tabular-nums">
                       {weekdayShort(locale, cell.weekday)} · {activeDateText}
                     </span>
                     <span className="text-xs text-muted-foreground" dir="auto">
@@ -150,13 +211,15 @@ export function AgendaView() {
                 </div>
                 <div className="mt-1.5 flex flex-col gap-1.5">
                   {events.map((e) => (
-                    <button
+                    <motion.button
                       key={e.id}
                       type="button"
+                      whileHover={{ y: -2 }}
+                      transition={{ duration: 0.15 }}
                       onClick={() => setEventDialog(e)}
                       className={cn(
-                        "flex w-full items-center gap-3 border border-border bg-background p-3 text-start rounded-e-xl rounded-s-sm transition-colors hover:bg-accent",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        "flex w-full cursor-pointer items-center gap-3 border border-border bg-background p-3 text-start rounded-e-xl rounded-s-sm transition-colors hover:bg-accent",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                       )}
                       style={{
                         borderInlineStartWidth: "3px",
@@ -177,7 +240,7 @@ export function AgendaView() {
                           {dict.holidayBadge}
                         </Badge>
                       )}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               </div>

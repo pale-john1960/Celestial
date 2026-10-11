@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.events.EventCategory
 import com.celestial.calendar.events.EventInstance
+import com.celestial.calendar.events.EventSource
 import com.celestial.calendar.ui.theme.categoryColor
 
 /** Shared small UI pieces (event dots, category chips, day-off banner, event card). */
@@ -50,8 +51,13 @@ object CommonUi {
     }
 
     @Composable
-    fun CategoryChip(category: EventCategory, locale: AppLocale, strings: LocalStrings) {
-        val label = when (category) {
+    fun CategoryChip(
+        category: EventCategory,
+        locale: AppLocale,
+        strings: LocalStrings,
+        manual: Boolean = false,
+    ) {
+        val label = if (manual) strings.sourceManual else when (category) {
             EventCategory.INTERNATIONAL -> strings.srcInternational
             EventCategory.US -> strings.srcUs
             EventCategory.JAPAN -> strings.srcJapan
@@ -145,7 +151,7 @@ object CommonUi {
                         fontWeight = FontWeight.SemiBold,
                     )
                     Box(Modifier.weight(1f))
-                    CategoryChip(event.category, locale, strings)
+                    CategoryChip(event.category, locale, strings, manual = event.manual)
                 }
                 val desc = event.localDescription(locale.code)
                 if (desc.isNotBlank()) {
@@ -157,6 +163,21 @@ object CommonUi {
                     )
                 }
             }
+        }
+    }
+
+    /** Localized source label for an event (used by the ICS export + chips). */
+    fun sourceLabel(event: EventInstance, strings: LocalStrings): String = when {
+        event.manual -> strings.sourceManual
+        event.source == EventSource.IMPORTED -> strings.srcImported
+        else -> when (event.category) {
+            EventCategory.INTERNATIONAL -> strings.srcInternational
+            EventCategory.US -> strings.srcUs
+            EventCategory.JAPAN -> strings.srcJapan
+            EventCategory.PERSIAN_CULTURAL -> strings.culturalBadge
+            EventCategory.PERSIAN_RELIGIOUS -> strings.religiousBadge
+            EventCategory.PERSIAN_NATIONAL -> strings.nationalBadge
+            EventCategory.IMPORTED -> strings.srcImported
         }
     }
 

@@ -139,4 +139,38 @@
     <string name="prev_year">前の年</string>
     <string name="next_year">次の年</string>
     <string name="select_date">日付を選択</string>
+
+    <!-- Week view (Task 6-b) -->
+    <string name="view_week">週</string>
+    <string name="this_week">今週</string>
+    <string name="prev_week">前の週</string>
+    <string name="next_week">次の週</string>
+
+    <!-- Moon phases (Task 6-b) -->
+    <string name="moon_phase_title">月相</string>
+    <string name="moon_new">新月</string>
+    <string name="moon_waxing_crescent">三日月</string>
+    <string name="moon_first_quarter">上弦の月</string>
+    <string name="moon_waxing_gibbous">盈凸月</string>
+    <string name="moon_full">満月</string>
+    <string name="moon_waning_gibbous">虧凸月</string>
+    <string name="moon_last_quarter">下弦の月</string>
+    <string name="moon_waning_crescent">有明月</string>
+    <string name="moon_illumination">輝面比 %1$d%%</string>
+    <string name="moon_age">月齢 %1$d日</string>
+
+    <!-- Manual events (Task 6-b) -->
+    <string name="add_event">イベントを追加</string>
+    <string name="add_event_title">新しいイベント</string>
+    <string name="add_event_name">タイトル</string>
+    <string name="add_event_desc">説明</string>
+    <string name="add_event_holiday">休日にする</string>
+    <string name="add_event_date">日付(西暦 yyyy-mm-dd)</string>
+    <string name="add_event_saved">イベントを追加しました</string>
+    <string name="add_event_invalid_date">日付が無効です</string>
+    <string name="source_manual">手動</string>
+
+    <!-- ICS export (Task 6-b) -->
+    <string name="export_ics">イベントを書き出す (.ics)</string>
+    <string name="export_ics_done">%1$d件のイベントを書き出しました</string>
 </resources>

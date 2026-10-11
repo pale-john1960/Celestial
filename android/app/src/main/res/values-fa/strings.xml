@@ -139,4 +139,38 @@
     <string name="prev_year">سال پیشین</string>
     <string name="next_year">سال بعد</string>
     <string name="select_date">انتخاب تاریخ</string>
+
+    <!-- Week view (Task 6-b) -->
+    <string name="view_week">هفته</string>
+    <string name="this_week">این هفته</string>
+    <string name="prev_week">هفته پیشین</string>
+    <string name="next_week">هفته بعد</string>
+
+    <!-- Moon phases (Task 6-b) -->
+    <string name="moon_phase_title">فاز ماه</string>
+    <string name="moon_new">ماه نو</string>
+    <string name="moon_waxing_crescent">هلال صعودی</string>
+    <string name="moon_first_quarter">ربع اول</string>
+    <string name="moon_waxing_gibbous">ماه گیب صعودی</string>
+    <string name="moon_full">ماه کامل</string>
+    <string name="moon_waning_gibbous">ماه گیب نزولی</string>
+    <string name="moon_last_quarter">ربع آخر</string>
+    <string name="moon_waning_crescent">هلال نزولی</string>
+    <string name="moon_illumination">روشنایی %1$d٪</string>
+    <string name="moon_age">سن ماه %1$d روز</string>
+
+    <!-- Manual events (Task 6-b) -->
+    <string name="add_event">افزودن رویداد</string>
+    <string name="add_event_title">رویداد جدید</string>
+    <string name="add_event_name">عنوان</string>
+    <string name="add_event_desc">توضیحات</string>
+    <string name="add_event_holiday">تعطیل رسمی</string>
+    <string name="add_event_date">تاریخ (میلادی yyyy-mm-dd)</string>
+    <string name="add_event_saved">رویداد افزوده شد</string>
+    <string name="add_event_invalid_date">تاریخ نامعتبر است</string>
+    <string name="source_manual">دستی</string>
+
+    <!-- ICS export (Task 6-b) -->
+    <string name="export_ics">خروجی رویدادها (.ics)</string>
+    <string name="export_ics_done">%1$d رویداد صادر شد</string>
 </resources>

@@ -49,6 +49,7 @@ class EventRepository {
     fun importedInstances(events: List<ImportedEvent>): List<EventInstance> =
         events.map { e ->
             val g = com.celestial.calendar.engine.Jdn.parseIso(e.iso)
+            val manual = e.sourceName == "manual"
             EventInstance(
                 id = "imported-${e.id}:${e.iso}",
                 ruleId = "imported",
@@ -56,10 +57,11 @@ class EventRepository {
                 iso = e.iso,
                 gregorian = g ?: com.celestial.calendar.engine.SimpleDate(1970, 1, 1),
                 isHoliday = e.isHoliday,
-                emoji = "📥",
+                emoji = if (manual) "✍️" else "📥",
                 names = L10n(e.title, e.title, e.title),
                 descriptions = L10n(e.description ?: "", e.description ?: "", e.description ?: ""),
                 source = EventSource.IMPORTED,
+                manual = manual,
             )
         }
 

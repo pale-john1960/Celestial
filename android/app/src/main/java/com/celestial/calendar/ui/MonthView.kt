@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -33,14 +34,15 @@ import com.celestial.calendar.engine.CalendarSystem
 import com.celestial.calendar.engine.DateFormats
 import com.celestial.calendar.engine.DayCell
 import com.celestial.calendar.engine.I18n
+import com.celestial.calendar.engine.MoonEngine
 import com.celestial.calendar.engine.WeekStart
 import com.celestial.calendar.events.EventInstance
 
 /**
  * Celestial — month view: 7-column grid, weekday header per weekStart,
  * weekend red styling (fa: Thu/Fri; others Sat/Sun), holiday cells with red
- * tint + 🌙, today highlight ring, small secondary date number, and event
- * dots by category color.
+ * tint + 🌙, today highlight ring, small secondary date number, event dots
+ * by category color, and a tiny moon-phase glyph on major-phase days.
  */
 @Composable
 fun MonthView(
@@ -137,6 +139,7 @@ private fun DayCellView(
     val isToday = cell.isToday
     val isHoliday = events.any { it.isHoliday || it.holidayOnly }
     val isWeekend = cell.date.weekday in weekendDays
+    val moonMajor = remember(cell.date.iso) { MoonEngine.infoFor(cell.date.gregorian).major }
 
     val contentAlpha = if (cell.inMonth) 1f else 0.35f
 
@@ -200,8 +203,27 @@ private fun DayCellView(
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
             )
             Box(Modifier.weight(1f))
-            CommonUi.EventDots(events)
+            Box(
+                Modifier.fillMaxWidth(),
+                // start-align the dots on moon days so they never collide with
+                // the bottom-end phase glyph (same rule as the web app)
+                contentAlignment = if (moonMajor != null) Alignment.CenterStart else Alignment.Center,
+            ) {
+                CommonUi.EventDots(events)
+            }
             Box(Modifier.height(4.dp))
+        }
+
+        // tiny major-phase glyph in the bottom-end corner (moon days only)
+        if (moonMajor != null) {
+            Text(
+                MoonEngine.majorGlyph(moonMajor),
+                fontSize = 9.sp,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(2.dp)
+                    .alpha(0.6f),
+            )
         }
     }
 }

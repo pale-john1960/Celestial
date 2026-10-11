@@ -36,8 +36,8 @@ export interface EventInstance {
   names: L10n;
   descriptions: L10n;
   /** true when the source rule is a "online" fetched event */
-  source: 'builtin' | 'online' | 'imported';
-  /** for online events: provider name */
+  source: 'builtin' | 'online' | 'imported' | 'manual';
+  /** for online events: provider name; for manual events: "manual" */
   provider?: string;
   /** imported event db id */
   dbId?: string;

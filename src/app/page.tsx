@@ -3,20 +3,29 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { getDict } from "@/lib/i18n";
+import { isoDate, parseIso, shiftMonth } from "@/lib/calendar";
+import { fromJdn, toJdn } from "@/lib/calendar/jdn";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { Toaster } from "@/components/ui/sonner";
 import { AppShell } from "@/components/celestial/AppShell";
 import { MonthView } from "@/components/celestial/MonthView";
+import { WeekView } from "@/components/celestial/WeekView";
 import { YearView } from "@/components/celestial/YearView";
 import { DayView } from "@/components/celestial/DayView";
 import { AgendaView } from "@/components/celestial/AgendaView";
 import { SearchDialog } from "@/components/celestial/SearchDialog";
 import { ImportDialog } from "@/components/celestial/ImportDialog";
+import { AddEventDialog } from "@/components/celestial/AddEventDialog";
+import { ShortcutsDialog } from "@/components/celestial/ShortcutsDialog";
 import { EventDialog } from "@/components/celestial/EventDialog";
 import { SettingsSheet } from "@/components/celestial/SettingsSheet";
+
+const MIN_YEAR = 1;
+const MAX_YEAR = 3000;
 
 export default function Page() {
   const [queryClient] = useState(
@@ -46,6 +55,31 @@ function useMounted() {
     emptySubscribe,
     () => true,
     () => false,
+  );
+}
+
+/** true while the user is typing in a form control */
+function isTypingTarget(target: EventTarget | null): boolean {
+  const t = target as HTMLElement | null;
+  if (!t) return false;
+  return (
+    t.tagName === "INPUT" ||
+    t.tagName === "TEXTAREA" ||
+    t.tagName === "SELECT" ||
+    t.isContentEditable
+  );
+}
+
+/** true while any dialog / sheet is open (keyboard nav must yield) */
+function anyDialogOpen(): boolean {
+  const ui = useUi.getState();
+  return (
+    ui.settingsOpen ||
+    ui.importOpen ||
+    ui.searchOpen ||
+    ui.addEventOpen ||
+    ui.shortcutsOpen ||
+    ui.activeEvent !== null
   );
 }
 
@@ -84,17 +118,83 @@ function CelestialApp() {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  // Ctrl/Cmd + K opens search
+  // global keyboard shortcuts (Ctrl/Cmd+K, arrows, view keys, dialogs)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + K opens search (works everywhere)
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setSearchOpen(true);
+        useUi.getState().setSearchOpen(true);
+        return;
+      }
+
+      // other shortcuts: never while typing or with modifier keys held
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isTypingTarget(e.target)) return;
+      if (anyDialogOpen()) return;
+
+      const ui = useUi.getState();
+      const settings = useSettings.getState();
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        // PHYSICAL arrows: left = previous, even in RTL
+        const dir = e.key === "ArrowLeft" ? -1 : 1;
+        e.preventDefault();
+        if (ui.view === "month") {
+          const next = shiftMonth(
+            settings.system,
+            ui.cursor.year,
+            ui.cursor.month,
+            dir,
+          );
+          if (next.year >= MIN_YEAR && next.year <= MAX_YEAR) {
+            ui.setCursorMonth(next.year, next.month);
+          }
+        } else if (ui.view === "year") {
+          const y = ui.cursor.year + dir;
+          if (y >= MIN_YEAR && y <= MAX_YEAR) {
+            ui.setCursorMonth(y, ui.cursor.month);
+          }
+        } else if (ui.view === "week" || ui.view === "day") {
+          const g = parseIso(ui.selectedIso);
+          if (g) ui.selectDaySync(isoDate(fromJdn(toJdn(g) + dir)));
+        }
+        return;
+      }
+
+      const k = e.key.toLowerCase();
+      if (e.key === "?" || (e.key === "/" && e.shiftKey)) {
+        e.preventDefault();
+        ui.setShortcutsOpen(true);
+      } else if (e.key === "/") {
+        e.preventDefault();
+        ui.setSearchOpen(true);
+      } else if (k === "t") {
+        e.preventDefault();
+        ui.goToday();
+      } else if (k === "m") {
+        e.preventDefault();
+        ui.setView("month");
+      } else if (k === "w") {
+        e.preventDefault();
+        ui.setView("week");
+      } else if (k === "y") {
+        e.preventDefault();
+        ui.setView("year");
+      } else if (k === "d") {
+        e.preventDefault();
+        ui.setView("day");
+      } else if (k === "a") {
+        e.preventDefault();
+        ui.setView("agenda");
+      } else if (k === "s") {
+        e.preventDefault();
+        ui.setSettingsOpen(true);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [setSearchOpen]);
+  }, []);
 
   if (!mounted) {
     return (
@@ -110,22 +210,37 @@ function CelestialApp() {
   }
 
   return (
-    <div dir={dict.dir} className={dict.fontClass}>
-      <AppShell>
-        <div className="mx-auto w-full max-w-6xl px-3 pb-8 pt-4 sm:px-4 md:px-6">
-          {view === "month" && <MonthView />}
-          {view === "year" && <YearView />}
-          {view === "day" && <DayView />}
-          {view === "agenda" && <AgendaView />}
-        </div>
-      </AppShell>
+    <MotionConfig reducedMotion="user">
+      <div dir={dict.dir} className={dict.fontClass}>
+        <AppShell>
+          <div className="relative mx-auto w-full max-w-6xl px-3 pb-8 pt-4 sm:px-4 md:px-6">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.div
+                key={view}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
+              >
+                {view === "month" && <MonthView />}
+                {view === "week" && <WeekView />}
+                {view === "year" && <YearView />}
+                {view === "day" && <DayView />}
+                {view === "agenda" && <AgendaView />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </AppShell>
 
-      <SettingsSheet />
-      <SearchDialog />
-      <ImportDialog />
-      <EventDialog />
+        <SettingsSheet />
+        <SearchDialog />
+        <ImportDialog />
+        <AddEventDialog />
+        <ShortcutsDialog />
+        <EventDialog />
 
-      <Toaster position="top-center" closeButton dir={dict.dir} />
-    </div>
+        <Toaster position="top-center" closeButton dir={dict.dir} />
+      </div>
+    </MotionConfig>
   );
 }

@@ -78,7 +78,7 @@ export function TodayStrip({
               onClick={() => setEventDialog(e)}
               className={cn(
                 "inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs transition-colors hover:bg-accent",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               )}
             >
               <span

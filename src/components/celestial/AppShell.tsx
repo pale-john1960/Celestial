@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col bg-background">
       <HeroHeader />
       <main className="flex-1">{children}</main>
-      <footer className="mt-auto border-t border-border bg-card">
+      <footer data-no-print className="mt-auto border-t border-border bg-card">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-2 px-4 py-4 text-center text-xs text-muted-foreground sm:flex-row sm:justify-between sm:text-start">
           <div className="min-w-0">
             <span className="font-bold text-foreground">{dict.appName}</span>

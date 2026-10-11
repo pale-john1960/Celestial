@@ -10,7 +10,7 @@ import {
 import { useSettings } from "./settings";
 import type { SystemCode } from "./settings";
 
-export type ViewMode = "month" | "year" | "day" | "agenda";
+export type ViewMode = "month" | "week" | "year" | "day" | "agenda";
 
 const today = todayGregorian();
 const todayIso = isoDate(today);
@@ -23,6 +23,10 @@ interface UiState {
   settingsOpen: boolean;
   importOpen: boolean;
   searchOpen: boolean;
+  /** add-event dialog */
+  addEventOpen: boolean;
+  /** keyboard shortcuts help dialog */
+  shortcutsOpen: boolean;
   /** event shown in the detail dialog */
   activeEvent: EventInstance | null;
   setView: (view: ViewMode) => void;
@@ -30,6 +34,8 @@ interface UiState {
   setCursorMonth: (year: number, month: number) => void;
   /** select a day, staying in the current view */
   selectDay: (iso: string) => void;
+  /** select a day + move the cursor to that day's month (week nav / keyboard) */
+  selectDaySync: (iso: string) => void;
   /** select a day + jump to Day view (cursor follows) */
   gotoDay: (iso: string) => void;
   goToday: () => void;
@@ -38,6 +44,8 @@ interface UiState {
   setSettingsOpen: (open: boolean) => void;
   setImportOpen: (open: boolean) => void;
   setSearchOpen: (open: boolean) => void;
+  setAddEventOpen: (open: boolean) => void;
+  setShortcutsOpen: (open: boolean) => void;
   setEventDialog: (inst: EventInstance | null) => void;
 }
 
@@ -53,6 +61,8 @@ export const useUi = create<UiState>()((set, get) => ({
   settingsOpen: false,
   importOpen: false,
   searchOpen: false,
+  addEventOpen: false,
+  shortcutsOpen: false,
   activeEvent: null,
 
   setView: (view) => set({ view }),
@@ -60,6 +70,11 @@ export const useUi = create<UiState>()((set, get) => ({
   setCursorMonth: (year, month) => set({ cursor: { year, month } }),
 
   selectDay: (iso) => set({ selectedIso: iso }),
+
+  selectDaySync: (iso) => {
+    const system = useSettings.getState().system;
+    set({ selectedIso: iso, cursor: cursorOf(iso, system) });
+  },
 
   gotoDay: (iso) => {
     const system = useSettings.getState().system;
@@ -79,6 +94,8 @@ export const useUi = create<UiState>()((set, get) => ({
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
   setImportOpen: (importOpen) => set({ importOpen }),
   setSearchOpen: (searchOpen) => set({ searchOpen }),
+  setAddEventOpen: (addEventOpen) => set({ addEventOpen }),
+  setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen }),
   setEventDialog: (activeEvent) => set({ activeEvent }),
 }));
 

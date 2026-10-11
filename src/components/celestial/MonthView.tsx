@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { motion } from "framer-motion";
 import {
   AlertTriangle,
   CalendarDays,
@@ -14,6 +15,8 @@ import {
   todayGregorian,
   weekdayOrder,
 } from "@/lib/calendar";
+import { moonInfo, moonPhaseName, MOON_MAJOR_EMOJI } from "@/lib/calendar/moon";
+import type { MoonMajor } from "@/lib/calendar/moon";
 import type { CalendarSystem, DayCell } from "@/lib/calendar";
 import {
   getDict,
@@ -83,6 +86,15 @@ export function MonthView() {
     return map;
   }, [data]);
 
+  // moon major markers for the visible grid (tiny glyph in the end corner)
+  const moonByIso = useMemo(() => {
+    const map = new Map<string, MoonMajor | null>();
+    for (const c of cells) {
+      map.set(c.iso, moonInfo(c.gregorian).major ?? null);
+    }
+    return map;
+  }, [cells]);
+
   const monthCount = system === "imperial" ? 13 : 12;
   const monthLabel =
     system === "gregorian"
@@ -115,6 +127,7 @@ export function MonthView() {
     <section aria-label={dict.viewMonth} className="flex flex-col gap-3">
       {/* month navigation */}
       <nav
+        data-no-print
         aria-label={dict.viewMonth}
         className="flex flex-wrap items-center gap-2"
       >
@@ -122,7 +135,7 @@ export function MonthView() {
           <Button
             variant="outline"
             size="icon"
-            className="size-8 rounded-lg border-border bg-card"
+            className="size-8 rounded-lg border-border bg-card transition-transform active:scale-95"
             aria-label={dict.prevMonth}
             onClick={() => shift(-1)}
           >
@@ -131,7 +144,7 @@ export function MonthView() {
           <Button
             variant="outline"
             size="icon"
-            className="size-8 rounded-lg border-border bg-card"
+            className="size-8 rounded-lg border-border bg-card transition-transform active:scale-95"
             aria-label={dict.nextMonth}
             onClick={() => shift(1)}
           >
@@ -195,7 +208,7 @@ export function MonthView() {
         <Button
           variant="secondary"
           size="sm"
-          className="h-8 rounded-lg font-semibold"
+          className="h-8 rounded-lg font-semibold transition-transform active:scale-95"
           onClick={goToday}
         >
           <CalendarDays className="size-4" aria-hidden />
@@ -239,19 +252,30 @@ export function MonthView() {
         })}
       </div>
 
-      {/* day grid */}
-      <div role="grid" aria-label={monthLabel} className="grid grid-cols-7 gap-0.5 sm:gap-1">
+      {/* day grid — keyed by month so the entrance stagger replays on navigation */}
+      <div
+        key={`${cursor.year}-${cursor.month}`}
+        role="grid"
+        aria-label={monthLabel}
+        className="grid grid-cols-7 gap-0.5 sm:gap-1"
+      >
         {Array.from({ length: 6 }, (_, week) => (
-          <div key={week} role="row" className="col-span-7 grid grid-cols-7 gap-0.5 sm:gap-1">
-            {cells.slice(week * 7, week * 7 + 7).map((cell) => (
+          <div
+            key={week}
+            role="row"
+            className="col-span-7 grid grid-cols-7 gap-0.5 sm:gap-1"
+          >
+            {cells.slice(week * 7, week * 7 + 7).map((cell, col) => (
               <DayCellButton
                 key={cell.iso}
+                index={week * 7 + col}
                 cell={cell}
                 dict={dict}
                 locale={locale}
                 system={system}
                 selected={cell.iso === selectedIso}
                 events={eventsByIso.get(cell.iso)}
+                moon={moonByIso.get(cell.iso) ?? null}
                 onClick={onCellClick}
               />
             ))}
@@ -267,30 +291,32 @@ export function MonthView() {
       />
 
       {/* legend (hidden on small screens — also in settings) */}
-      <CategoryLegend
-        dict={dict}
-        sources={sources}
-        className="hidden sm:flex"
-      />
+      <div data-no-print className="hidden sm:block">
+        <CategoryLegend dict={dict} sources={sources} className="flex" />
+      </div>
     </section>
   );
 }
 
 function DayCellButton({
   cell,
+  index,
   dict,
   locale,
   system,
   selected,
   events,
+  moon,
   onClick,
 }: {
   cell: DayCell;
+  index: number;
   dict: LocaleDict;
   locale: LocaleCode;
   system: CalendarSystem;
   selected: boolean;
   events: EventInstance[] | undefined;
+  moon: "new" | "firstQ" | "full" | "lastQ" | null;
   onClick: (iso: string) => void;
 }) {
   const isHolidayDay = (events ?? []).some((e) => e.isHoliday);
@@ -314,15 +340,20 @@ function DayCellButton({
         : formatImperialDate(locale, cell.imperial, dict);
 
   return (
-    <button
+    <motion.button
       type="button"
       role="gridcell"
       aria-selected={selected}
-      aria-label={`${dict.selectDate}: ${weekdayLong(locale, cell.weekday)}, ${activeDateText}`}
+      aria-label={`${dict.selectDate}: ${weekdayLong(locale, cell.weekday)}, ${activeDateText}${moon ? ` · ${dict.moonPhaseTitle}` : ""}`}
       title={activeDateText}
       onClick={() => onClick(cell.iso)}
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.16, delay: Math.min(index * 0.006, 0.25) }}
       className={cn(
-        "relative flex min-h-11 aspect-square flex-col items-center justify-start gap-0.5 rounded-lg p-1 text-center transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "relative flex min-h-11 aspect-square flex-col items-center justify-start gap-0.5 rounded-lg p-1 text-center transition-colors",
+        "hover:bg-accent hover:z-10 hover:shadow-[0_1px_4px_rgba(0,0,0,0.08)]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         cell.inMonth ? "" : "opacity-40",
         isHolidayDay && "bg-red-50 dark:bg-red-950/30",
         selected && "bg-primary/10 ring-1 ring-primary/40",
@@ -354,7 +385,13 @@ function DayCellButton({
       <span className="text-[10px] leading-none text-muted-foreground/80 tabular-nums">
         {num(locale, secondary)}
       </span>
-      <span className="flex h-1.5 w-full items-center justify-center gap-0.5">
+      <span
+        className={cn(
+          "flex h-1.5 w-full items-center gap-0.5",
+          // keep the end corner free for the moon glyph on marker days
+          moon ? "justify-start" : "justify-center",
+        )}
+      >
         {dots.map((e) => (
           <span
             key={e.id}
@@ -364,6 +401,15 @@ function DayCellButton({
           />
         ))}
       </span>
-    </button>
+      {moon && (
+        <span
+          aria-hidden
+          className="absolute bottom-1 end-1 text-[10px] leading-none opacity-60"
+          title={`${dict.moonPhaseTitle}: ${moonPhaseName(dict, moon === "new" ? 0 : moon === "firstQ" ? 2 : moon === "full" ? 4 : 6)}`}
+        >
+          {MOON_MAJOR_EMOJI[moon]}
+        </span>
+      )}
+    </motion.button>
   );
 }

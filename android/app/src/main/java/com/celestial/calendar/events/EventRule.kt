@@ -61,6 +61,7 @@ data class EventInstance(
     val descriptions: L10n,
     val source: EventSource,
     val holidayOnly: Boolean = false, // hidden category but legal holiday → day-off only
+    val manual: Boolean = false, // user-created event (sourceName == "manual") → ✍️
 ) {
     /** Localized name (holidayOnly instances must never expose their text). */
     fun localName(localeCode: String): String = names.forLocale(localeCode)

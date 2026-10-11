@@ -45,12 +45,15 @@ No API keys, no secrets — the app is fully offline-capable by design.
 | Calendar engine | Pure-Kotlin 33-year-cycle Jalali (epoch Farvardin 1 1386 = 2007-03-21), Fourmilab JDN g2d/d2g, Persian Imperial (12 × 30-day months + 5/6 Andarjah + 30 trilingual devotional day names), Hijri via `android.icu.util.IslamicCalendar` |
 | Event datasets | All 66 web rules ported **verbatim** (international, US, JP, Persian cultural / national / religious) — names, descriptions and emoji in en/ja/fa, incl. the Yalda = Azar 30 and Sepandarmazgan = Bahman 29 data fixes |
 | Religious toggle | Hiding *Persian religious events* keeps legal holidays as red day-off cells (`holidayOnly`) — the event text is never shown, matching the web rule |
-| Views | Month (7-col grid, week-start aware, weekend red — fa: Thu/Fri, else Sat/Sun; red tint + 🌙 holidays, today ring, secondary date number, category dots) · Year (12/13 cards + year switcher) · Day (all four systems + devotional name + day-off banner) · Agenda (next 90 days grouped) |
-| Hero header | Static seasonal banner per season (2 variants each, swap at day 1/15), month+year in the active system, secondary systems line |
+| Views | Month (7-col grid, week-start aware, weekend red — fa: Thu/Fri, else Sat/Sun; red tint + 🌙 holidays, today ring, secondary date number, category dots, moon-phase glyphs) · **Week** (7 day-cards in a vertical list, week-start aware, ‹ › ±7 d + “This week”, per-day: weekday, big active-system number, secondary + Hijri tiny, events in Day-view card style) · Year (12/13 cards + year switcher) · Day (all four systems + devotional name + day-off banner + moon card) · Agenda (next 90 days grouped) |
+| Moon phases | `MoonEngine` — Meeus ch. 49-derived mean-lunation algorithm, **constants identical to the web `moon.ts`** (SYNODIC 29.530588853, BASE 2451550.09766, quarter positions 7.38264721/14.76529443/22.14794164, two-term anomaly correction): per-day age / phase / illumination / 8-phase emoji (🌑🌒🌓🌔🌕🌖🌗🌘) + localized names; major-phase day glyph (🌑🌓🌕🌗) in month cells, week cards and a Day-view card. Accuracy: new/full ±5 min, quarters ±2 h; day-markers match the live reference 149/153 |
+| Manual events | ✛ button in the hero header → AddEventDialog (title 1–120, description ≤500, “day off” switch, Gregorian `yyyy-mm-dd` field pre-filled with the selected day + live active-system conversion + validation) → Room `ImportedEvent` with sourceName `"manual"`, ✍️ badge everywhere (📥 for file imports); managed + **per-row delete** in Settings |
+| ICS export | Settings → “Export events (.ics)” — SAF `CreateDocument("text/calendar")`, next 90 days of events (`holidayOnly` text never exported), RFC 5545 escaping (`\ ; ,` + newlines), 74-char line folding, CRLF endings, `DTEND` exclusive |
+| Hero header | Static seasonal banner per season (2 variants each, swap at day 1/15), month+year in the active system, secondary systems line, ✛ add-event button |
 | Widgets | **Date widget** (4×2 RemoteViews: today in active system + secondary systems + next event) and **Month widget** (4×5 GridView via `RemoteViewsService`, today highlighted, tap-a-day opens the app) |
 | Status-bar date | Persistent silent ongoing notification (IMPORTANCE_LOW) with today's date in the active system; toggle in Settings |
 | NTP | `NtpClient` — UDP SNTP to `pool.ntp.org` (3 s timeout, `Dispatchers.IO`), offset persisted in DataStore; syncs on app open (when online) + manual button |
-| Import | SAF `OpenDocument` picker → JSON / TXT / CSV parser (Jalali auto-detect: years < 1600, Persian digits normalized) → Room `ImportedEvent` (iso, jalaliIso, title, description, isHoliday, sourceName) |
+| Import | SAF `OpenDocument` picker → JSON / TXT / CSV parser (Jalali auto-detect: years < 1600, Persian digits normalized) → Room `ImportedEvent` (iso, jalaliIso, title, description, isHoliday, sourceName) — listed in Settings with ✍️/📥 source badges + per-row delete |
 | i18n | `values/`, `values-ja/`, `values-fa/` string sets (fa = RTL); `android:supportsRtl="true"`; in-app language switching without activity recreation |
 
 ## 3. Low-power design notes
@@ -58,7 +61,7 @@ No API keys, no secrets — the app is fully offline-capable by design.
 The Android port is deliberately *calmer* than the web app:
 
 - **One** animated transition: a 300 ms alpha cross-fade when switching
-  Month/Year/Day/Agenda views. Everything else is static.
+  Month/Week/Year/Day/Agenda views. Everything else is static.
 - No hero cross-fade/ken-burns, **no particles**, no pulsing badges, no
   infinite animations. Material ripple is left on (system-standard, cheap).
 - Widgets/notifications refresh only from **WorkManager**: one inexact
@@ -92,16 +95,16 @@ android/
 ├─ gradle/libs.versions.toml        # version catalog
 ├─ settings.gradle.kts, build.gradle.kts, gradle.properties
 ├─ app/src/main/java/com/celestial/calendar/
-│  ├─ engine/      Jdn, JalaliEngine, HijriEngine, ImperialEngine, Models, I18n, DateFormats
-│  ├─ events/      EventRule, RuleDataset (66 rules), EventExpander, EventRepository
+│  ├─ engine/      Jdn, JalaliEngine, HijriEngine, ImperialEngine, Models, I18n, DateFormats, MoonEngine
+│  ├─ events/      EventRule, RuleDataset (66 rules), EventExpander, EventRepository, IcsBuilder
 │  ├─ import/      ImportParser (JSON/TXT/CSV + Jalali auto-detect)
 │  ├─ data/        Room AppDatabase + ImportedEvent, SettingsDataStore
 │  ├─ ntp/         NtpClient (SNTP/UDP)
 │  ├─ statusbar/   StatusBarDate (persistent date notification)
 │  ├─ widgets/     DateWidget, MonthWidget + MonthWidgetService, WidgetUpdater
 │  ├─ work/        RefreshScheduler/RefreshWorker + BootReceiver
-│  └─ ui/          CelestialApp, CelestialViewModel, Hero/Month/Year/Day/Agenda views,
-│                  SettingsSheet, CommonUi, Strings, theme/
+│  └─ ui/          CelestialApp, CelestialViewModel, Hero/Month/Week/Year/Day/Agenda views,
+│                  AddEventDialog, SettingsSheet, CommonUi, Strings, theme/
 └─ app/src/main/res/ values{,-ja,-fa}/strings.xml · drawable/ · layout/ · xml/
 ```
 
@@ -113,5 +116,11 @@ android/
   sighting — treat religious dates as approximate (noted in `HijriEngine` KDoc).
 - Online Nager.Date layer: not ported — the Android app is offline-first; US/JP
   holidays always come from the built-in dataset.
+- Moon-phase day-markers can differ ±1 day from live references when the true
+  event falls within ~1 h of local midnight (149/153 agreement — same known
+  limitation as the web `moon.ts`).
+- ICS export folds lines by character count (not UTF-8 octets), matching the
+  web builder — RFC-strict parsers may see >75-octet folded lines for
+  Persian/Japanese summaries; mainstream clients are tolerant.
 - First-launch `POST_NOTIFICATIONS` prompt (API 33+) is triggered by the
   status-bar date feature (default on).

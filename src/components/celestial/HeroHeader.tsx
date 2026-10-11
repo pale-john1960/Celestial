@@ -3,7 +3,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarSearch, Search, Settings2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { CalendarSearch, Keyboard, Plus, Search, Settings2 } from "lucide-react";
 import {
   gregorianMonthName,
   getDict,
@@ -132,6 +133,8 @@ export function HeroHeader() {
   const setView = useUi((s) => s.setView);
   const setSearchOpen = useUi((s) => s.setSearchOpen);
   const setSettingsOpen = useUi((s) => s.setSettingsOpen);
+  const setAddEventOpen = useUi((s) => s.setAddEventOpen);
+  const setShortcutsOpen = useUi((s) => s.setShortcutsOpen);
   const goToday = useUi((s) => s.goToday);
 
   // month identity in the ACTIVE system
@@ -197,7 +200,7 @@ export function HeroHeader() {
   const todayWeekday = weekdayShort(locale, jdnWeekday(toJdn(today)));
 
   return (
-    <header className="relative h-64 overflow-hidden sm:h-72 lg:h-80">
+    <header data-no-print className="relative h-64 overflow-hidden sm:h-72 lg:h-80">
       <HeroImage src={seasonImageSrc(firstG.month)} />
       <div
         aria-hidden
@@ -206,7 +209,7 @@ export function HeroHeader() {
       <SeasonalParticles season={season} />
 
       {/* top row: brand + actions (flex flips naturally in RTL) */}
-      <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3 sm:p-4">
+      <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-1 p-3 sm:p-4">
         <div className="flex items-center gap-1.5 text-white/95 drop-shadow-sm">
           <CalendarSearch className="size-5" aria-hidden />
           <span className="text-sm font-bold tracking-wide sm:text-base">
@@ -222,6 +225,24 @@ export function HeroHeader() {
           >
             <Search className="size-4" aria-hidden />
             <span className="sr-only">{dict.search}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setAddEventOpen(true)}
+            aria-label={dict.addEvent}
+            className="flex size-9 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+          >
+            <Plus className="size-4" aria-hidden />
+            <span className="sr-only">{dict.addEvent}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShortcutsOpen(true)}
+            aria-label={dict.shortcuts}
+            className="flex size-9 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+          >
+            <Keyboard className="size-4" aria-hidden />
+            <span className="sr-only">{dict.shortcuts}</span>
           </button>
           <button
             type="button"
@@ -251,36 +272,45 @@ export function HeroHeader() {
             {todayMonthName}
           </button>
         </div>
-        <h1 className="text-3xl font-bold leading-tight text-white drop-shadow-md sm:text-4xl">
-          {monthName} {num(locale, cursor.year)}{" "}
-          <span className="text-lg font-semibold text-white/85 sm:text-xl">
-            {era}
-          </span>
-        </h1>
-        <p
-          className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-white/80 sm:text-sm"
-          dir="auto"
+        {/* month title block — replays fade+rise when the month changes */}
+        <motion.div
+          key={`${monthName} ${cursor.year}`}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, ease: "easeOut" }}
         >
-          {secondary.map((part, i) => (
-            <span key={i} className="inline-flex items-center gap-2">
-              {i > 0 && (
-                <span aria-hidden className="text-white/40">
-                  ·
-                </span>
-              )}
-              {part}
+          <h1 className="text-3xl font-bold leading-tight text-white drop-shadow-md sm:text-4xl">
+            {monthName} {num(locale, cursor.year)}{" "}
+            <span className="text-lg font-semibold text-white/85 sm:text-xl">
+              {era}
             </span>
-          ))}
-        </p>
+          </h1>
+          <p
+            className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-white/80 sm:text-sm"
+            dir="auto"
+          >
+            {secondary.map((part, i) => (
+              <span key={i} className="inline-flex items-center gap-2">
+                {i > 0 && (
+                  <span aria-hidden className="text-white/40">
+                    ·
+                  </span>
+                )}
+                {part}
+              </span>
+            ))}
+          </p>
+        </motion.div>
       </div>
 
       {/* view switcher */}
       <div className="absolute inset-x-3 bottom-3 sm:inset-x-6">
         <Tabs value={view} onValueChange={(v) => setView(v as typeof view)}>
-          <TabsList className="h-auto w-full grid grid-cols-4 gap-1 rounded-xl border border-white/25 bg-black/25 p-1 backdrop-blur-md">
+          <TabsList className="h-auto w-full grid grid-cols-5 gap-1 rounded-xl border border-white/25 bg-black/25 p-1 backdrop-blur-md">
             {(
               [
                 ["month", dict.viewMonth],
+                ["week", dict.viewWeek],
                 ["year", dict.viewYear],
                 ["day", dict.viewDay],
                 ["agenda", dict.viewAgenda],

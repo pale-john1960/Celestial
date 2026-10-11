@@ -8,6 +8,7 @@ import {
   ChevronRight,
   MoonStar,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   buildDayCell,
   imperialDayName,
@@ -16,6 +17,7 @@ import {
   todayGregorian,
 } from "@/lib/calendar";
 import { fromJdn, toJdn } from "@/lib/calendar/jdn";
+import { moonInfo, moonPhaseName, MOON_EMOJI } from "@/lib/calendar/moon";
 import { getDict, num, weekdayLong } from "@/lib/i18n";
 import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
@@ -63,6 +65,10 @@ export function DayView() {
   const prevIso = isoDate(fromJdn(toJdn(g) - 1));
   const nextIso = isoDate(fromJdn(toJdn(g) + 1));
 
+  const moon = moonInfo(g);
+  const illumPct = Math.round(moon.illum * 100);
+  const ageText = moon.ageDays.toFixed(1);
+
   const activeDateText =
     system === "gregorian"
       ? formatGregorianDate(locale, cell.gregorian, dict)
@@ -78,7 +84,8 @@ export function DayView() {
           <Button
             variant="outline"
             size="icon"
-            className="size-8 rounded-lg border-border"
+            data-no-print
+            className="size-8 rounded-lg border-border transition-transform active:scale-95"
             aria-label={dict.prevMonth}
             onClick={() => gotoDay(prevIso)}
           >
@@ -88,14 +95,15 @@ export function DayView() {
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {weekdayLong(locale, cell.weekday)}
             </p>
-            <h2 className="mt-0.5 truncate text-xl font-bold sm:text-2xl">
+            <h2 className="mt-0.5 truncate text-xl font-bold tabular-nums sm:text-2xl">
               {activeDateText}
             </h2>
           </div>
           <Button
             variant="outline"
             size="icon"
-            className="size-8 rounded-lg border-border"
+            data-no-print
+            className="size-8 rounded-lg border-border transition-transform active:scale-95"
             aria-label={dict.nextMonth}
             onClick={() => gotoDay(nextIso)}
           >
@@ -129,9 +137,10 @@ export function DayView() {
         {!cell.isToday && (
           <div className="mt-3 text-center">
             <Button
+              data-no-print
               variant="ghost"
               size="sm"
-              className="text-primary"
+              className="text-primary transition-transform active:scale-95"
               onClick={goToday}
             >
               <CalendarDays className="size-4" aria-hidden />
@@ -139,6 +148,25 @@ export function DayView() {
             </Button>
           </div>
         )}
+      </div>
+
+      {/* moon phase card (every day) */}
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <span aria-hidden className="text-3xl leading-none">
+            {MOON_EMOJI[moon.phaseIndex]}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {dict.moonPhaseTitle}
+            </p>
+            <p className="text-sm font-bold">{moonPhaseName(dict, moon.phaseIndex)}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+              {dict.moonIllumination}: {num(locale, illumPct)}% · {dict.moonAge}:{" "}
+              {num(locale, ageText)} {dict.days}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* day-off banner */}
@@ -172,8 +200,11 @@ export function DayView() {
         </div>
       )}
       {!isLoading && !isError && events.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          {dict.noEvents}
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-muted-foreground">
+          <span aria-hidden className="text-3xl leading-none">
+            🗓️
+          </span>
+          <p className="text-sm">{dict.noEvents}</p>
         </div>
       )}
       {events.length > 0 && (
@@ -205,10 +236,12 @@ function EventCard({
   onOpen: () => void;
 }) {
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onOpen}
-      className="w-full rounded-2xl border border-border bg-card p-4 text-start shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.15 }}
+      className="w-full cursor-pointer rounded-2xl border border-border bg-card p-4 text-start shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
     >
       <div className="flex items-start gap-3">
         <span className="text-2xl leading-none" aria-hidden>
@@ -250,7 +283,7 @@ function EventCard({
           </div>
         </div>
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -269,6 +302,14 @@ export function SourceBadge({
         <span aria-hidden>🌐</span>
         {dict.onlineSources}
         {event.provider ? ` · ${event.provider}` : ""}
+      </span>
+    );
+  }
+  if (event.source === "manual") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+        <span aria-hidden>✍️</span>
+        {dict.sourceManual}
       </span>
     );
   }

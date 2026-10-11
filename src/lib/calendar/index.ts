@@ -16,6 +16,8 @@ export {
 } from './jalali';
 export { gregorianToImperial, imperialToGregorian, IMPERIAL_DAY_NAMES, ANDARJAH_LABEL } from './imperial';
 export { gregorianToHijri, hijriToGregorian, hijriMode } from './hijri';
+export { moonInfo, moonPhaseName, MOON_EMOJI, MOON_MAJOR_EMOJI } from './moon';
+export type { MoonInfo, MoonMajor } from './moon';
 
 /** Position of a date in "system space" — year/month in the ACTIVE system. */
 export interface SystemDate {

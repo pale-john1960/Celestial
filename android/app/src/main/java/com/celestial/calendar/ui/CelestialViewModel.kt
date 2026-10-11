@@ -14,6 +14,7 @@ import com.celestial.calendar.data.ThemeMode
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CalendarSystem
+import com.celestial.calendar.engine.JalaliEngine
 import com.celestial.calendar.engine.Jdn
 import com.celestial.calendar.engine.SimpleDate
 import com.celestial.calendar.engine.WeekStart
@@ -35,7 +36,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class ViewKind { MONTH, YEAR, DAY, AGENDA }
+enum class ViewKind { MONTH, WEEK, YEAR, DAY, AGENDA }
 
 /**
  * Celestial — single-activity, state-driven view model (mirrors the web app's
@@ -224,6 +225,23 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
         selectedIso = Jdn.isoDate(next)
     }
 
+    /** Week view navigation: shift the selected day by [delta] weeks (±7 days). */
+    fun shiftWeek(delta: Int) {
+        shiftDay(delta * 7)
+    }
+
+    /** "This week" — reset the Week view to the week containing today. */
+    fun goThisWeek() {
+        val s = settings.value ?: return
+        val today = todayGregorian()
+        val sd = CalendarFacade.systemDateOf(s.system, today)
+        navYear = sd.year
+        navMonth = sd.month
+        selectedIso = Jdn.isoDate(today)
+        view = ViewKind.WEEK
+        ensureYears(gregorianYearsAround(s, sd.year, sd.month))
+    }
+
     // ---- settings --------------------------------------------------------
 
     fun setSystem(v: CalendarSystem) {
@@ -299,5 +317,44 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearImported() {
         viewModelScope.launch { dao.clear() }
+    }
+
+    /** Delete a single imported/manual event row (imported-events manager). */
+    fun deleteImported(id: Long) {
+        viewModelScope.launch { dao.deleteById(id) }
+    }
+
+    /**
+     * Persist a user-created event (sourceName = "manual"). The imported-events
+     * flow triggers the existing event refresh automatically.
+     */
+    fun addManualEvent(title: String, description: String, isHoliday: Boolean, iso: String) {
+        val g = Jdn.parseIso(iso) ?: return
+        viewModelScope.launch {
+            dao.insertAll(
+                listOf(
+                    ImportedEvent(
+                        iso = iso,
+                        jalaliIso = Jdn.isoDate(JalaliEngine.gregorianToJalali(g)),
+                        title = title,
+                        description = description.ifBlank { null },
+                        isHoliday = isHoliday,
+                        sourceName = "manual",
+                    )
+                )
+            )
+        }
+    }
+
+    /**
+     * Visible events in the next 90 days for the ICS export. holidayOnly
+     * instances are excluded — their text must never leave the app.
+     */
+    fun exportableEvents(): List<EventInstance> {
+        val s = settings.value ?: return emptyList()
+        val from = todayIso()
+        val to = Jdn.isoDate(Jdn.d2g(Jdn.toJdn(todayGregorian()) + 90))
+        return repo.aggregate(from, to, s.sources, importedEvents.value)
+            .filter { !it.holidayOnly }
     }
 }
