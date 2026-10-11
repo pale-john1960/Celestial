@@ -293,6 +293,59 @@ class LocalStrings(private val res: Resources) {
     val horoscopeLuckyNumber get() = res.getString(R.string.horoscope_lucky_number)
     val horoscopeLuckyColor get() = res.getString(R.string.horoscope_lucky_color)
     val horoscopeAdvice get() = res.getString(R.string.horoscope_advice)
+
+    // ---- Round 14: systems / royal names / weekend day / sun / world clock ----
+
+    /** Labels + hints for the two round-14 calendar systems. */
+    val systemImperialSolar get() = res.getString(R.string.system_imperial_solar)
+    val systemImperialSolarHint get() = res.getString(R.string.system_imperial_solar_hint)
+    val systemAncient get() = res.getString(R.string.system_ancient)
+    val systemAncientHint get() = res.getString(R.string.system_ancient_hint)
+    val royalMonthNames get() = res.getString(R.string.royal_month_names)
+    val royalMonthNamesHint get() = res.getString(R.string.royal_month_names_hint)
+
+    /** Label of the weekly-day-off selector + its five options. */
+    val weekendDayLabel get() = res.getString(R.string.weekend_day)
+    fun weekendDayName(day: com.celestial.calendar.engine.WeekendDay): String = when (day) {
+        com.celestial.calendar.engine.WeekendDay.AUTO -> res.getString(R.string.weekend_auto)
+        com.celestial.calendar.engine.WeekendDay.NONE -> res.getString(R.string.weekend_none)
+        com.celestial.calendar.engine.WeekendDay.FRIDAY -> res.getString(R.string.weekend_friday)
+        com.celestial.calendar.engine.WeekendDay.SATURDAY -> res.getString(R.string.weekend_saturday)
+        com.celestial.calendar.engine.WeekendDay.SUNDAY -> res.getString(R.string.weekend_sunday)
+    }
+
+    /** Sun-times card labels (round 14). */
+    val sunTimesTitle get() = res.getString(R.string.sun_times_title)
+    val sunDawn get() = res.getString(R.string.sun_dawn)
+    val sunSunrise get() = res.getString(R.string.sun_sunrise)
+    val sunNoon get() = res.getString(R.string.sun_noon)
+    val sunSunset get() = res.getString(R.string.sun_sunset)
+    val sunDusk get() = res.getString(R.string.sun_dusk)
+    val sunLocation get() = res.getString(R.string.sun_location)
+    val sunPolarNight get() = res.getString(R.string.sun_polar_night)
+    val sunMidnightSun get() = res.getString(R.string.sun_midnight_sun)
+
+    /** World-clock card labels (round 14). */
+    val worldClockTitle get() = res.getString(R.string.world_clock_title)
+    val worldClockAdd get() = res.getString(R.string.world_clock_add)
+    val worldClockEmpty get() = res.getString(R.string.world_clock_empty)
+    val worldClockTomorrow get() = res.getString(R.string.world_clock_tomorrow)
+    val worldClockYesterday get() = res.getString(R.string.world_clock_yesterday)
+
+    /** Localized preset-city name (sun location + world clock). */
+    fun cityName(city: com.celestial.calendar.engine.WorldCity): String = when (city.id) {
+        "tehran" -> res.getString(R.string.city_tehran)
+        "tokyo" -> res.getString(R.string.city_tokyo)
+        "seoul" -> res.getString(R.string.city_seoul)
+        "beijing" -> res.getString(R.string.city_beijing)
+        "new-york" -> res.getString(R.string.city_new_york)
+        "london" -> res.getString(R.string.city_london)
+        "paris" -> res.getString(R.string.city_paris)
+        "dubai" -> res.getString(R.string.city_dubai)
+        "sydney" -> res.getString(R.string.city_sydney)
+        "los-angeles" -> res.getString(R.string.city_los_angeles)
+        else -> city.id
+    }
 }
 
 /** Season of the year (Gregorian months). */
@@ -310,55 +363,94 @@ enum class Season {
 }
 
 /**
- * Hero banner artwork resource for the active header theme (round 13).
+ * Hero banner artwork resource for the active header theme (round 13;
+ * 4-image fixed pools in round 14).
  *
- * SEASONAL: the NEW spring/summer pools + the original autumn/winter pieces
- * (now shipped as the generated jpgs); the two variants alternate with the
- * months — consecutive months flip the piece, exactly like the web. Fixed
- * themes: two pieces alternating by Gregorian month parity (odd months show
- * the 2nd piece, mirroring the web's `gMonth % 2` index). All assets are the
- * generated 1344x768 jpgs in `res/drawable-nodpi/` — `painterResource` loads
- * them like any drawable. Static imagery only (no animations — low power).
+ * THE CENTRAL theme image source on Android (web parity with themeImageSrc):
+ * the hero header AND the YearView month-card artwork both resolve through
+ * this one function, so they always stay in sync.
+ *
+ * SEASONAL: the spring/summer pools + the original autumn/winter pieces;
+ * the two variants alternate with the months. Fixed themes: FOUR pieces per
+ * theme (/hero/{theme}-{1..4}.jpg) rotating by Gregorian month — index
+ * gMonth % 4 (Jan → piece 2, Feb → 3, Mar → 4, Apr → 1 — exactly the web's
+ * FIXED_HERO_POOL + gMonth % 4 rule). All assets are the generated
+ * 1344x768 jpgs in `res/drawable-nodpi/`. Static imagery only.
  */
 fun heroArtworkRes(theme: com.celestial.calendar.data.HeaderTheme, gMonth: Int): Int {
-    val secondVariant: Boolean = when (theme) {
-        com.celestial.calendar.data.HeaderTheme.SEASONAL -> {
-            val season = Season.ofGregorianMonth(gMonth)
-            val start = when (season) {
-                Season.SPRING -> 3
-                Season.SUMMER -> 6
-                Season.AUTUMN -> 9
-                Season.WINTER -> 12
-            }
-            val idxInSeason = (gMonth - start + 12) % 12
-            idxInSeason % 2 == 1
+    if (theme == com.celestial.calendar.data.HeaderTheme.SEASONAL) {
+        val season = Season.ofGregorianMonth(gMonth)
+        val start = when (season) {
+            Season.SPRING -> 3
+            Season.SUMMER -> 6
+            Season.AUTUMN -> 9
+            Season.WINTER -> 12
         }
-        else -> gMonth % 2 == 1 // fixed themes: month parity (Jan -> piece 2)
+        val secondVariant = (gMonth - start + 12) % 12 % 2 == 1
+        return when (season) {
+            Season.SPRING ->
+                if (secondVariant) R.drawable.hero_seasonal_spring_4 else R.drawable.hero_seasonal_spring_3
+            Season.SUMMER ->
+                if (secondVariant) R.drawable.hero_seasonal_summer_4 else R.drawable.hero_seasonal_summer_3
+            Season.AUTUMN ->
+                if (secondVariant) R.drawable.hero_seasonal_autumn_2 else R.drawable.hero_seasonal_autumn_1
+            Season.WINTER ->
+                if (secondVariant) R.drawable.hero_seasonal_winter_2 else R.drawable.hero_seasonal_winter_1
+        }
+    }
+    // fixed themes: 4 pieces rotating by Gregorian month (gMonth % 4)
+    val index = ((gMonth % 4) + 4) % 4 // 0..3 → pieces 1..4
+    val resId = when (index) {
+        0 -> 1
+        1 -> 2
+        2 -> 3
+        else -> 4
     }
     return when (theme) {
-        com.celestial.calendar.data.HeaderTheme.SEASONAL ->
-            when (Season.ofGregorianMonth(gMonth)) {
-                Season.SPRING ->
-                    if (secondVariant) R.drawable.hero_seasonal_spring_4 else R.drawable.hero_seasonal_spring_3
-                Season.SUMMER ->
-                    if (secondVariant) R.drawable.hero_seasonal_summer_4 else R.drawable.hero_seasonal_summer_3
-                Season.AUTUMN ->
-                    if (secondVariant) R.drawable.hero_seasonal_autumn_2 else R.drawable.hero_seasonal_autumn_1
-                Season.WINTER ->
-                    if (secondVariant) R.drawable.hero_seasonal_winter_2 else R.drawable.hero_seasonal_winter_1
-            }
         com.celestial.calendar.data.HeaderTheme.CELESTIAL ->
-            if (secondVariant) R.drawable.hero_celestial_2 else R.drawable.hero_celestial_1
+            when (resId) {
+                1 -> R.drawable.hero_celestial_1
+                2 -> R.drawable.hero_celestial_2
+                3 -> R.drawable.hero_celestial_3
+                else -> R.drawable.hero_celestial_4
+            }
         com.celestial.calendar.data.HeaderTheme.MAGICAL ->
-            if (secondVariant) R.drawable.hero_magical_2 else R.drawable.hero_magical_1
+            when (resId) {
+                1 -> R.drawable.hero_magical_1
+                2 -> R.drawable.hero_magical_2
+                3 -> R.drawable.hero_magical_3
+                else -> R.drawable.hero_magical_4
+            }
         com.celestial.calendar.data.HeaderTheme.SHAHANSHAHI ->
-            if (secondVariant) R.drawable.hero_shahanshahi_2 else R.drawable.hero_shahanshahi_1
+            when (resId) {
+                1 -> R.drawable.hero_shahanshahi_1
+                2 -> R.drawable.hero_shahanshahi_2
+                3 -> R.drawable.hero_shahanshahi_3
+                else -> R.drawable.hero_shahanshahi_4
+            }
         com.celestial.calendar.data.HeaderTheme.JAPANESE ->
-            if (secondVariant) R.drawable.hero_japanese_2 else R.drawable.hero_japanese_1
+            when (resId) {
+                1 -> R.drawable.hero_japanese_1
+                2 -> R.drawable.hero_japanese_2
+                3 -> R.drawable.hero_japanese_3
+                else -> R.drawable.hero_japanese_4
+            }
         com.celestial.calendar.data.HeaderTheme.KOREAN ->
-            if (secondVariant) R.drawable.hero_korean_2 else R.drawable.hero_korean_1
+            when (resId) {
+                1 -> R.drawable.hero_korean_1
+                2 -> R.drawable.hero_korean_2
+                3 -> R.drawable.hero_korean_3
+                else -> R.drawable.hero_korean_4
+            }
         com.celestial.calendar.data.HeaderTheme.CHINESE ->
-            if (secondVariant) R.drawable.hero_chinese_2 else R.drawable.hero_chinese_1
+            when (resId) {
+                1 -> R.drawable.hero_chinese_1
+                2 -> R.drawable.hero_chinese_2
+                3 -> R.drawable.hero_chinese_3
+                else -> R.drawable.hero_chinese_4
+            }
+        com.celestial.calendar.data.HeaderTheme.SEASONAL ->
+            R.drawable.hero_seasonal_spring_3 // unreachable (handled above)
     }
 }
 

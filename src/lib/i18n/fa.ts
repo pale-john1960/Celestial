@@ -93,6 +93,62 @@ export const fa: LocaleDict = {
   weekNumCol: 'هفته',
   weekNumLabel: 'هفته {n}',
 
+  // مرحله ۱۴: گاه‌شماری‌های افزوده
+  systemImperialSolar: 'سال شاهنشاهی (شمسی)',
+  systemImperialSolarHint: 'سال شاهنشاهی با ماه و روزهای شمسی معمول',
+  systemAncient: 'باستانی (فصلی)',
+  systemAncientHint: 'ماه‌های ۳۰ روزه + اندرج، با نام ماه‌های باستانی زرتشتی',
+  eraAncient: 'باستان',
+
+  // مرحله ۱۴: نام ماه‌های شاهی
+  royalMonthNames: 'نام ماه‌های شاهی (باستانی)',
+  royalMonthNamesHint: 'نمایش نام کهن ماه‌ها (امرداد، اسپندارمذ) در تقویم‌های شاهنشاهی',
+
+  // مرحله ۱۴: روز تعطیل هفته
+  weekendDay: 'روز تعطیل هفته',
+  weekendAuto: 'خودکار (طبق زبان)',
+  weekendNone: 'بدون تعطیلی',
+  weekendFriday: 'جمعه',
+  weekendSaturday: 'شنبه',
+  weekendSunday: 'یکشنبه',
+
+  // مرحله ۱۴: اوقات خورشید
+  sunTimesTitle: 'اوقات خورشید',
+  sunDawn: 'دم صبح',
+  sunSunrise: 'طلوع آفتاب',
+  sunNoon: 'ظهر آفتابی',
+  sunSunset: 'غروب آفتاب',
+  sunDusk: 'شفق',
+  sunLocation: 'موقعیت',
+  sunUseMyLocation: 'استفاده از موقعیت من',
+  sunLocating: 'در حال یافتن…',
+  sunLocError: 'موقعیت مکانی در دسترس نیست',
+  sunPolarNight: 'شب قطبی',
+  sunMidnightSun: 'خورشید نیمه‌شب',
+
+  // مرحله ۱۴: ساعت جهانی
+  worldClockTitle: 'ساعت جهانی',
+  worldClockAdd: 'افزودن شهر',
+  worldClockEmpty: 'برای مقایسه ساعت در سراسر جهان، منطقه زمانی اضافه کنید.',
+  worldClockTomorrow: 'فردا',
+  worldClockYesterday: 'دیروز',
+
+  // مرحله ۱۴: نام شهرها (موقعیت خورشید و ساعت جهانی)
+  cityTehran: 'تهران',
+  cityTokyo: 'توکیو',
+  citySeoul: 'سئول',
+  cityBeijing: 'پکن',
+  cityNewYork: 'نیویورک',
+  cityLondon: 'لندن',
+  cityParis: 'پاریس',
+  cityDubai: 'دبی',
+  citySydney: 'سیدنی',
+  cityLosAngeles: 'لس‌آنجلس',
+
+  // مرحله ۱۴: دریافت اپک اندروید
+  apkDownload: 'دریافت برنامه اندروید (APK)',
+  apkHint: 'نسخه اندروید را دانلود و روی گوشی خود نصب کنید.',
+
   eventSources: 'منابع رویدادها و تعطیلات',
   srcInternational: 'رویدادهای جهانی',
   srcUs: 'تعطیلات آمریکا',

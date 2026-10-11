@@ -98,6 +98,62 @@ export interface LocaleDict {
   /** aria-label per week row — "{n}" = ISO week number */
   weekNumLabel: string;
 
+  // Round 14: extra calendar systems
+  systemImperialSolar: string;
+  systemImperialSolarHint: string;
+  systemAncient: string;
+  systemAncientHint: string;
+  eraAncient: string;
+
+  // Round 14: royal month names toggle
+  royalMonthNames: string;
+  royalMonthNamesHint: string;
+
+  // Round 14: weekly day-off option
+  weekendDay: string;
+  weekendAuto: string;
+  weekendNone: string;
+  weekendFriday: string;
+  weekendSaturday: string;
+  weekendSunday: string;
+
+  // Round 14: sun times card
+  sunTimesTitle: string;
+  sunDawn: string;
+  sunSunrise: string;
+  sunNoon: string;
+  sunSunset: string;
+  sunDusk: string;
+  sunLocation: string;
+  sunUseMyLocation: string;
+  sunLocating: string;
+  sunLocError: string;
+  sunPolarNight: string;
+  sunMidnightSun: string;
+
+  // Round 14: world clock
+  worldClockTitle: string;
+  worldClockAdd: string;
+  worldClockEmpty: string;
+  worldClockTomorrow: string;
+  worldClockYesterday: string;
+
+  // Round 14: city names (sun location + world clock)
+  cityTehran: string;
+  cityTokyo: string;
+  citySeoul: string;
+  cityBeijing: string;
+  cityNewYork: string;
+  cityLondon: string;
+  cityParis: string;
+  cityDubai: string;
+  citySydney: string;
+  cityLosAngeles: string;
+
+  // Round 14: APK download
+  apkDownload: string;
+  apkHint: string;
+
   // event sources
   eventSources: string;
   srcInternational: string;

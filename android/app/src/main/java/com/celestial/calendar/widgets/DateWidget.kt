@@ -57,8 +57,9 @@ class DateWidget : AppWidgetProvider() {
 
             val today = WidgetUpdater.todayDate()
             val locale = settings.locale
-            val big = "${I18n.num(locale, dayOfMonth(settings, today))} ${DateFormats.monthName(settings.system, locale, today)}"
-            val yearLine = DateFormats.systemMonthYearEra(settings.system, locale, today)
+            val big = "${I18n.num(locale, dayOfMonth(settings, today))} " +
+                    "${DateFormats.monthName(settings.system, locale, today, settings.royalMonthNames)}"
+            val yearLine = DateFormats.systemMonthYearEra(settings.system, locale, today, settings.royalMonthNames)
             val secondary = buildSecondaryLine(settings, today)
             val nextEvent = buildNextEventText(context, settings, today)
 
@@ -89,8 +90,12 @@ class DateWidget : AppWidgetProvider() {
         private fun dayOfMonth(settings: Settings, today: com.celestial.calendar.engine.CelestialDate): Int =
             when (settings.system) {
                 com.celestial.calendar.engine.CalendarSystem.GREGORIAN -> today.gregorian.day
-                com.celestial.calendar.engine.CalendarSystem.JALALI -> today.jalali.day
-                com.celestial.calendar.engine.CalendarSystem.IMPERIAL -> today.imperial.day
+                // round 14: imperialSolar rides the Jalali structure; ancient
+                // shares the Imperial (12×30 + Andarjah) structure
+                com.celestial.calendar.engine.CalendarSystem.JALALI,
+                com.celestial.calendar.engine.CalendarSystem.IMPERIAL_SOLAR -> today.jalali.day
+                com.celestial.calendar.engine.CalendarSystem.IMPERIAL,
+                com.celestial.calendar.engine.CalendarSystem.ANCIENT -> today.imperial.day
             }
 
         private fun buildSecondaryLine(
@@ -103,7 +108,10 @@ class DateWidget : AppWidgetProvider() {
                     DateFormats.jalaliMonthYearEra(locale, today)
                 com.celestial.calendar.engine.CalendarSystem.JALALI ->
                     DateFormats.gregorianMonthYearEra(locale, today)
-                com.celestial.calendar.engine.CalendarSystem.IMPERIAL ->
+                // round 14: the imperial family shows Gregorian + Jalali
+                com.celestial.calendar.engine.CalendarSystem.IMPERIAL,
+                com.celestial.calendar.engine.CalendarSystem.IMPERIAL_SOLAR,
+                com.celestial.calendar.engine.CalendarSystem.ANCIENT ->
                     DateFormats.gregorianMonthYearEra(locale, today) + " · " +
                             DateFormats.jalaliMonthYearEra(locale, today)
             }

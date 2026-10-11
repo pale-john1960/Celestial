@@ -238,4 +238,49 @@
     <string name="horoscope_lucky_number">Lucky number</string>
     <string name="horoscope_lucky_color">Lucky color</string>
     <string name="horoscope_advice">Advice</string>
+
+    <!-- Round 14: extra calendar systems / royal month names / weekend day off -->
+    <string name="system_imperial_solar">Shahanshahi year (Shamsi)</string>
+    <string name="system_imperial_solar_hint">Imperial year with the standard solar (Jalali) months and days</string>
+    <string name="system_ancient">Ancient (Fasli)</string>
+    <string name="system_ancient_hint">30-day months + Andarjah, with ancient Zoroastrian month names</string>
+    <string name="era_ancient">Ancient era</string>
+    <string name="royal_month_names">Royal (ancient) month names</string>
+    <string name="royal_month_names_hint">Use the ancient month names (Amordad, Spandarmad) in the Imperial calendars</string>
+    <string name="weekend_day">Weekly day off</string>
+    <string name="weekend_auto">Auto (follow language)</string>
+    <string name="weekend_none">None</string>
+    <string name="weekend_friday">Friday</string>
+    <string name="weekend_saturday">Saturday</string>
+    <string name="weekend_sunday">Sunday</string>
+
+    <!-- Round 14: sun times card -->
+    <string name="sun_times_title">Sun times</string>
+    <string name="sun_dawn">Dawn</string>
+    <string name="sun_sunrise">Sunrise</string>
+    <string name="sun_noon">Solar noon</string>
+    <string name="sun_sunset">Sunset</string>
+    <string name="sun_dusk">Dusk</string>
+    <string name="sun_location">Location</string>
+    <string name="sun_polar_night">Polar night</string>
+    <string name="sun_midnight_sun">Midnight sun</string>
+
+    <!-- Round 14: world clock -->
+    <string name="world_clock_title">World clock</string>
+    <string name="world_clock_add">Add city</string>
+    <string name="world_clock_empty">Add time zones to compare times around the world.</string>
+    <string name="world_clock_tomorrow">next day</string>
+    <string name="world_clock_yesterday">previous day</string>
+
+    <!-- Round 14: city names (sun location + world clock) -->
+    <string name="city_tehran">Tehran</string>
+    <string name="city_tokyo">Tokyo</string>
+    <string name="city_seoul">Seoul</string>
+    <string name="city_beijing">Beijing</string>
+    <string name="city_new_york">New York</string>
+    <string name="city_london">London</string>
+    <string name="city_paris">Paris</string>
+    <string name="city_dubai">Dubai</string>
+    <string name="city_sydney">Sydney</string>
+    <string name="city_los_angeles">Los Angeles</string>
 </resources>

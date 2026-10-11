@@ -13,8 +13,18 @@ export interface SimpleDate {
   day: number;
 }
 
-/** Supported calendar systems */
-export type CalendarSystem = 'gregorian' | 'jalali' | 'imperial';
+/** Supported calendar systems (round 14 adds two Shahanshahi-era variants):
+ *  - imperialSolar: Shahanshahi YEAR (Jalali + 1180) with the STANDARD Jalali
+ *    month/day structure (Farvardin 1–31 … Esfand 29/30) — 12 months.
+ *  - ancient: the 12×30-day Fasli structure + Andarjah (month 13, 5/6 days),
+ *    same math as 'imperial' but month NAMES always use the ancient
+ *    Zoroastrian set (see ANCIENT_MONTH_NAMES). */
+export type CalendarSystem =
+  | 'gregorian'
+  | 'jalali'
+  | 'imperial'
+  | 'imperialSolar'
+  | 'ancient';
 
 /** Week start day (0 = Sunday … 6 = Saturday) */
 export type WeekStart = 0 | 1 | 2 | 3 | 4 | 5 | 6;

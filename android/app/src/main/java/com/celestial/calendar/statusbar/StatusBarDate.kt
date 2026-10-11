@@ -62,13 +62,18 @@ object StatusBarDate {
             CalendarSystem.GREGORIAN -> DateFormats.gregorianMonthYearEra(locale, today)
             CalendarSystem.JALALI -> DateFormats.jalaliMonthYearEra(locale, today)
             CalendarSystem.IMPERIAL -> DateFormats.imperialMonthYearEra(locale, today)
+            // round 14: imperialSolar rides the Jalali structure (Shahanshahi
+            // year); ancient shares the Imperial structure with the ancient era
+            CalendarSystem.IMPERIAL_SOLAR, CalendarSystem.ANCIENT ->
+                DateFormats.systemMonthYearEra(settings.system, locale, today, settings.royalMonthNames)
         }
         val secondary = when (settings.system) {
             CalendarSystem.GREGORIAN ->
                 DateFormats.jalaliMonthYearEra(locale, today) + " · " + DateFormats.hijriMonthYearEra(locale, today)
             CalendarSystem.JALALI ->
                 DateFormats.gregorianMonthYearEra(locale, today) + " · " + DateFormats.hijriMonthYearEra(locale, today)
-            CalendarSystem.IMPERIAL ->
+            // round 14: the imperial family shows Gregorian + Jalali
+            CalendarSystem.IMPERIAL, CalendarSystem.IMPERIAL_SOLAR, CalendarSystem.ANCIENT ->
                 DateFormats.gregorianMonthYearEra(locale, today) + " · " + DateFormats.jalaliMonthYearEra(locale, today)
         }
         return title to secondary

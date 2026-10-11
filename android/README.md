@@ -178,3 +178,17 @@ BCE), Iranian-Friday day-off styling, Hijri-year toggle, daily horoscope
 (deterministic, same picks as the web), header artwork themes (7 × jpg
 drawables in `drawable-nodpi/`), month-cell tile borders, and the full
 32-entry international observance dataset.
+
+Round-14 Android parity: two extra calendar systems — **Shahanshahi (Shamsi)**
+(Imperial year on the standard Jalali months) and **Ancient (Fasli)** (30-day
+structure + ancient Zoroastrian month names, always), the **royal month-names
+toggle** (امرداد/اسپندارمذ in the Imperial systems), the **configurable weekly
+day off** (auto/Fri/Sat/Sun/none, replacing the hardcoded Iranian Friday),
+**locale-aware date formatting** (fa day-first + full weekday names
+everywhere outside the month grid, ja 年月日 + （曜日）), a **NOAA sun-times
+card** (dawn/sunrise/noon/sunset/dusk, 10-city picker, polar-night aware —
+`SunEngine.kt`, constants 1:1 with the web) and a **world-clock card** (live
+times, next/previous-day markers, add/remove cities), 4-image hero pools
+(+12 drawables = 32 total, `gMonth % 4` rotation), and Year-view month cards
+that follow the active header theme's artwork pool. Strings: 240 keys ×3
+locales (37 new, byte-identical to the web dictionaries).

@@ -221,7 +221,7 @@ step("search dialog opens with Ctrl+K and closes with Escape", () => {
   return closed.ok && dialogCount() === 0;
 });
 
-step("date converter opens with C (3 calendar rows) and closes", () => {
+step("date converter opens with C (5 calendar rows) and closes", () => {
   ab(["press", "c"]);
   const w = ab(["wait", "[role=dialog] input", "--timeout", String(STEP_TIMEOUT)]);
   if (!w.ok) return "converter did not open";
@@ -233,8 +233,9 @@ step("date converter opens with C (3 calendar rows) and closes", () => {
       "document.querySelectorAll('[role=dialog] button[role=combobox]').length",
     ),
   );
-  if (inputs < 6 || monthSelects !== 3) {
-    return `expected 6 inputs + 3 month selects, got ${inputs}+${monthSelects}`;
+  // round 14: 5 systems → 5 rows (10 inputs + 5 month selects)
+  if (inputs < 10 || monthSelects !== 5) {
+    return `expected 10 inputs + 5 month selects, got ${inputs}+${monthSelects}`;
   }
   ab(["press", "Escape"]);
   const closed = ab([

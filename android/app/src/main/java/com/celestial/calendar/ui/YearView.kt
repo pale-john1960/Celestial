@@ -1,5 +1,6 @@
 package com.celestial.calendar.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -29,13 +31,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.celestial.calendar.data.HeaderTheme
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CalendarSystem
+import com.celestial.calendar.engine.CelestialDate
 import com.celestial.calendar.engine.DateFormats
 import com.celestial.calendar.engine.DayCell
 import com.celestial.calendar.engine.I18n
@@ -44,9 +50,12 @@ import com.celestial.calendar.events.EventInstance
 import com.celestial.calendar.ui.theme.eventColor
 
 /**
- * Celestial — year overview: 12 (13 in Imperial mode, incl. Andarjah) month
- * cards with mini month grids + event dots. A compact year switcher on top;
- * tapping a card opens that month.
+ * Celestial — year overview: 12 (13 for the imperial family, incl. Andarjah)
+ * month cards with mini month grids + event dots. Round 14: every month card
+ * carries a small artwork banner drawn from the ACTIVE header theme's pool
+ * via [heroArtworkRes] (the central theme image source — web parity with
+ * themeImageSrc), so the year view follows the theme like the hero header.
+ * A compact year switcher on top; tapping a card opens that month.
  */
 @Composable
 fun YearView(
@@ -56,6 +65,8 @@ fun YearView(
     navYear: Int,
     todayIso: String,
     eventsByIso: Map<String, List<EventInstance>>,
+    headerTheme: HeaderTheme,
+    royalMonthNames: Boolean,
     strings: LocalStrings,
     onOpenMonth: (Int) -> Unit,
     onShiftYear: (Int) -> Unit,
@@ -106,6 +117,8 @@ fun YearView(
                     order = order,
                     today = today,
                     eventsByIso = eventsByIso,
+                    headerTheme = headerTheme,
+                    royalMonthNames = royalMonthNames,
                     onOpenMonth = { onOpenMonth(monthIndex) },
                 )
             }
@@ -123,6 +136,8 @@ private fun MiniMonthCard(
     order: List<Int>,
     today: com.celestial.calendar.engine.SimpleDate,
     eventsByIso: Map<String, List<EventInstance>>,
+    headerTheme: HeaderTheme,
+    royalMonthNames: Boolean,
     onOpenMonth: () -> Unit,
 ) {
     val year = remember(firstG) {
@@ -131,7 +146,11 @@ private fun MiniMonthCard(
     val cells: List<DayCell> = remember(system, year, monthIndex, weekStart, today) {
         CalendarFacade.monthGrid(system, year, monthIndex, weekStart, today)
     }
-    val monthName = DateFormats.monthNameOf(system, locale, year, monthIndex)
+    // month name in the ACTIVE system (royal names for the imperial family)
+    val monthName = DateFormats.monthNameOf(system, locale, year, monthIndex, royalMonthNames)
+    // artwork banner from the ACTIVE theme's pool (central image source —
+    // the same heroArtworkRes the header uses; rotates by Gregorian month)
+    val artwork = remember(headerTheme, firstG) { heroArtworkRes(headerTheme, firstG.month) }
 
     Surface(
         shape = RoundedCornerShape(14.dp),
@@ -143,17 +162,28 @@ private fun MiniMonthCard(
             .fillMaxWidth()
             .clickable(onClick = onOpenMonth),
     ) {
-        Column(Modifier.padding(8.dp)) {
-            Text(
-                monthName,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
+        Column {
+            // theme artwork banner (round 14 — year view follows the theme)
+            Image(
+                painter = painterResource(artwork),
+                contentDescription = null, // decorative banner
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 4.dp),
-                textAlign = TextAlign.Center,
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(topStart = 13.dp, topEnd = 13.dp)),
             )
+            Column(Modifier.padding(8.dp)) {
+                Text(
+                    monthName,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    textAlign = TextAlign.Center,
+                )
             // weekday header
             Row(Modifier.fillMaxWidth()) {
                 order.forEach { wd ->
@@ -173,11 +203,8 @@ private fun MiniMonthCard(
                             val events = eventsByIso[cell.date.iso]
                             val isToday = cell.isToday
                             val isHoliday = events?.any { it.isHoliday || it.holidayOnly } == true
-                            val day = when (system) {
-                                CalendarSystem.GREGORIAN -> cell.date.gregorian.day
-                                CalendarSystem.JALALI -> cell.date.jalali.day
-                                CalendarSystem.IMPERIAL -> cell.date.imperial.day
-                            }
+                            // day number in the ACTIVE system (all 5)
+                            val day = CalendarFacade.systemTripleOf(system, cell.date).day
                             Column(
                                 Modifier.weight(1f),
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -228,6 +255,7 @@ private fun MiniMonthCard(
                         }
                     }
                 }
+            }
             }
         }
     }

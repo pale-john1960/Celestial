@@ -136,6 +136,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                             view = viewModel.view,
                             headerTheme = s.headerTheme,
                             showHijri = s.showHijri,
+                            royalMonthNames = s.royalMonthNames,
                             strings = strings,
                             onViewChange = { viewModel.setView(it) },
                             onPrevMonth = { viewModel.shiftMonth(-1) },
@@ -164,6 +165,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                     todayIso = todayIso,
                                     eventsByIso = eventsByIso,
                                     selectedIso = viewModel.selectedIso,
+                                    weekendDay = s.weekendDay,
                                     strings = strings,
                                     // 1st tap selects (TodayStrip), 2nd tap on the same
                                     // day opens the Day view — same UX as the web app
@@ -184,6 +186,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                     selectedIso = viewModel.selectedIso ?: todayIso,
                                     eventsByIso = eventsByIso,
                                     showHijri = s.showHijri,
+                                    weekendDay = s.weekendDay,
                                     strings = strings,
                                     onPrevWeek = { viewModel.shiftWeek(-1) },
                                     onNextWeek = { viewModel.shiftWeek(1) },
@@ -198,6 +201,8 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                     navYear = viewModel.navYear,
                                     todayIso = todayIso,
                                     eventsByIso = eventsByIso,
+                                    headerTheme = s.headerTheme,
+                                    royalMonthNames = s.royalMonthNames,
                                     strings = strings,
                                     onOpenMonth = { m -> viewModel.goToSystemMonth(viewModel.navYear, m) },
                                     onShiftYear = { d -> viewModel.shiftYear(d) },
@@ -216,9 +221,14 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                             events = eventsByIso[iso] ?: emptyList(),
                                             showHijri = s.showHijri,
                                             showHoroscope = s.showHoroscope,
+                                            royalMonthNames = s.royalMonthNames,
+                                            sunLocation = s.sunLocation,
+                                            worldClockZones = s.worldClockZones,
                                             strings = strings,
                                             onPrevDay = { viewModel.shiftDay(-1) },
                                             onNextDay = { viewModel.shiftDay(1) },
+                                            onSetSunLocation = { viewModel.setSunLocation(it) },
+                                            onSetWorldClockZones = { viewModel.setWorldClockZones(it) },
                                             // ✎ on imported/manual cards opens the edit dialog
                                             onEditEvent = { ev ->
                                                 ev.dbId?.let { viewModel.beginEditImported(it) }
@@ -232,6 +242,8 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                     locale = s.locale,
                                     todayIso = todayIso,
                                     eventsByIso = eventsByIso,
+                                    weekendDay = s.weekendDay,
+                                    royalMonthNames = s.royalMonthNames,
                                     strings = strings,
                                     onOpenDay = { iso -> viewModel.openDay(iso) },
                                 )
@@ -268,6 +280,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                     locale = s.locale,
                     selectedIso = viewModel.selectedIso ?: todayIso,
                     strings = strings,
+                    royalMonthNames = s.royalMonthNames,
                     onSave = { title, description, isHoliday, iso, recurYearly, color ->
                         viewModel.addManualEvent(title, description, isHoliday, iso, recurYearly, color)
                         showAddEvent = false
@@ -286,6 +299,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                     selectedIso = row.iso,
                     strings = strings,
                     editing = row,
+                    royalMonthNames = s.royalMonthNames,
                     onSave = { title, description, isHoliday, iso, recurYearly, color ->
                         viewModel.updateImported(
                             row.copy(
@@ -356,8 +370,14 @@ private fun SelectedDayStrip(
         ) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // round 14: FULL weekday name + locale-aware composition
+                    // (weekday · date for en/fa; date（weekday） for ja)
                     Text(
-                        "${DateFormats.weekdayShort(locale, date)} · ${DateFormats.fullSystemDate(s.system, locale, date)}",
+                        DateFormats.weekdayDateText(
+                            locale,
+                            date.weekday,
+                            DateFormats.fullSystemDate(s.system, locale, date, s.royalMonthNames),
+                        ),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                     )

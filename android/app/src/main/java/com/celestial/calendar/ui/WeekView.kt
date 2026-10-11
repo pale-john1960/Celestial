@@ -43,6 +43,7 @@ import com.celestial.calendar.engine.MoonEngine
 import com.celestial.calendar.engine.MoonMajor
 import com.celestial.calendar.engine.SolsticeEngine
 import com.celestial.calendar.engine.WeekStart
+import com.celestial.calendar.engine.WeekendDay
 import com.celestial.calendar.events.EventInstance
 
 /**
@@ -63,6 +64,7 @@ fun WeekView(
     selectedIso: String,
     eventsByIso: Map<String, List<EventInstance>>,
     showHijri: Boolean,
+    weekendDay: WeekendDay,
     strings: LocalStrings,
     onPrevWeek: () -> Unit,
     onNextWeek: () -> Unit,
@@ -132,6 +134,7 @@ fun WeekView(
                 locale = locale,
                 isToday = date.iso == todayIso,
                 showHijri = showHijri,
+                weekendDay = weekendDay,
                 events = eventsByIso[date.iso] ?: emptyList(),
                 strings = strings,
                 onOpenDay = { onOpenDay(date.iso) },
@@ -149,6 +152,7 @@ private fun WeekDayCard(
     locale: AppLocale,
     isToday: Boolean,
     showHijri: Boolean,
+    weekendDay: WeekendDay,
     events: List<EventInstance>,
     strings: LocalStrings,
     onOpenDay: () -> Unit,
@@ -158,6 +162,9 @@ private fun WeekDayCard(
     val dayOffOnly = remember(events) { events.any { it.holidayOnly } }
     val moonMajor = remember(date.iso) { MoonEngine.infoFor(date.gregorian).major }
     val seasonEvent = remember(date.iso) { SolsticeEngine.eventOn(date.gregorian)?.event }
+    // weekly day off (round 14, user-configurable) — soft red weekday label
+    // (the full holiday treatment stays event-driven below)
+    val weeklyDayOff = CalendarFacade.isWeeklyDayOff(weekendDay, locale, date.weekday)
 
     Surface(
         shape = RoundedCornerShape(14.dp),
@@ -193,6 +200,8 @@ private fun WeekDayCard(
                             color = when {
                                 isToday -> MaterialTheme.colorScheme.primary
                                 isHoliday -> MaterialTheme.colorScheme.error
+                                // weekly day off (setting-driven) — soft red
+                                weeklyDayOff -> MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
                             },
                         )
@@ -276,33 +285,30 @@ private fun DayOffChip(strings: LocalStrings, modifier: Modifier = Modifier) {
     }
 }
 
-/** Secondary-system date + Hijri date (Hijri gated behind showHijri),
- *  e.g. "12 Mehr · 4 Rabiʿ II". */
+/** Secondary-system date + Hijri date (Hijri gated behind showHijri) —
+ *  round 14 web parity: every NON-Gregorian system shows the Gregorian date,
+ *  Gregorian shows the Jalali one, e.g. "12 October" / "12 Mehr · 4 Rabiʿ II". */
 private fun secondaryLine(
     system: CalendarSystem,
     locale: AppLocale,
     date: CelestialDate,
     showHijri: Boolean,
 ): String {
-    val secondary = when (system) {
-        CalendarSystem.GREGORIAN ->
-            "${I18n.num(locale, date.jalali.day)} ${I18n.jalaliMonthName(locale, date.jalali.month)}"
-        CalendarSystem.JALALI ->
-            "${I18n.num(locale, date.gregorian.day)} ${I18n.gregorianMonthName(locale, date.gregorian.month)}"
-        CalendarSystem.IMPERIAL ->
-            "${I18n.num(locale, date.jalali.day)} ${I18n.jalaliMonthName(locale, date.jalali.month)}"
+    val secondary = if (system == CalendarSystem.GREGORIAN) {
+        "${I18n.num(locale, date.jalali.day)} ${I18n.jalaliMonthName(locale, date.jalali.month)}"
+    } else {
+        "${I18n.num(locale, date.gregorian.day)} ${I18n.gregorianMonthName(locale, date.gregorian.month)}"
     }
     if (!showHijri) return secondary
     val hijri = "${I18n.num(locale, date.hijri.day)} ${I18n.hijriMonthName(locale, date.hijri.month)}"
     return "$secondary · $hijri"
 }
 
-private fun systemYearMonth(system: CalendarSystem, date: CelestialDate): Pair<Int, Int> =
-    when (system) {
-        CalendarSystem.GREGORIAN -> date.gregorian.year to date.gregorian.month
-        CalendarSystem.JALALI -> date.jalali.year to date.jalali.month
-        CalendarSystem.IMPERIAL -> date.imperial.year to date.imperial.month
-    }
+/** (year, month) of a day in the ACTIVE system (works for all 5). */
+private fun systemYearMonth(system: CalendarSystem, date: CelestialDate): Pair<Int, Int> {
+    val t = CalendarFacade.systemTripleOf(system, date)
+    return t.year to t.month
+}
 
 /** Week label in the active system, e.g. "Mehr 24 – 30, 1405". */
 private fun weekLabelOf(

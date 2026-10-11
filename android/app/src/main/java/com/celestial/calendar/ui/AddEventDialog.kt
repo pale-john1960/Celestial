@@ -75,6 +75,7 @@ fun AddEventDialog(
     selectedIso: String,
     strings: LocalStrings,
     editing: ImportedEvent? = null,
+    royalMonthNames: Boolean = false,
     onSave: (
         title: String,
         description: String,
@@ -111,7 +112,7 @@ fun AddEventDialog(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (selectedDate != null) {
                     Text(
-                        DateFormats.fullSystemDate(system, locale, selectedDate),
+                        DateFormats.fullSystemDate(system, locale, selectedDate, royalMonthNames),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -141,6 +142,7 @@ fun AddEventDialog(
                             } else if (g != null) {
                                 DateFormats.fullSystemDate(
                                     system, locale, CalendarFacade.buildCelestialDate(g),
+                                    royalMonthNames,
                                 )
                             } else {
                                 ""

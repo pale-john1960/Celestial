@@ -87,16 +87,12 @@ class MonthWidget : AppWidgetProvider() {
             settings: Settings,
             today: com.celestial.calendar.engine.CelestialDate,
         ): String {
-            val (y, m) = when (settings.system) {
-                com.celestial.calendar.engine.CalendarSystem.GREGORIAN ->
-                    today.gregorian.year to today.gregorian.month
-                com.celestial.calendar.engine.CalendarSystem.JALALI ->
-                    today.jalali.year to today.jalali.month
-                com.celestial.calendar.engine.CalendarSystem.IMPERIAL ->
-                    today.imperial.year to today.imperial.month
-            }
-            val monthName = DateFormats.monthNameOf(settings.system, settings.locale, y, m)
-            return "$monthName ${I18n.num(settings.locale, y)}"
+            // (year, month) in the ACTIVE system's display space (all 5)
+            val t = CalendarFacade.systemTripleOf(settings.system, today)
+            val monthName = DateFormats.monthNameOf(
+                settings.system, settings.locale, t.year, t.month, settings.royalMonthNames,
+            )
+            return "$monthName ${I18n.num(settings.locale, t.year)}"
         }
 
         private fun appWidgetIds(context: Context): IntArray =

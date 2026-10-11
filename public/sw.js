@@ -54,7 +54,7 @@
  *      network failures.
  */
 
-const VERSION = "v5";
+const VERSION = "v6";
 const STATIC_CACHE = `celestial-static-${VERSION}`;
 const API_CACHE = `celestial-api-${VERSION}`;
 
@@ -79,6 +79,9 @@ const CACHE_FIRST_PREFIXES = [
   "/_next/static/",
 ];
 
+/** NEVER cache the 15MB APK download (pass-through to network). */
+const NEVER_CACHE_PREFIXES = ["/celestial-debug.apk"];
+
 /** Exact pathnames served cache-first. */
 const CACHE_FIRST_EXACT = new Set([
   "/logo.svg",
@@ -88,6 +91,9 @@ const CACHE_FIRST_EXACT = new Set([
 
 /** true when this request is one of the few shapes we are allowed to cache. */
 function isStaticAssetPath(pathname) {
+  if (NEVER_CACHE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return false;
+  }
   if (CACHE_FIRST_EXACT.has(pathname)) return true;
   return CACHE_FIRST_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }

@@ -39,16 +39,18 @@ import com.celestial.calendar.engine.MoonEngine
 import com.celestial.calendar.engine.SeasonEvent
 import com.celestial.calendar.engine.SolsticeEngine
 import com.celestial.calendar.engine.WeekStart
+import com.celestial.calendar.engine.WeekendDay
 import com.celestial.calendar.events.EventInstance
 
 /**
  * Celestial — month view: 7-column grid, weekday header per weekStart,
  * weekend red styling (fa: Thu/Fri; others Sat/Sun), holiday cells with red
- * tint + 🌙 (in the fa locale every Friday gets the same day-off styling —
- * Iran's weekly day off), distinct bordered surface tiles per day cell,
- * today highlight ring, small secondary date number, event dots by category
- * color, and a tiny bottom-end glyph cluster (moon phase + season marker) on
- * major-phase / solstice / equinox days.
+ * tint + 🌙 (weekly day-offs get the SAME styling, now driven by the
+ * weekendDay setting — round 14 port of the web's isWeeklyDayOff), distinct
+ * bordered surface tiles per day cell, today highlight ring, small secondary
+ * date number, event dots by category color, and a tiny bottom-end glyph
+ * cluster (moon phase + season marker) on major-phase / solstice / equinox
+ * days.
  */
 @Composable
 fun MonthView(
@@ -60,6 +62,7 @@ fun MonthView(
     todayIso: String,
     eventsByIso: Map<String, List<EventInstance>>,
     selectedIso: String?,
+    weekendDay: WeekendDay,
     strings: LocalStrings,
     onSelectDay: (String?) -> Unit,
 ) {
@@ -115,6 +118,7 @@ fun MonthView(
                             system = system,
                             locale = locale,
                             weekendDays = weekendDays,
+                            weekendDay = weekendDay,
                             events = eventsByIso[cell.date.iso] ?: emptyList(),
                             isSelected = selectedIso == cell.date.iso,
                             strings = strings,
@@ -138,6 +142,7 @@ private fun DayCellView(
     system: CalendarSystem,
     locale: AppLocale,
     weekendDays: Set<Int>,
+    weekendDay: WeekendDay,
     events: List<EventInstance>,
     isSelected: Boolean,
     strings: LocalStrings,
@@ -146,12 +151,13 @@ private fun DayCellView(
 ) {
     val isToday = cell.isToday
     val isHoliday = events.any { it.isHoliday || it.holidayOnly }
-    // Iran: Friday is the weekly day off — in the fa locale every Friday gets
-    // the full holiday STYLING (red date number + red tint + 🌙 corner), same
-    // as event holidays. STYLING ONLY: no event is fabricated, so dots /
-    // moon/season glyphs / a11y stay purely event-driven (web parity).
-    val iranFriday = locale == AppLocale.FA && cell.date.weekday == 5
-    val dayOff = isHoliday || iranFriday
+    // Weekly day off (round 14 — user-configurable, was the hardcoded fa
+    // Friday): every weekly day-off day gets the full holiday STYLING (red
+    // date number + red tint + 🌙 corner), same as event holidays. STYLING
+    // ONLY: no event is fabricated, so dots / moon/season glyphs / a11y stay
+    // purely event-driven (web parity).
+    val weeklyDayOff = CalendarFacade.isWeeklyDayOff(weekendDay, locale, cell.date.weekday)
+    val dayOff = isHoliday || weeklyDayOff
     val isWeekend = cell.date.weekday in weekendDays
     val moonMajor = remember(cell.date.iso) { MoonEngine.infoFor(cell.date.gregorian).major }
     val seasonEvent = remember(cell.date.iso) { SolsticeEngine.eventOn(cell.date.gregorian)?.event }

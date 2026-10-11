@@ -2,8 +2,13 @@
 "use client";
 
 import { CalendarClock } from "lucide-react";
-import { isoDate, parseIso, todayGregorian } from "@/lib/calendar";
-import { fromJdn, toJdn } from "@/lib/calendar/jdn";
+import {
+  isWeeklyDayOff,
+  isoDate,
+  parseIso,
+  todayGregorian,
+} from "@/lib/calendar";
+import { fromJdn, jdnWeekday, toJdn } from "@/lib/calendar/jdn";
 import { getDict, num } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
@@ -16,6 +21,7 @@ const NAME_MAX = 24;
 
 export function NextDayOffChip() {
   const locale = useSettings((s) => s.locale);
+  const weekendDay = useSettings((s) => s.weekendDay);
   const sources = useSettings((s) => s.sources);
   const dict = getDict(locale);
   const gotoDay = useUi((s) => s.gotoDay);
@@ -25,10 +31,33 @@ export function NextDayOffChip() {
   const to = isoDate(fromJdn(toJdn(today) + DAYS_AHEAD - 1));
   const { data, isLoading } = useEvents(from, to, sources);
 
-  // first legal day off (holidayOnly included — it IS a day off) ≥ today
-  // (cheap filter; the API returns events sorted by iso)
-  const next =
+  // candidate 1 — first legal day off (holidayOnly included — it IS a day
+  // off) ≥ today (cheap filter; the API returns events sorted by iso)
+  const holidayNext =
     (data?.events ?? []).find((e) => e.isHoliday && e.iso >= from) ?? null;
+
+  // candidate 2 — the next WEEKLY day off (round 14: user-configurable;
+  // auto → fa Friday, else none) within the coming 7 days, today included
+  const todayJdn = toJdn(today);
+  let weeklyOffJdn: number | null = null;
+  for (let i = 0; i < 7; i++) {
+    if (isWeeklyDayOff(weekendDay, locale, jdnWeekday(todayJdn + i))) {
+      weeklyOffJdn = todayJdn + i;
+      break;
+    }
+  }
+  const holidayJdn = holidayNext
+    ? toJdn(parseIso(holidayNext.iso) ?? today)
+    : null;
+  // the earlier candidate wins; a legal holiday wins ties (real name)
+  const weeklyWins =
+    weeklyOffJdn !== null &&
+    (holidayJdn === null || weeklyOffJdn < holidayJdn);
+  const next = weeklyWins
+    ? { iso: isoDate(fromJdn(weeklyOffJdn as number)), name: dict.weekend }
+    : holidayNext
+      ? { iso: holidayNext.iso, name: holidayNext.names[locale] }
+      : null;
 
   if (isLoading) {
     return <Skeleton className="h-6 w-40 rounded-full" aria-hidden />;
@@ -36,7 +65,7 @@ export function NextDayOffChip() {
   if (!next) return null;
 
   const diffDays = toJdn(parseIso(next.iso) ?? today) - toJdn(today);
-  const name = next.names[locale];
+  const name = next.name;
   const shortName =
     name.length > NAME_MAX ? `${name.slice(0, NAME_MAX - 1).trimEnd()}…` : name;
   const fullLabel =

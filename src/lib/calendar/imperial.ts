@@ -44,6 +44,19 @@ export const ANDARJAH_LABEL: Record<'en' | 'ja' | 'fa', string> = {
   fa: 'اندارج',
 };
 
+/**
+ * Ancient Zoroastrian (royal) month names — the "reformed" modern spellings
+ * differ: امرداد vs مرداد (Amordad), اسپندارمذ vs اسفند (Spandarmad).
+ * Used by the 'ancient' system (always) and by 'imperial'/'imperialSolar'
+ * when the royalMonthNames setting is ON. Andarjah (month 13) keeps its
+ * own label (ANDARJAH_LABEL / jalaliMonthName(locale, 13)).
+ */
+export const ANCIENT_MONTH_NAMES: Record<'en' | 'ja' | 'fa', string[]> = {
+  en: ['Farvardin', 'Ardibehesht', 'Khordad', 'Tir', 'Amordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Spandarmad'],
+  ja: ['ファルヴァルディーン', 'アルディーベヘシュト', 'ホルダード', 'ティール', 'アモルダード', 'シャフリヴァール', 'メフル', 'アーバーン', 'アーザル', 'デイ', 'バフマン', 'スプァンダルマド'],
+  fa: ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'امرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسپندارمذ'],
+};
+
 /** Convert a Gregorian date to the Imperial calendar date */
 export function gregorianToImperial(g: SimpleDate): ImperialDate {
   // Jalali year containing g

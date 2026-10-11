@@ -80,6 +80,11 @@ object I18n {
         else -> jalaliMonths[locale]?.getOrNull(month - 1) ?: ""
     }
 
+    /** Ancient Zoroastrian month name (royal names — 1..12; see
+     *  [ImperialEngine.ANCIENT_MONTH_NAMES]). */
+    fun ancientMonthName(locale: AppLocale, month: Int): String =
+        ImperialEngine.ANCIENT_MONTH_NAMES[locale]?.getOrNull(month - 1) ?: ""
+
     fun hijriMonthName(locale: AppLocale, month: Int): String =
         hijriMonths[locale]?.getOrNull(month - 1) ?: ""
 

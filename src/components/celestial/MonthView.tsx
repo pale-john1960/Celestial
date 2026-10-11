@@ -13,10 +13,14 @@ import {
 import {
   gregorianToJalali,
   isoWeekNumber,
+  isWeeklyDayOff,
   monthGrid,
   shiftMonth,
+  systemMonthCount,
   systemMonthLength,
+  systemMonthName,
   systemToGregorian,
+  systemTripleOf,
   todayGregorian,
   weekdayOrder,
 } from "@/lib/calendar";
@@ -32,15 +36,13 @@ import type { SeasonEvent } from "@/lib/calendar/solstice";
 import type { CalendarSystem, DayCell } from "@/lib/calendar";
 import {
   getDict,
-  gregorianMonthName,
-  jalaliMonthName,
   num,
-  weekdayLong,
   weekdayShort,
 } from "@/lib/i18n";
 import type { LocaleCode, LocaleDict } from "@/lib/i18n";
 import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
+import type { WeekendDayCode } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { useEvents } from "@/lib/client/api";
 import { Button } from "@/components/ui/button";
@@ -60,9 +62,9 @@ import {
 } from "@/components/ui/tooltip";
 import { CategoryLegend, eventColor } from "./CategoryLegend";
 import {
-  formatGregorianDate,
-  formatImperialDate,
-  formatJalaliDate,
+  activeDateText,
+  systemEraLabel,
+  weekdayDateText,
 } from "./HeroHeader";
 import { TodayStrip } from "./TodayStrip";
 
@@ -95,6 +97,8 @@ export function MonthView() {
   const system = useSettings((s) => s.system);
   const weekStart = useSettings((s) => s.weekStart);
   const showWeekNumbers = useSettings((s) => s.showWeekNumbers);
+  const weekendDay = useSettings((s) => s.weekendDay);
+  const royal = useSettings((s) => s.royalMonthNames);
   const sources = useSettings((s) => s.sources);
   const dict = getDict(locale);
 
@@ -155,17 +159,9 @@ export function MonthView() {
     return map;
   }, [cells]);
 
-  const monthCount = system === "imperial" ? 13 : 12;
-  const monthLabel =
-    system === "gregorian"
-      ? gregorianMonthName(locale, cursor.month)
-      : jalaliMonthName(locale, cursor.month);
-  const era =
-    system === "gregorian"
-      ? dict.eraGregorian
-      : system === "jalali"
-        ? dict.eraJalali
-        : dict.eraImperial;
+  const monthCount = systemMonthCount(system);
+  const monthLabel = systemMonthName(system, locale, cursor.month, royal);
+  const era = systemEraLabel(system, dict);
 
   // Persian zodiac chip: the Jalali month underlying the DISPLAYED month.
   // Middle-day sampling (min(15, length)) — matches the Android derivation:
@@ -221,6 +217,8 @@ export function MonthView() {
         dict={dict}
         locale={locale}
         system={system}
+        royal={royal}
+        weekendDay={weekendDay}
         selected={cell.iso === selectedIso}
         events={eventsByIso.get(cell.iso)}
         moon={moonByIso.get(cell.iso) ?? null}
@@ -304,9 +302,7 @@ export function MonthView() {
           <SelectContent>
             {Array.from({ length: monthCount }, (_, i) => i + 1).map((m) => (
               <SelectItem key={m} value={String(m)}>
-                {system === "gregorian"
-                  ? gregorianMonthName(locale, m)
-                  : jalaliMonthName(locale, m)}
+                {systemMonthName(system, locale, m, royal)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -487,6 +483,8 @@ function DayCellButton({
   dict,
   locale,
   system,
+  royal,
+  weekendDay,
   selected,
   events,
   moon,
@@ -499,6 +497,10 @@ function DayCellButton({
   dict: LocaleDict;
   locale: LocaleCode;
   system: CalendarSystem;
+  /** royalMonthNames setting — ancient month names in the imperial family */
+  royal: boolean;
+  /** weekendDay setting — drives the weekly day-off styling */
+  weekendDay: WeekendDayCode;
   selected: boolean;
   events: EventInstance[] | undefined;
   moon: "new" | "firstQ" | "full" | "lastQ" | null;
@@ -507,12 +509,13 @@ function DayCellButton({
   onClick: (iso: string) => void;
 }) {
   const isHolidayDay = (events ?? []).some((e) => e.isHoliday);
-  // Iran: Friday is the weekly day off — in the fa locale every Friday gets
-  // the full holiday STYLING (red date number + red tint + 🌙 corner glyph),
-  // same as event holidays. STYLING ONLY: no event is fabricated, so the
-  // dots / preview / aria segments below stay purely event-driven.
-  const iranFriday = locale === "fa" && cell.weekday === 5;
-  const dayOff = isHolidayDay || iranFriday;
+  // Weekly day off (round 14: user-configurable — auto follows the locale,
+  // fa → Friday, else none; the settings sheet can force Fri/Sat/Sun/none).
+  // It gets the full holiday STYLING (red date number + red tint + 🌙 corner
+  // glyph), same as event holidays. STYLING ONLY: no event is fabricated, so
+  // the dots / preview / aria segments below stay purely event-driven.
+  const weeklyDayOff = isWeeklyDayOff(weekendDay, locale, cell.weekday);
+  const dayOff = isHolidayDay || weeklyDayOff;
   const dots = (events ?? []).filter((e) => !e.holidayOnly).slice(0, 4);
   const hasRecurring = (events ?? []).some(
     (e) => !e.holidayOnly && e.recurring,
@@ -522,22 +525,15 @@ function DayCellButton({
   const previewEvents = (events ?? []).slice(0, PREVIEW_EVENTS);
   const moreCount = (events?.length ?? 0) - previewEvents.length;
 
-  const primary =
-    system === "gregorian"
-      ? cell.gregorian.day
-      : system === "jalali"
-        ? cell.jalali.day
-        : cell.imperial.day;
+  const sd = systemTripleOf(system, cell);
+  const primary = sd.day;
   // secondary small number: gregorian mode → Jalali day; jalali/imperial → Gregorian day
   const secondary =
-    system === "jalali" ? cell.gregorian.day : cell.jalali.day;
+    system === "jalali" || system === "imperialSolar" || system === "imperial" || system === "ancient"
+      ? cell.gregorian.day
+      : cell.jalali.day;
 
-  const activeDateText =
-    system === "gregorian"
-      ? formatGregorianDate(locale, cell.gregorian, dict)
-      : system === "jalali"
-        ? formatJalaliDate(locale, cell.jalali, dict)
-        : formatImperialDate(locale, cell.imperial, dict);
+  const cellDateText = activeDateText(system, locale, cell, dict, royal);
 
   // first few event names appended to the cell's aria-label (kept short)
   const ariaEventNames = (events ?? [])
@@ -560,8 +556,8 @@ function DayCellButton({
       type="button"
       role="gridcell"
       aria-selected={selected}
-      aria-label={`${dict.selectDate}: ${weekdayLong(locale, cell.weekday)}, ${activeDateText}${moon ? ` · ${moonPhaseText}` : ""}${season ? ` · ${seasonEventName(dict, season)}` : ""}${ariaEventNames ? ` · ${ariaEventNames}` : ""}`}
-      title={hoverCapable ? undefined : activeDateText}
+      aria-label={`${dict.selectDate}: ${weekdayDateText(locale, cell.weekday, cellDateText)}${moon ? ` · ${moonPhaseText}` : ""}${season ? ` · ${seasonEventName(dict, season)}` : ""}${ariaEventNames ? ` · ${ariaEventNames}` : ""}`}
+      title={hoverCapable ? undefined : cellDateText}
       onClick={() => onClick(cell.iso)}
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -665,7 +661,7 @@ function DayCellButton({
       >
         <div className="flex flex-col gap-1.5">
           <p className="font-semibold">
-            {weekdayLong(locale, cell.weekday)}, {activeDateText}
+            {weekdayDateText(locale, cell.weekday, cellDateText)}
           </p>
           {previewEvents.length > 0 && (
             <ul className="flex flex-col gap-1">

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,7 +19,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -46,18 +47,26 @@ import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CelestialDate
 import com.celestial.calendar.engine.CalendarSystem
 import com.celestial.calendar.engine.DateFormats
+import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.JalaliEngine
 
 /**
- * Celestial — hero header with selectable artwork themes (round 13).
+ * Celestial — hero header with selectable artwork themes (round 13; round 14
+ * adds the two new calendar systems, royal month names, the era suffix and
+ * the today chip).
  *
- * Static banner image per header theme (7 themes, 2 pieces each, alternating
- * with the months — no cross-fade animation on Android, per the low-power
- * rules), month name + year in the active system, a small zodiac chip with
- * the displayed Jalali month's constellation glyph + sign name (Task 10;
- * month view only), a secondary line with the other systems (Hijri line
- * gated behind the showHijri setting; the season suffix only shows for the
- * seasonal artwork theme), and the Month/Week/Year/Day/Agenda view switcher.
+ * Static banner image per header theme (fixed themes rotate 4 pieces by
+ * Gregorian month — no cross-fade animation on Android, per the low-power
+ * rules), month name + year + era in the active system (month names follow
+ * the royal-names preference for the imperial family; ancient ALWAYS uses
+ * the ancient names), a small zodiac chip with the displayed Jalali month's
+ * constellation glyph + sign name (month view only), a secondary line with
+ * the other systems (Gregorian for every non-Gregorian system, Jalali for
+ * every non-Jalali one — web round-14 structure; the Hijri line is gated
+ * behind the showHijri setting; the season suffix only shows for the
+ * seasonal artwork theme), the today chip (round 14 — full weekday name +
+ * locale-ordered day·month composition, replaces the icon-only button) and
+ * the Month/Week/Year/Day/Agenda view switcher.
  */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -70,6 +79,7 @@ fun HeroHeader(
     view: ViewKind,
     headerTheme: HeaderTheme,
     showHijri: Boolean,
+    royalMonthNames: Boolean,
     strings: LocalStrings,
     onViewChange: (ViewKind) -> Unit,
     onPrevMonth: () -> Unit,
@@ -79,12 +89,15 @@ fun HeroHeader(
     onAddEvent: () -> Unit,
 ) {
     val season = Season.ofGregorianMonth(today.gregorian.month)
-    // hero artwork: active theme's pool; the two pieces alternate with the
-    // months (seasonal: consecutive months flip; fixed themes: month parity)
+    // hero artwork: active theme's pool — the CENTRAL theme image source
+    // (fixed themes rotate 4 pieces by Gregorian month)
     val banner = heroArtworkRes(headerTheme, today.gregorian.month)
 
-    val navMonthName = DateFormats.monthNameOf(system, locale, navYear, navMonth)
-    val navYearText = com.celestial.calendar.engine.I18n.num(locale, navYear)
+    // month identity in the ACTIVE system (royal names apply to the
+    // imperial-family systems; jalali/gregorian are unchanged)
+    val navMonthName = DateFormats.monthNameOf(system, locale, navYear, navMonth, royalMonthNames)
+    val navYearText = I18n.num(locale, navYear)
+    val eraText = DateFormats.eraOfSystem(system, locale)
     // Jalali month of the displayed (cursor) month regardless of the active
     // system — the middle day of the system month converted via the engine
     // facade. Drives the zodiac chip (Task 10). Sampling the middle day
@@ -99,36 +112,41 @@ fun HeroHeader(
     ).month
     val seasonLabel = strings.seasonName(season)
 
-    // Secondary line: the other system(s) of TODAY. The Hijri (AH) year line
-    // is gated behind the showHijri setting (default on); the season suffix
-    // only shows for the seasonal artwork theme (fixed themes carry their
-    // own palette — same rule as the web's season chip).
+    // Secondary line: the other main system(s) of TODAY — web round-14
+    // structure: Gregorian shows for every non-Gregorian system, Jalali (SH)
+    // for every non-Jalali one (including the whole imperial family); the
+    // Hijri (AH) year line is gated behind the showHijri setting; the season
+    // suffix only shows for the seasonal artwork theme (fixed themes carry
+    // their own palette — same rule as the web's season chip).
     val secondary = buildString {
-        when (system) {
-            CalendarSystem.GREGORIAN -> {
-                append(DateFormats.jalaliMonthYearEra(locale, today))
-                if (showHijri) {
-                    append(" · ")
-                    append(DateFormats.hijriMonthYearEra(locale, today))
-                }
-            }
-            CalendarSystem.JALALI -> {
-                append(DateFormats.gregorianMonthYearEra(locale, today))
-                if (showHijri) {
-                    append(" · ")
-                    append(DateFormats.hijriMonthYearEra(locale, today))
-                }
-            }
-            CalendarSystem.IMPERIAL -> {
-                append(DateFormats.gregorianMonthYearEra(locale, today))
-                append(" · ")
-                append(DateFormats.jalaliMonthYearEra(locale, today))
-            }
+        if (system != CalendarSystem.GREGORIAN) {
+            append(DateFormats.gregorianMonthYearEra(locale, today))
+        }
+        if (system != CalendarSystem.JALALI) {
+            if (isNotEmpty()) append(" · ")
+            append(DateFormats.jalaliMonthYearEra(locale, today))
+        }
+        if (showHijri) {
+            if (isNotEmpty()) append(" · ")
+            append(DateFormats.hijriMonthYearEra(locale, today))
         }
         if (headerTheme == HeaderTheme.SEASONAL) {
             append(" · ")
             append(seasonLabel)
         }
+    }
+
+    // today chip (round 14): FULL weekday name + locale-ordered day·month
+    // composition — en "Today · Saturday, March 21" / ja "今日 · 3月21日（土曜日）"
+    // / fa "امروز · شنبه ۲۱ مارس" (web parity)
+    val todayTriple = CalendarFacade.systemTripleOf(system, today)
+    val todayMonthName = CalendarFacade.systemMonthName(system, locale, todayTriple.month, royalMonthNames)
+    val todayDayNum = I18n.num(locale, todayTriple.day)
+    val todayWeekday = I18n.weekdayLong(locale, today.weekday)
+    val todayChipLabel = when (locale) {
+        AppLocale.JA -> "${strings.today} · $todayMonthName${todayDayNum}日（$todayWeekday）"
+        AppLocale.FA -> "${strings.today} · $todayWeekday $todayDayNum $todayMonthName"
+        else -> "${strings.today} · $todayWeekday, $todayMonthName $todayDayNum"
     }
 
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -173,12 +191,6 @@ fun HeroHeader(
                         tint = Color.White,
                     )
                 }
-                IconButton(onClick = onGoToday) {
-                    Icon(
-                        Icons.Filled.DateRange, contentDescription = strings.goToday,
-                        tint = Color.White,
-                    )
-                }
                 IconButton(onClick = onOpenSettings) {
                     Icon(
                         Icons.Filled.Settings, contentDescription = strings.settings,
@@ -198,6 +210,23 @@ fun HeroHeader(
                     letterSpacing = 3.sp,
                     fontWeight = FontWeight.Bold,
                 )
+                // today chip (round 14) — replaces the icon-only Today button;
+                // full weekday + locale-ordered composition, web parity
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(vertical = 4.dp)
+                        .clickable(onClick = onGoToday),
+                ) {
+                    Text(
+                        todayChipLabel,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                    )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -211,13 +240,22 @@ fun HeroHeader(
                             )
                         }
                     }
-                    Text(
-                        "$navMonthName $navYearText",
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                    )
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            "$navMonthName $navYearText",
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            " $eraText",
+                            color = Color.White.copy(alpha = 0.85f),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
+                    }
                     if (view == ViewKind.MONTH) {
                         IconButton(onClick = onNextMonth) {
                             Icon(

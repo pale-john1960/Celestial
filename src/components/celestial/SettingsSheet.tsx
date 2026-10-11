@@ -2,12 +2,16 @@
 "use client";
 
 import { useEffect, useReducer, useRef, useState } from "react";
-import { BellRing, Check, FileDown, MonitorDown, Upload, UploadCloud } from "lucide-react";
+import { BellRing, Check, FileDown, MonitorDown, Smartphone, Upload, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 import { getDict, num } from "@/lib/i18n";
 import type { LocaleDict } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
-import type { HeaderThemeCode, SourceFlags } from "@/store/settings";
+import type {
+  HeaderThemeCode,
+  SourceFlags,
+  WeekendDayCode,
+} from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -186,14 +190,31 @@ function AppSection() {
   const install = useInstallState();
   const offlineReady = useOfflineReady();
 
-  // nothing to offer yet — keep the sheet unchanged
-  if (!install.canInstall && !offlineReady) return null;
-
+  // the APK row is always offered (the build ships with the repo)
   return (
     <>
       <Separator className="my-4" />
       <h3 className={sectionTitle()}>{APP_LABELS[locale].title}</h3>
       <div className="mt-1.5">
+        {/* Android APK download (round 14) — anchors at /celestial-debug.apk */}
+        <a
+          href="/celestial-debug.apk"
+          download="celestial-debug.apk"
+          className="flex w-full items-start justify-between gap-3 rounded-xl p-2.5 text-start transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-medium leading-tight">
+              {dict.apkDownload}
+            </span>
+            <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+              {dict.apkHint}
+            </span>
+          </span>
+          <Smartphone
+            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+        </a>
         {install.canInstall && (
           <button
             type="button"
@@ -522,6 +543,18 @@ export function SettingsSheet() {
               dict.systemImperial,
               dict.systemImperialHint,
             )}
+            {radioRow(
+              "imperialSolar",
+              "sys-imperial-solar",
+              dict.systemImperialSolar,
+              dict.systemImperialSolarHint,
+            )}
+            {radioRow(
+              "ancient",
+              "sys-ancient",
+              dict.systemAncient,
+              dict.systemAncientHint,
+            )}
           </RadioGroup>
 
           <Separator className="my-4" />
@@ -553,6 +586,46 @@ export function SettingsSheet() {
             {radioRow("0", "ws-0", dict.weekStartSun)}
             {radioRow("1", "ws-1", dict.weekStartMon)}
           </RadioGroup>
+
+          {/* weekly day off (round 14) — Select next to the week-start
+              radios; same row pattern as the header-theme Select */}
+          <div className="mt-1.5 flex items-center justify-between gap-3 rounded-xl p-2.5 hover:bg-accent">
+            <Label
+              htmlFor="weekend-day"
+              className="cursor-pointer text-sm font-medium leading-tight"
+            >
+              {dict.weekendDay}
+            </Label>
+            <Select
+              value={settings.weekendDay}
+              onValueChange={(v) =>
+                settings.setWeekendDay(v as WeekendDayCode)
+              }
+            >
+              <SelectTrigger
+                id="weekend-day"
+                size="sm"
+                className="mt-0.5 w-auto min-w-32 shrink-0 rounded-lg"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(
+                  [
+                    ["auto", dict.weekendAuto],
+                    ["none", dict.weekendNone],
+                    ["friday", dict.weekendFriday],
+                    ["saturday", dict.weekendSaturday],
+                    ["sunday", dict.weekendSunday],
+                  ] as const
+                ).map(([code, label]) => (
+                  <SelectItem key={code} value={code}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* ISO week-number column in the month grid (task 12-a) —
               same Switch row pattern as the notifications toggle */}
@@ -604,6 +677,28 @@ export function SettingsSheet() {
               id="show-horoscope"
               checked={settings.showHoroscope}
               onCheckedChange={(v) => settings.setShowHoroscope(v)}
+              className="mt-0.5 shrink-0"
+            />
+          </div>
+
+          {/* royal (ancient) month names in the Imperial calendars (round 14) —
+              same Switch row pattern as show-horoscope, with hint */}
+          <div className="mt-1.5 flex items-start justify-between gap-3 rounded-xl p-2.5 hover:bg-accent">
+            <div className="min-w-0">
+              <Label
+                htmlFor="royal-month-names"
+                className="cursor-pointer text-sm font-medium leading-tight"
+              >
+                {dict.royalMonthNames}
+              </Label>
+              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                {dict.royalMonthNamesHint}
+              </p>
+            </div>
+            <Switch
+              id="royal-month-names"
+              checked={settings.royalMonthNames}
+              onCheckedChange={(v) => settings.setRoyalMonthNames(v)}
               className="mt-0.5 shrink-0"
             />
           </div>

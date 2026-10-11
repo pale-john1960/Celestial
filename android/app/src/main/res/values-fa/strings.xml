@@ -238,4 +238,49 @@
     <string name="horoscope_lucky_number">عدد شانس</string>
     <string name="horoscope_lucky_color">رنگ شانس</string>
     <string name="horoscope_advice">توصیه</string>
+
+    <!-- مرحله ۱۴: گاه‌شماری‌های افزوده / نام ماه‌های شاهی / روز تعطیل هفته -->
+    <string name="system_imperial_solar">سال شاهنشاهی (شمسی)</string>
+    <string name="system_imperial_solar_hint">سال شاهنشاهی با ماه و روزهای شمسی معمول</string>
+    <string name="system_ancient">باستانی (فصلی)</string>
+    <string name="system_ancient_hint">ماه‌های ۳۰ روزه + اندرج، با نام ماه‌های باستانی زرتشتی</string>
+    <string name="era_ancient">باستان</string>
+    <string name="royal_month_names">نام ماه‌های شاهی (باستانی)</string>
+    <string name="royal_month_names_hint">نمایش نام کهن ماه‌ها (امرداد، اسپندارمذ) در تقویم‌های شاهنشاهی</string>
+    <string name="weekend_day">روز تعطیل هفته</string>
+    <string name="weekend_auto">خودکار (طبق زبان)</string>
+    <string name="weekend_none">بدون تعطیلی</string>
+    <string name="weekend_friday">جمعه</string>
+    <string name="weekend_saturday">شنبه</string>
+    <string name="weekend_sunday">یکشنبه</string>
+
+    <!-- مرحله ۱۴: اوقات خورشید -->
+    <string name="sun_times_title">اوقات خورشید</string>
+    <string name="sun_dawn">دم صبح</string>
+    <string name="sun_sunrise">طلوع آفتاب</string>
+    <string name="sun_noon">ظهر آفتابی</string>
+    <string name="sun_sunset">غروب آفتاب</string>
+    <string name="sun_dusk">شفق</string>
+    <string name="sun_location">موقعیت</string>
+    <string name="sun_polar_night">شب قطبی</string>
+    <string name="sun_midnight_sun">خورشید نیمه‌شب</string>
+
+    <!-- مرحله ۱۴: ساعت جهانی -->
+    <string name="world_clock_title">ساعت جهانی</string>
+    <string name="world_clock_add">افزودن شهر</string>
+    <string name="world_clock_empty">برای مقایسه ساعت در سراسر جهان، منطقه زمانی اضافه کنید.</string>
+    <string name="world_clock_tomorrow">فردا</string>
+    <string name="world_clock_yesterday">دیروز</string>
+
+    <!-- مرحله ۱۴: نام شهرها (موقعیت خورشید و ساعت جهانی) -->
+    <string name="city_tehran">تهران</string>
+    <string name="city_tokyo">توکیو</string>
+    <string name="city_seoul">سئول</string>
+    <string name="city_beijing">پکن</string>
+    <string name="city_new_york">نیویورک</string>
+    <string name="city_london">لندن</string>
+    <string name="city_paris">پاریس</string>
+    <string name="city_dubai">دبی</string>
+    <string name="city_sydney">سیدنی</string>
+    <string name="city_los_angeles">لس‌آنجلس</string>
 </resources>

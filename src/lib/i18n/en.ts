@@ -93,6 +93,62 @@ export const en: LocaleDict = {
   weekNumCol: 'Wk',
   weekNumLabel: 'Week {n}',
 
+  // Round 14: extra calendar systems
+  systemImperialSolar: 'Shahanshahi year (Shamsi)',
+  systemImperialSolarHint: 'Imperial year with the standard solar (Jalali) months and days',
+  systemAncient: 'Ancient (Fasli)',
+  systemAncientHint: '30-day months + Andarjah, with ancient Zoroastrian month names',
+  eraAncient: 'Ancient era',
+
+  // Round 14: royal month names toggle
+  royalMonthNames: 'Royal (ancient) month names',
+  royalMonthNamesHint: 'Use the ancient month names (Amordad, Spandarmad) in the Imperial calendars',
+
+  // Round 14: weekly day-off option
+  weekendDay: 'Weekly day off',
+  weekendAuto: 'Auto (follow language)',
+  weekendNone: 'None',
+  weekendFriday: 'Friday',
+  weekendSaturday: 'Saturday',
+  weekendSunday: 'Sunday',
+
+  // Round 14: sun times card
+  sunTimesTitle: 'Sun times',
+  sunDawn: 'Dawn',
+  sunSunrise: 'Sunrise',
+  sunNoon: 'Solar noon',
+  sunSunset: 'Sunset',
+  sunDusk: 'Dusk',
+  sunLocation: 'Location',
+  sunUseMyLocation: 'Use my location',
+  sunLocating: 'Locating…',
+  sunLocError: 'Location unavailable',
+  sunPolarNight: 'Polar night',
+  sunMidnightSun: 'Midnight sun',
+
+  // Round 14: world clock
+  worldClockTitle: 'World clock',
+  worldClockAdd: 'Add city',
+  worldClockEmpty: 'Add time zones to compare times around the world.',
+  worldClockTomorrow: 'next day',
+  worldClockYesterday: 'previous day',
+
+  // Round 14: city names (sun location + world clock)
+  cityTehran: 'Tehran',
+  cityTokyo: 'Tokyo',
+  citySeoul: 'Seoul',
+  cityBeijing: 'Beijing',
+  cityNewYork: 'New York',
+  cityLondon: 'London',
+  cityParis: 'Paris',
+  cityDubai: 'Dubai',
+  citySydney: 'Sydney',
+  cityLosAngeles: 'Los Angeles',
+
+  // Round 14: APK download
+  apkDownload: 'Get the Android app (APK)',
+  apkHint: 'Download and install the Android version on your phone.',
+
   eventSources: 'Event & holiday sources',
   srcInternational: 'International events',
   srcUs: 'United States holidays',

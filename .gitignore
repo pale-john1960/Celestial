@@ -62,7 +62,8 @@ dev.log
 tool-results/
 
 # Android APK artifacts served for download (not committed)
-public/*.apk
+# APK is shipped in the repo (round 14): user downloads it from the web app
+# public/*.apk
 
 # local Android SDK
 android/local.properties

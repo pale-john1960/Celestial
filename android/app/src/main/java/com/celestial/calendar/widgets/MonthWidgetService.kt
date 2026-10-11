@@ -76,11 +76,9 @@ private class MonthFactory(private val context: android.content.Context) :
             }
             // day cells
             for (cell in grid) {
-                val day = when (system) {
-                    com.celestial.calendar.engine.CalendarSystem.GREGORIAN -> cell.date.gregorian.day
-                    com.celestial.calendar.engine.CalendarSystem.JALALI -> cell.date.jalali.day
-                    com.celestial.calendar.engine.CalendarSystem.IMPERIAL -> cell.date.imperial.day
-                }
+                // day number in the ACTIVE system (imperialSolar rides the
+                // Jalali structure; ancient shares the Imperial structure)
+                val day = CalendarFacade.systemTripleOf(system, cell.date).day
                 val isToday = cell.isToday && cell.date.iso == todayIso
                 val isHoliday = cell.date.iso in holidayIsos
                 val color = when {

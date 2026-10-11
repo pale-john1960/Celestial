@@ -13,28 +13,33 @@ import {
 } from "lucide-react";
 import {
   monthGrid,
+  systemMonthName,
+  systemTripleOf,
   systemToGregorian,
   todayGregorian,
   weekdayOrder,
   yearMonths,
 } from "@/lib/calendar";
 import type { DayCell, CalendarSystem } from "@/lib/calendar";
-import { getDict, gregorianMonthName, jalaliMonthName, num } from "@/lib/i18n";
+import { getDict, num } from "@/lib/i18n";
 import type { LocaleCode, LocaleDict } from "@/lib/i18n";
 import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
+import type { HeaderThemeCode } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { useEvents } from "@/lib/client/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { eventColor } from "./CategoryLegend";
-import { seasonImageSrc } from "./HeroHeader";
+import { systemEraLabel, themeImageSrc } from "./HeroHeader";
 
 export function YearView() {
   const locale = useSettings((s) => s.locale);
   const system = useSettings((s) => s.system);
   const weekStart = useSettings((s) => s.weekStart);
+  const headerTheme = useSettings((s) => s.headerTheme);
+  const royal = useSettings((s) => s.royalMonthNames);
   const sources = useSettings((s) => s.sources);
   const dict = getDict(locale);
 
@@ -126,11 +131,7 @@ export function YearView() {
         <h2 className="mt-1 text-2xl font-bold">
           {num(locale, cursor.year)}{" "}
           <span className="text-base font-semibold text-muted-foreground">
-            {system === "gregorian"
-              ? dict.eraGregorian
-              : system === "jalali"
-                ? dict.eraJalali
-                : dict.eraImperial}
+            {systemEraLabel(system, dict)}
           </span>
         </h2>
       </div>
@@ -178,6 +179,7 @@ export function YearView() {
         dict={dict}
         locale={locale}
         system={system}
+        royal={royal}
         stats={stats}
         ready={data !== undefined}
       />
@@ -192,6 +194,8 @@ export function YearView() {
             dict={dict}
             locale={locale}
             system={system}
+            royal={royal}
+            headerTheme={headerTheme}
             weekStart={weekStart}
             eventsByIso={eventsByIso}
             onOpen={() => {
@@ -210,21 +214,21 @@ function YearStats({
   dict,
   locale,
   system,
+  royal,
   stats,
   ready,
 }: {
   dict: LocaleDict;
   locale: LocaleCode;
   system: CalendarSystem;
+  royal: boolean;
   stats: { total: number; dayOffs: number; recurring: number; busiest: number | null };
   ready: boolean;
 }) {
   const busiestName =
     stats.busiest === null
       ? "—"
-      : system === "gregorian"
-        ? gregorianMonthName(locale, stats.busiest)
-        : jalaliMonthName(locale, stats.busiest);
+      : systemMonthName(system, locale, stats.busiest, royal);
   const totalText = dict.statsTotal.replace("{n}", num(locale, stats.total));
   const dayOffsText = dict.statsDayOffs.replace("{n}", num(locale, stats.dayOffs));
   const busiestText = dict.statsBusiest.replace("{month}", busiestName);
@@ -308,6 +312,8 @@ function MonthCard({
   dict,
   locale,
   system,
+  royal,
+  headerTheme,
   weekStart,
   eventsByIso,
   onOpen,
@@ -318,15 +324,14 @@ function MonthCard({
   dict: LocaleDict;
   locale: LocaleCode;
   system: CalendarSystem;
+  royal: boolean;
+  headerTheme: HeaderThemeCode;
   weekStart: 0 | 1 | 6;
   eventsByIso: Map<string, EventInstance[]>;
   onOpen: () => void;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const monthName =
-    system === "gregorian"
-      ? gregorianMonthName(locale, monthIndex)
-      : jalaliMonthName(locale, monthIndex);
+  const monthName = systemMonthName(system, locale, monthIndex, royal);
   // the month containing today gets a card-level ring (the today DAY cell
   // already carries the solid primary fill — this emphasizes the month itself)
   const hasToday = cells.some((c) => c.inMonth && c.isToday);
@@ -347,7 +352,9 @@ function MonthCard({
           <div className="absolute inset-0 bg-gradient-to-br from-primary/60 to-primary/20" />
         ) : (
           <img
-            src={seasonImageSrc(firstG.month)}
+            // CENTRAL theme source (round 14) — same pool+index logic as the
+            // hero, so year headers follow the header-theme setting
+            src={themeImageSrc(headerTheme, firstG.month)}
             alt=""
             loading="lazy"
             onError={() => setImgFailed(true)}
@@ -427,11 +434,7 @@ function MonthCard({
 
 /** day number shown in the mini grid — ACTIVE system's day-of-month */
 function miniDay(system: CalendarSystem, cell: DayCell): number {
-  return system === "gregorian"
-    ? cell.gregorian.day
-    : system === "jalali"
-      ? cell.jalali.day
-      : cell.imperial.day;
+  return systemTripleOf(system, cell).day;
 }
 
 function weekdayShortInitial(locale: LocaleCode, weekday: number): string {

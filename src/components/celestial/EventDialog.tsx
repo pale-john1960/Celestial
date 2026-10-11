@@ -2,7 +2,7 @@
 "use client";
 
 import { buildDayCell, imperialDayName, todayGregorian } from "@/lib/calendar";
-import { getDict, weekdayLong } from "@/lib/i18n";
+import { getDict } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { Pencil } from "lucide-react";
@@ -23,16 +23,19 @@ import {
 import { SourceBadge } from "./DayView";
 import { EventGlyph } from "./FlagIcon";
 import {
+  activeDateText,
   formatGregorianDate,
   formatHijriDate,
   formatImperialDate,
   formatJalaliDate,
+  weekdayDateText,
 } from "./HeroHeader";
 
 export function EventDialog() {
   const locale = useSettings((s) => s.locale);
   const system = useSettings((s) => s.system);
   const showHijri = useSettings((s) => s.showHijri);
+  const royal = useSettings((s) => s.royalMonthNames);
   const dict = getDict(locale);
   const activeEvent = useUi((s) => s.activeEvent);
   const setEventDialog = useUi((s) => s.setEventDialog);
@@ -41,14 +44,7 @@ export function EventDialog() {
   const today = todayGregorian();
   const cell = activeEvent ? buildDayCell(activeEvent.gregorian, today, true) : null;
 
-  const activeDateText =
-    cell == null
-      ? ""
-      : system === "gregorian"
-        ? formatGregorianDate(locale, cell.gregorian, dict)
-        : system === "jalali"
-          ? formatJalaliDate(locale, cell.jalali, dict)
-          : formatImperialDate(locale, cell.imperial, dict);
+  const dateText = cell == null ? "" : activeDateText(system, locale, cell, dict, royal);
 
   // only imported/manual rows can be edited (dbId present)
   const editable = activeEvent?.dbId != null;
@@ -97,7 +93,9 @@ export function EventDialog() {
                 </span>
               </DialogTitle>
               <DialogDescription>
-                {weekdayLong(locale, cell.weekday)} · {activeDateText}
+                {cell
+                  ? weekdayDateText(locale, cell.weekday, dateText)
+                  : dateText}
               </DialogDescription>
             </DialogHeader>
 

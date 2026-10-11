@@ -2,6 +2,10 @@
 // Also exports the cross-view date formatting helpers (hijri month names etc).
 // Round 13: 7 artwork themes (seasonal + 6 fixed), wind-driven particle
 // system, static imagery (no kenburns), optional Hijri year line.
+// Round 14: locale-ordered date formats (en "Month D, Y" / ja "Y年M月D日" /
+// fa day-first), full weekday names + locale-aware weekday·date composition,
+// activeDateText for all 5 systems, 4-image fixed-theme pools + themeImageSrc
+// (shared with the YearView month cards).
 "use client";
 
 import { useState } from "react";
@@ -12,19 +16,28 @@ import {
   getDict,
   jalaliMonthName,
   num,
-  weekdayShort,
+  weekdayLong,
 } from "@/lib/i18n";
 import type { LocaleCode, LocaleDict } from "@/lib/i18n";
 import {
+  ANCIENT_MONTH_NAMES,
+  IMPERIAL_EPOCH_OFFSET,
+  buildDayCell,
   gregorianToHijri,
-  gregorianToImperial,
-  gregorianToJalali,
+  systemMonthName,
+  systemTripleOf,
   systemToGregorian,
   systemDateOf,
   todayGregorian,
 } from "@/lib/calendar";
 import { jdnWeekday, toJdn } from "@/lib/calendar/jdn";
-import type { HijriDate, SimpleDate, ImperialDate } from "@/lib/calendar";
+import type {
+  CalendarSystem,
+  DayCell,
+  HijriDate,
+  ImperialDate,
+  SimpleDate,
+} from "@/lib/calendar";
 import { useSettings } from "@/store/settings";
 import type { HeaderThemeCode } from "@/store/settings";
 import { useUi } from "@/store/ui";
@@ -57,12 +70,38 @@ export function hijriMonthName(locale: LocaleCode, month: number): string {
   return HIJRI_MONTHS[locale][month - 1] ?? "";
 }
 
+/**
+ * Locale-ordered date composition (round 14 — every locale used to render
+ * "Month Day, Year Era", producing e.g. "مهر ۲۹" in Persian):
+ *  - en: "March 21, 2026 CE"
+ *  - ja: "2026年3月21日 西暦" (Gregorian months are "3月", so the 月 comes
+ *    from the month name itself; Jalali months are katakana → "1405年メフル29日")
+ *  - fa: "۲۱ مارس ۲۰۲۶ میلادی" (day BEFORE month — Persian reads day-first)
+ */
+function composeDate(
+  locale: LocaleCode,
+  parts: { year: string; month: string; day: string; era: string },
+): string {
+  if (locale === "ja") {
+    return `${parts.year}年${parts.month}${parts.day}日 ${parts.era}`;
+  }
+  if (locale === "fa") {
+    return `${parts.day} ${parts.month} ${parts.year} ${parts.era}`;
+  }
+  return `${parts.month} ${parts.day}, ${parts.year} ${parts.era}`;
+}
+
 export function formatGregorianDate(
   locale: LocaleCode,
   g: SimpleDate,
   dict: LocaleDict,
 ): string {
-  return `${gregorianMonthName(locale, g.month)} ${num(locale, g.day)}, ${num(locale, g.year)} ${dict.eraGregorian}`;
+  return composeDate(locale, {
+    year: num(locale, g.year),
+    month: gregorianMonthName(locale, g.month),
+    day: num(locale, g.day),
+    era: dict.eraGregorian,
+  });
 }
 
 export function formatJalaliDate(
@@ -70,7 +109,12 @@ export function formatJalaliDate(
   j: SimpleDate,
   dict: LocaleDict,
 ): string {
-  return `${jalaliMonthName(locale, j.month)} ${num(locale, j.day)}, ${num(locale, j.year)} ${dict.eraJalali}`;
+  return composeDate(locale, {
+    year: num(locale, j.year),
+    month: jalaliMonthName(locale, j.month),
+    day: num(locale, j.day),
+    era: dict.eraJalali,
+  });
 }
 
 export function formatHijriDate(
@@ -78,18 +122,118 @@ export function formatHijriDate(
   h: HijriDate,
   dict: LocaleDict,
 ): string {
-  return `${hijriMonthName(locale, h.month)} ${num(locale, h.day)}, ${num(locale, h.year)} ${dict.hijriLabel}`;
+  return composeDate(locale, {
+    year: num(locale, h.year),
+    month: hijriMonthName(locale, h.month),
+    day: num(locale, h.day),
+    era: dict.hijriLabel,
+  });
+}
+
+/** options for the Imperial-family formatters */
+export interface ImperialFormatOptions {
+  /** era suffix — defaults to dict.eraImperial ('ancient' passes eraAncient) */
+  era?: string;
+  /** use the ancient Zoroastrian month names (royalMonthNames setting) */
+  royal?: boolean;
 }
 
 export function formatImperialDate(
   locale: LocaleCode,
   imp: ImperialDate,
   dict: LocaleDict,
+  opts?: ImperialFormatOptions,
 ): string {
-  if (imp.month === 13) {
-    return `${dict.andarjah} ${num(locale, imp.day)}, ${num(locale, imp.year)} ${dict.eraImperial}`;
+  const month =
+    opts?.royal && imp.month >= 1 && imp.month <= 12
+      ? ANCIENT_MONTH_NAMES[locale][imp.month - 1]
+      : jalaliMonthName(locale, imp.month); // 13 → Andarjah label
+  return composeDate(locale, {
+    year: num(locale, imp.year),
+    month,
+    day: num(locale, imp.day),
+    era: opts?.era ?? dict.eraImperial,
+  });
+}
+
+/**
+ * imperialSolar: Shahanshahi YEAR on the standard Jalali month/day structure
+ * — `j` is the day's JALALI triple; only the displayed year gets +1180.
+ */
+export function formatImperialSolarDate(
+  locale: LocaleCode,
+  j: SimpleDate,
+  dict: LocaleDict,
+  royal = false,
+): string {
+  const month =
+    royal && j.month >= 1 && j.month <= 12
+      ? ANCIENT_MONTH_NAMES[locale][j.month - 1]
+      : jalaliMonthName(locale, j.month);
+  return composeDate(locale, {
+    year: num(locale, j.year + IMPERIAL_EPOCH_OFFSET),
+    month,
+    day: num(locale, j.day),
+    era: dict.eraImperial,
+  });
+}
+
+/**
+ * The ACTIVE system's full date for a DayCell, locale-ordered — one helper
+ * for all 5 systems (views used to switch on 3 systems inline).
+ * `royal` = the royalMonthNames setting (imperial/imperialSolar only).
+ */
+export function activeDateText(
+  system: CalendarSystem,
+  locale: LocaleCode,
+  cell: DayCell,
+  dict: LocaleDict,
+  royal = false,
+): string {
+  switch (system) {
+    case "gregorian":
+      return formatGregorianDate(locale, cell.gregorian, dict);
+    case "jalali":
+      return formatJalaliDate(locale, cell.jalali, dict);
+    case "imperial":
+      return formatImperialDate(locale, cell.imperial, dict, { royal });
+    case "imperialSolar":
+      return formatImperialSolarDate(locale, cell.jalali, dict, royal);
+    case "ancient":
+      // same math as imperial, ALWAYS ancient names, ancient era label
+      return formatImperialDate(locale, cell.imperial, dict, {
+        era: dict.eraAncient,
+        royal: true,
+      });
   }
-  return `${jalaliMonthName(locale, imp.month)} ${num(locale, imp.day)}, ${num(locale, imp.year)} ${dict.eraImperial}`;
+}
+
+/**
+ * Locale-aware "weekday + date" composition for list headers and dialogs
+ * (round 14 — the agenda showed the truncated "چهار"):
+ *  - en / fa: "چهارشنبه · ۲۹ مهر ۱۴۰۵ هجری شمسی" (weekday first, · separator)
+ *  - ja: "2026年10月29日（水曜日）" (date first, weekday in full-width parens)
+ */
+export function weekdayDateText(
+  locale: LocaleCode,
+  weekday: number,
+  dateText: string,
+): string {
+  if (locale === "ja") {
+    return `${dateText}（${weekdayLong(locale, weekday)}）`;
+  }
+  return `${weekdayLong(locale, weekday)} · ${dateText}`;
+}
+
+/** era label of the ACTIVE system (imperialSolar shares eraImperial) */
+export function systemEraLabel(
+  system: CalendarSystem,
+  dict: LocaleDict,
+): string {
+  if (system === "gregorian") return dict.eraGregorian;
+  if (system === "jalali") return dict.eraJalali;
+  if (system === "ancient") return dict.eraAncient;
+  return dict.eraImperial; // imperial + imperialSolar
 }
 
 /* ---------------- season helpers ---------------- */
@@ -125,17 +269,7 @@ const SEASON_TINT: Record<Season, string> = {
   winter: "bg-muted-foreground/15",
 };
 
-/** /seasonal/{season}-{1|2}.jpg — consecutive months alternate variants
- *  (used by the YearView month cards; the hero has its own round-13 pool) */
-export function seasonImageSrc(gMonth: number): string {
-  const season = seasonOf(gMonth);
-  const start = SEASON_START[season];
-  const idxInSeason = (gMonth - start + 12) % 12;
-  const variant = (idxInSeason % 2) + 1;
-  return `/seasonal/${season}-${variant}.jpg`;
-}
-
-/* ---------------- hero artwork themes (round 13) ---------------- */
+/* ---------------- hero artwork themes (round 13; pools of 4 in round 14) ---------------- */
 
 /** seasonal hero pool — NEW spring/summer artwork (round 13); autumn/winter
  *  keep the original pieces (still in /seasonal/) */
@@ -146,18 +280,20 @@ const SEASONAL_HERO_POOL: Record<Season, readonly string[]> = {
   winter: ["/seasonal/winter-1.jpg", "/seasonal/winter-2.jpg"],
 };
 
-/** fixed-theme pools — /hero/{theme}-{1|2}.jpg */
+/** fixed-theme pools — /hero/{theme}-{1..4}.jpg (round 14: 4 variants per
+ *  theme; the -3/-4 artwork lands with task 14-c — HeroImage's onError
+ *  gradient fallback covers the gap until the files exist) */
 const FIXED_HERO_POOL: Record<Exclude<HeaderThemeCode, "seasonal">, readonly string[]> = {
-  celestial: ["/hero/celestial-1.jpg", "/hero/celestial-2.jpg"],
-  magical: ["/hero/magical-1.jpg", "/hero/magical-2.jpg"],
-  shahanshahi: ["/hero/shahanshahi-1.jpg", "/hero/shahanshahi-2.jpg"],
-  japanese: ["/hero/japanese-1.jpg", "/hero/japanese-2.jpg"],
-  korean: ["/hero/korean-1.jpg", "/hero/korean-2.jpg"],
-  chinese: ["/hero/chinese-1.jpg", "/hero/chinese-2.jpg"],
+  celestial: ["/hero/celestial-1.jpg", "/hero/celestial-2.jpg", "/hero/celestial-3.jpg", "/hero/celestial-4.jpg"],
+  magical: ["/hero/magical-1.jpg", "/hero/magical-2.jpg", "/hero/magical-3.jpg", "/hero/magical-4.jpg"],
+  shahanshahi: ["/hero/shahanshahi-1.jpg", "/hero/shahanshahi-2.jpg", "/hero/shahanshahi-3.jpg", "/hero/shahanshahi-4.jpg"],
+  japanese: ["/hero/japanese-1.jpg", "/hero/japanese-2.jpg", "/hero/japanese-3.jpg", "/hero/japanese-4.jpg"],
+  korean: ["/hero/korean-1.jpg", "/hero/korean-2.jpg", "/hero/korean-3.jpg", "/hero/korean-4.jpg"],
+  chinese: ["/hero/chinese-1.jpg", "/hero/chinese-2.jpg", "/hero/chinese-3.jpg", "/hero/chinese-4.jpg"],
 };
 
-/** active pool for the theme + Gregorian month (consecutive months
- *  alternate the two variants; fixed themes alternate by month parity) */
+/** active pool for the theme + Gregorian month (seasonal keeps 2 variants
+ *  per season, alternating; fixed themes rotate their 4 images by month) */
 function heroPool(
   headerTheme: HeaderThemeCode,
   gMonth: number,
@@ -171,7 +307,18 @@ function heroPool(
       index: idxInSeason % 2,
     };
   }
-  return { key: headerTheme, urls: FIXED_HERO_POOL[headerTheme], index: gMonth % 2 };
+  return { key: headerTheme, urls: FIXED_HERO_POOL[headerTheme], index: gMonth % 4 };
+}
+
+/**
+ * CENTRAL theme image source (round 14): the single active artwork URL for a
+ * theme + Gregorian month. The hero and the YearView month cards stay in
+ * sync through this one function — the year headers used to be seasonal-only
+ * (seasonImageSrc, removed in round 14; YearView now calls themeImageSrc).
+ */
+export function themeImageSrc(headerTheme: HeaderThemeCode, gMonth: number): string {
+  const pool = heroPool(headerTheme, gMonth);
+  return pool.urls[pool.index] ?? pool.urls[0];
 }
 
 /** night-sky art themes: their artwork carries its own stars, so the DOM
@@ -290,6 +437,7 @@ export function HeroHeader() {
   const system = useSettings((s) => s.system);
   const headerTheme = useSettings((s) => s.headerTheme);
   const showHijri = useSettings((s) => s.showHijri);
+  const royal = useSettings((s) => s.royalMonthNames);
   const dict = getDict(locale);
 
   const cursor = useUi((s) => s.cursor);
@@ -302,17 +450,10 @@ export function HeroHeader() {
   const openAddDialog = useUi((s) => s.openAddDialog);
   const goToday = useUi((s) => s.goToday);
 
-  // month identity in the ACTIVE system
-  const monthName =
-    system === "gregorian"
-      ? gregorianMonthName(locale, cursor.month)
-      : jalaliMonthName(locale, cursor.month);
-  const era =
-    system === "gregorian"
-      ? dict.eraGregorian
-      : system === "jalali"
-        ? dict.eraJalali
-        : dict.eraImperial;
+  // month identity in the ACTIVE system (royal names apply to the
+  // imperial-family systems; jalali/gregorian are unchanged)
+  const monthName = systemMonthName(system, locale, cursor.month, royal);
+  const era = systemEraLabel(system, dict);
 
   const firstG = systemToGregorian(system, cursor.year, cursor.month, 1);
   const season = seasonOf(firstG.month);
@@ -330,20 +471,16 @@ export function HeroHeader() {
   const isNightArt = NIGHT_ART_THEMES.has(headerTheme);
   const particles = heroParticles(headerTheme, season);
 
-  // secondary line: the other main system(s) + (optional) hijri of the 1st
+  // secondary line: the other main system(s) + (optional) hijri of the 1st.
+  // The Jalali (SH) line shows for every non-Jalali system — including the
+  // imperial family, whose own month title sits in the h1 above.
   const secondary: string[] = [];
   if (system !== "gregorian") {
     secondary.push(
       `${gregorianMonthName(locale, firstG.month)} ${num(locale, firstG.year)} ${dict.eraGregorian}`,
     );
   }
-  if (system !== "jalali" && system !== "imperial") {
-    const j = systemDateOf("jalali", firstG);
-    secondary.push(
-      `${jalaliMonthName(locale, j.month)} ${num(locale, j.year)} ${dict.eraJalali}`,
-    );
-  }
-  if (system === "imperial") {
+  if (system !== "jalali") {
     const j = systemDateOf("jalali", firstG);
     secondary.push(
       `${jalaliMonthName(locale, j.month)} ${num(locale, j.year)} ${dict.eraJalali}`,
@@ -356,20 +493,22 @@ export function HeroHeader() {
     );
   }
 
-  // today chip label
+  // today chip label — FULL weekday name (round 14; was the truncated
+  // سه/چهار form) + locale-ordered day·month composition:
+  //   en "Today · Saturday, March 21" / ja "今日 · 3月21日（土曜日）" /
+  //   fa "امروز · شنبه ۲۱ مارس"
   const today = todayGregorian();
-  const todaySys = systemDateOf(system, today);
-  const todayDayNum =
-    system === "gregorian"
-      ? today.day
-      : system === "jalali"
-        ? gregorianToJalali(today).day
-        : gregorianToImperial(today).day;
-  const todayMonthName =
-    system === "gregorian"
-      ? gregorianMonthName(locale, todaySys.month)
-      : jalaliMonthName(locale, todaySys.month);
-  const todayWeekday = weekdayShort(locale, jdnWeekday(toJdn(today)));
+  const todayCell = buildDayCell(today, today, true);
+  const todaySys = systemTripleOf(system, todayCell);
+  const todayDayNum = todaySys.day;
+  const todayMonthName = systemMonthName(system, locale, todaySys.month, royal);
+  const todayWeekday = weekdayLong(locale, jdnWeekday(toJdn(today)));
+  const todayChipLabel =
+    locale === "ja"
+      ? `${dict.today} · ${todayMonthName}${num(locale, todayDayNum)}日（${todayWeekday}）`
+      : locale === "fa"
+        ? `${dict.today} · ${todayWeekday} ${num(locale, todayDayNum)} ${todayMonthName}`
+        : `${dict.today} · ${todayWeekday}, ${todayMonthName} ${num(locale, todayDayNum)}`;
 
   return (
     <header data-no-print className="relative h-64 overflow-hidden sm:h-72 lg:h-80">
@@ -488,8 +627,7 @@ export function HeroHeader() {
             onClick={goToday}
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-white shadow-lg transition hover:bg-primary/85 hover:scale-[1.02] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
           >
-            {dict.today} · {todayWeekday} {num(locale, todayDayNum)}{" "}
-            {todayMonthName}
+            {todayChipLabel}
           </button>
           {/* next day-off countdown (hidden when loading with no data / none in 90d) */}
           <NextDayOffChip />
@@ -554,12 +692,13 @@ export function HeroHeader() {
 }
 
 /**
- * Mounts the ACTIVE theme's 2-image pool; the month-parity variant fades to
- * opacity-100 (700ms crossfade), failures fall back to a magenta gradient.
- * The pool wrapper is keyed (theme/season) so switching artwork remounts it
- * with a graceful fade-in (animate-fade-swap). Images are STATIC — no
- * kenburns (round 13: user prefers no camera motion). No timers — the
- * crossfade is pure CSS class flipping.
+ * Mounts the ACTIVE theme's image pool; the active variant fades to
+ * opacity-100 (700ms crossfade), failures fall back to a magenta gradient
+ * (covers the round-14 -3/-4 artwork that is still landing). The pool
+ * wrapper is keyed (theme/season) so switching artwork remounts it with a
+ * graceful fade-in (animate-fade-swap). Images are STATIC — no kenburns
+ * (round 13: user prefers no camera motion). No timers — the crossfade is
+ * pure CSS class flipping.
  */
 function HeroImage({
   poolKey,

@@ -6,12 +6,14 @@ import { AlertTriangle, CalendarClock, CalendarOff, Download, RotateCw } from "l
 import { toast } from "sonner";
 import {
   buildDayCell,
+  isWeeklyDayOff,
   isoDate,
   systemDateOf,
+  systemMonthName,
   todayGregorian,
 } from "@/lib/calendar";
 import { fromJdn, toJdn } from "@/lib/calendar/jdn";
-import { getDict, gregorianMonthName, jalaliMonthName, num, weekdayShort } from "@/lib/i18n";
+import { getDict, num } from "@/lib/i18n";
 import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
 import { useUi } from "@/store/ui";
@@ -25,9 +27,10 @@ import { eventColor } from "./CategoryLegend";
 import { EmptyState } from "./EmptyState";
 import { EventGlyph } from "./FlagIcon";
 import {
+  activeDateText,
   formatGregorianDate,
-  formatImperialDate,
   formatJalaliDate,
+  weekdayDateText,
 } from "./HeroHeader";
 
 const DAYS_AHEAD = 90;
@@ -35,6 +38,8 @@ const DAYS_AHEAD = 90;
 export function AgendaView() {
   const locale = useSettings((s) => s.locale);
   const system = useSettings((s) => s.system);
+  const weekendDay = useSettings((s) => s.weekendDay);
+  const royal = useSettings((s) => s.royalMonthNames);
   const sources = useSettings((s) => s.sources);
   const dict = getDict(locale);
   const setEventDialog = useUi((s) => s.setEventDialog);
@@ -79,10 +84,7 @@ export function AgendaView() {
       };
       const sd = systemDateOf(system, g);
       if (!prev || sd.year !== prev.year || sd.month !== prev.month) {
-        const monthName =
-          system === "gregorian"
-            ? gregorianMonthName(locale, sd.month)
-            : jalaliMonthName(locale, sd.month);
+        const monthName = systemMonthName(system, locale, sd.month, royal);
         out.push({
           key: `${sd.year}-${sd.month}`,
           label: `${monthName} ${num(locale, sd.year)}`,
@@ -93,7 +95,7 @@ export function AgendaView() {
       out[out.length - 1].groups.push(grp);
     }
     return out;
-  }, [groups, system, locale]);
+  }, [groups, system, locale, royal]);
 
   const dayOffIsos = useMemo(() => {
     const set = new Set<string>();
@@ -256,17 +258,18 @@ export function AgendaView() {
                 const diffDays = cell.jdn - todayJdn;
                 const relative = rtf.format(diffDays, "day");
 
-                const activeDateText =
-                  system === "gregorian"
-                    ? formatGregorianDate(locale, cell.gregorian, dict)
-                    : system === "jalali"
-                      ? formatJalaliDate(locale, cell.jalali, dict)
-                      : formatImperialDate(locale, cell.imperial, dict);
+                // full weekday + locale-aware composition (round 14 — was the
+                // truncated weekdayShort, "چهار · مهر ۲۹" in fa)
+                const dateText = activeDateText(system, locale, cell, dict, royal);
+                const headerText = weekdayDateText(locale, cell.weekday, dateText);
                 const secondaryText =
                   system === "gregorian"
                     ? formatJalaliDate(locale, cell.jalali, dict)
                     : formatGregorianDate(locale, cell.gregorian, dict);
-                const isDayOff = dayOffIsos.has(iso);
+                // day-off badge: legal holidays + the weekly day off
+                const isDayOff =
+                  dayOffIsos.has(iso) ||
+                  isWeeklyDayOff(weekendDay, locale, cell.weekday);
 
                 return (
                   <div key={iso} className="mt-2">
@@ -280,7 +283,7 @@ export function AgendaView() {
                     >
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                         <span className="text-sm font-bold tabular-nums">
-                          {weekdayShort(locale, cell.weekday)} · {activeDateText}
+                          {headerText}
                         </span>
                         <span className="text-xs tabular-nums text-muted-foreground" dir="auto">
                           {secondaryText}

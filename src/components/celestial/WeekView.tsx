@@ -12,9 +12,13 @@ import {
 } from "lucide-react";
 import {
   buildDayCell,
+  hasAndarjah,
   imperialDayName,
+  isWeeklyDayOff,
   isoDate,
   parseIso,
+  systemMonthName,
+  systemTripleOf,
   todayGregorian,
 } from "@/lib/calendar";
 import { fromJdn, jdnWeekday, toJdn } from "@/lib/calendar/jdn";
@@ -27,13 +31,12 @@ import {
 import type { SeasonEvent } from "@/lib/calendar/solstice";
 import {
   getDict,
-  gregorianMonthName,
-  jalaliMonthName,
   num,
   weekdayLong,
 } from "@/lib/i18n";
 import type { EventInstance } from "@/lib/events";
 import { useSettings } from "@/store/settings";
+import type { WeekendDayCode } from "@/store/settings";
 import { useUi } from "@/store/ui";
 import { useEvents } from "@/lib/client/api";
 import { Badge } from "@/components/ui/badge";
@@ -43,17 +46,20 @@ import { cn } from "@/lib/utils";
 import { eventColor } from "./CategoryLegend";
 import { EventGlyph } from "./FlagIcon";
 import {
+  activeDateText,
   formatGregorianDate,
   formatHijriDate,
-  formatImperialDate,
   formatJalaliDate,
+  weekdayDateText,
 } from "./HeroHeader";
-import type { DayCell } from "@/lib/calendar";
+import type { CalendarSystem, DayCell } from "@/lib/calendar";
 
 export function WeekView() {
   const locale = useSettings((s) => s.locale);
   const system = useSettings((s) => s.system);
   const weekStart = useSettings((s) => s.weekStart);
+  const weekendDay = useSettings((s) => s.weekendDay);
+  const royal = useSettings((s) => s.royalMonthNames);
   const sources = useSettings((s) => s.sources);
   const dict = getDict(locale);
 
@@ -112,12 +118,9 @@ export function WeekView() {
 
   // week range label in the ACTIVE system, e.g. "Mehr 25 – Aban 1, 1405"
   const weekLabel = useMemo(() => {
-    const a = systemOfCell(system, cells[0]);
-    const b = systemOfCell(system, cells[6]);
-    const monthName = (m: number) =>
-      system === "gregorian"
-        ? gregorianMonthName(locale, m)
-        : jalaliMonthName(locale, m);
+    const a = systemTripleOf(system, cells[0]);
+    const b = systemTripleOf(system, cells[6]);
+    const monthName = (m: number) => systemMonthName(system, locale, m, royal);
     if (a.year === b.year && a.month === b.month) {
       return `${monthName(a.month)} ${num(locale, a.day)} – ${num(locale, b.day)}, ${num(locale, a.year)}`;
     }
@@ -125,7 +128,7 @@ export function WeekView() {
       return `${monthName(a.month)} ${num(locale, a.day)} – ${monthName(b.month)} ${num(locale, b.day)}, ${num(locale, a.year)}`;
     }
     return `${monthName(a.month)} ${num(locale, a.day)}, ${num(locale, a.year)} – ${monthName(b.month)} ${num(locale, b.day)}, ${num(locale, b.year)}`;
-  }, [cells, system, locale]);
+  }, [cells, system, locale, royal]);
 
   const prevWeek = () => selectDaySync(isoDate(fromJdn(firstJdn - 7)));
   const nextWeek = () => selectDaySync(isoDate(fromJdn(firstJdn + 7)));
@@ -215,6 +218,8 @@ export function WeekView() {
             dict={dict}
             locale={locale}
             system={system}
+            royal={royal}
+            weekendDay={weekendDay}
             selected={cell.iso === selectedIso}
             events={eventsByIso.get(cell.iso)}
             loading={isLoading}
@@ -232,21 +237,14 @@ export function WeekView() {
   );
 }
 
-function systemOfCell(
-  system: "gregorian" | "jalali" | "imperial",
-  cell: DayCell,
-): { year: number; month: number; day: number } {
-  if (system === "gregorian") return cell.gregorian;
-  if (system === "jalali") return cell.jalali;
-  return cell.imperial;
-}
-
 function WeekDayCard({
   cell,
   index,
   dict,
   locale,
   system,
+  royal,
+  weekendDay,
   selected,
   events,
   loading,
@@ -259,7 +257,11 @@ function WeekDayCard({
   index: number;
   dict: ReturnType<typeof getDict>;
   locale: "en" | "ja" | "fa";
-  system: "gregorian" | "jalali" | "imperial";
+  system: CalendarSystem;
+  /** royalMonthNames setting — ancient month names in the imperial family */
+  royal: boolean;
+  /** weekendDay setting — tints the weekday label on the weekly day off */
+  weekendDay: WeekendDayCode;
   selected: boolean;
   events: EventInstance[] | undefined;
   /** events query in flight — the event area shows skeleton rows */
@@ -273,14 +275,14 @@ function WeekDayCard({
   const showHijri = useSettings((s) => s.showHijri);
   const isHolidayDay = (events ?? []).some((e) => e.isHoliday);
   const visible = (events ?? []).filter((e) => !e.holidayOnly);
+  // weekly day off (round 14, user-configurable) — soft red weekday label
+  // (the full holiday treatment stays event-driven below)
+  const weeklyDayOff = isWeeklyDayOff(weekendDay, locale, cell.weekday);
 
-  const sd = systemOfCell(system, cell);
+  const sd = systemTripleOf(system, cell);
   const primaryDay = sd.day;
   const isMonthFirst = sd.day === 1;
-  const monthName =
-    system === "gregorian"
-      ? gregorianMonthName(locale, sd.month)
-      : jalaliMonthName(locale, sd.month);
+  const monthName = systemMonthName(system, locale, sd.month, royal);
 
   // secondary line: the other main system(s)
   const secondary =
@@ -288,12 +290,8 @@ function WeekDayCard({
       ? formatJalaliDate(locale, cell.jalali, dict)
       : formatGregorianDate(locale, cell.gregorian, dict);
 
-  const activeDateText =
-    system === "gregorian"
-      ? formatGregorianDate(locale, cell.gregorian, dict)
-      : system === "jalali"
-        ? formatJalaliDate(locale, cell.jalali, dict)
-        : formatImperialDate(locale, cell.imperial, dict);
+  const cardDateText = activeDateText(system, locale, cell, dict, royal);
+  const showDayName = hasAndarjah(system); // imperial + ancient structures
 
   return (
     <motion.article
@@ -310,7 +308,7 @@ function WeekDayCard({
       <button
         type="button"
         onClick={onSelect}
-        aria-label={`${dict.selectDate}: ${weekdayLong(locale, cell.weekday)}, ${activeDateText}`}
+        aria-label={`${dict.selectDate}: ${weekdayDateText(locale, cell.weekday, cardDateText)}`}
         aria-current={cell.isToday ? "date" : undefined}
         className={cn(
           "flex w-full flex-col gap-0.5 rounded-t-2xl border-b border-border p-3 text-start transition-colors hover:bg-accent",
@@ -318,7 +316,14 @@ function WeekDayCard({
         )}
       >
         <span className="flex items-center justify-between gap-1">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <span
+            className={cn(
+              "text-xs font-semibold uppercase tracking-wide",
+              weeklyDayOff && !isHolidayDay
+                ? "text-red-600/90 dark:text-red-400/90"
+                : "text-muted-foreground",
+            )}
+          >
             {weekdayLong(locale, cell.weekday)}
           </span>
           {(moon || season) && (
@@ -366,13 +371,13 @@ function WeekDayCard({
         >
           {secondary}
         </span>
-        {(showHijri || system === "imperial") && (
+        {(showHijri || showDayName) && (
           <span
             className="truncate text-[10px] text-muted-foreground/75"
             dir="auto"
           >
             {showHijri && formatHijriDate(locale, cell.hijri, dict)}
-            {system === "imperial" && (
+            {showDayName && (
               <span className="text-muted-foreground/60">
                 {showHijri ? " · " : ""}
                 {imperialDayName(locale, cell.imperial)}

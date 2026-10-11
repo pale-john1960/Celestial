@@ -31,12 +31,16 @@ import com.celestial.calendar.engine.CelestialDate
 import com.celestial.calendar.engine.DateFormats
 import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.Jdn
+import com.celestial.calendar.engine.WeekendDay
 import com.celestial.calendar.events.EventInstance
 import com.celestial.calendar.ui.theme.eventColor
 
 /**
  * Celestial — agenda view: the next 90 days as a grouped list (grouped by
  * month header in the active system), only days with visible events.
+ * Round 14: day rows show the FULL weekday name (was the truncated «یک» form)
+ * and the day-off styling fires on legal holidays AND the weekly day off
+ * (setting-driven, web parity).
  */
 @Composable
 fun AgendaView(
@@ -44,6 +48,8 @@ fun AgendaView(
     locale: AppLocale,
     todayIso: String,
     eventsByIso: Map<String, List<EventInstance>>,
+    weekendDay: WeekendDay,
+    royalMonthNames: Boolean,
     strings: LocalStrings,
     onOpenDay: (String) -> Unit,
 ) {
@@ -84,11 +90,9 @@ fun AgendaView(
         var lastMonthKey = ""
         val grouped = ArrayList<Pair<String, Pair<CelestialDate, List<EventInstance>>>>()
         for ((date, events) in days) {
-            val key = when (system) {
-                CalendarSystem.GREGORIAN -> "${date.gregorian.year}-${date.gregorian.month}"
-                CalendarSystem.JALALI -> "${date.jalali.year}-${date.jalali.month}"
-                CalendarSystem.IMPERIAL -> "${date.imperial.year}-${date.imperial.month}"
-            }
+            // month key in the ACTIVE system's display space (works for all 5)
+            val t = CalendarFacade.systemTripleOf(system, date)
+            val key = "${t.year}-${t.month}"
             if (key != lastMonthKey) {
                 grouped.add(key to (date to emptyList()))
                 lastMonthKey = key
@@ -100,9 +104,9 @@ fun AgendaView(
             val (key, pair) = grouped[index]
             val (date, events) = pair
             if (events.isEmpty()) {
-                // month header
-                val monthLabel = remember(key, date, system, locale) {
-                    monthHeaderLabel(system, locale, date)
+                // month header (royal names for the imperial family)
+                val monthLabel = remember(key, date, system, locale, royalMonthNames) {
+                    monthHeaderLabel(system, locale, date, royalMonthNames)
                 }
                 Text(
                     monthLabel,
@@ -119,6 +123,7 @@ fun AgendaView(
                     events = events,
                     system = system,
                     locale = locale,
+                    weekendDay = weekendDay,
                     strings = strings,
                     onOpenDay = { onOpenDay(date.iso) },
                 )
@@ -128,15 +133,15 @@ fun AgendaView(
     }
 }
 
-private fun monthHeaderLabel(system: CalendarSystem, locale: AppLocale, date: CelestialDate): String =
-    when (system) {
-        CalendarSystem.GREGORIAN ->
-            "${I18n.gregorianMonthName(locale, date.gregorian.month)} ${I18n.num(locale, date.gregorian.year)}"
-        CalendarSystem.JALALI ->
-            "${I18n.jalaliMonthName(locale, date.jalali.month)} ${I18n.num(locale, date.jalali.year)}"
-        CalendarSystem.IMPERIAL ->
-            "${I18n.jalaliMonthName(locale, date.imperial.month)} ${I18n.num(locale, date.imperial.year)}"
-    }
+private fun monthHeaderLabel(
+    system: CalendarSystem,
+    locale: AppLocale,
+    date: CelestialDate,
+    royal: Boolean,
+): String {
+    val t = CalendarFacade.systemTripleOf(system, date)
+    return "${CalendarFacade.systemMonthName(system, locale, t.month, royal)} ${I18n.num(locale, t.year)}"
+}
 
 @Composable
 private fun AgendaDayRow(
@@ -144,13 +149,17 @@ private fun AgendaDayRow(
     events: List<EventInstance>,
     system: CalendarSystem,
     locale: AppLocale,
+    weekendDay: WeekendDay,
     strings: LocalStrings,
     onOpenDay: () -> Unit,
 ) {
     val isHoliday = events.any { it.isHoliday || it.holidayOnly }
+    // day-off styling: legal holidays + the weekly day off (round 14,
+    // setting-driven — web parity with the agenda's day-off badge)
+    val isDayOff = isHoliday || CalendarFacade.isWeeklyDayOff(weekendDay, locale, date.weekday)
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = if (isHoliday) {
+        color = if (isDayOff) {
             MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.18f)
         } else {
             MaterialTheme.colorScheme.surface
@@ -173,10 +182,12 @@ private fun AgendaDayRow(
                     DateFormats.dayNumber(system, locale, date),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (isHoliday) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    color = if (isDayOff) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 )
+                // round 14: FULL weekday name (the truncated «یک»/«دو» forms
+                // were confusing outside the month-grid header row)
                 Text(
-                    DateFormats.weekdayShort(locale, date),
+                    DateFormats.weekdayLong(locale, date),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

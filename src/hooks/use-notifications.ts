@@ -56,11 +56,17 @@ export function localizedTodayLabel(
   dict: LocaleDict,
   today: SimpleDate,
 ): string {
-  return system === "gregorian"
-    ? formatGregorianDate(locale, today, dict)
-    : system === "jalali"
-      ? formatJalaliDate(locale, gregorianToJalali(today), dict)
-      : formatImperialDate(locale, gregorianToImperial(today), dict);
+  if (system === "gregorian") return formatGregorianDate(locale, today, dict);
+  if (system === "jalali") {
+    return formatJalaliDate(locale, gregorianToJalali(today), dict);
+  }
+  if (system === "imperialSolar") {
+    // Shahanshahi year on the Jalali structure
+    const j = gregorianToJalali(today);
+    return formatImperialDate(locale, { ...j, year: j.year + 1180 }, dict);
+  }
+  // imperial + ancient share the 30-day structure
+  return formatImperialDate(locale, gregorianToImperial(today), dict);
 }
 
 /* ------------------------------------------------------------------ */

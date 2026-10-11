@@ -58,6 +58,7 @@ import com.celestial.calendar.data.ThemeMode
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarSystem
 import com.celestial.calendar.engine.WeekStart
+import com.celestial.calendar.engine.WeekendDay
 import com.celestial.calendar.events.IcsBuilder
 import com.celestial.calendar.events.IcsEvent
 import com.celestial.calendar.events.SourceSettings
@@ -94,29 +95,47 @@ fun SettingsSheet(
         ) {
 
             // ---------------------------------------------------- system
+            // Round 14: five calendar systems — the 3-way segmented row became
+            // too wide, so the selector uses the header-theme chip-grid pattern
+            // (two per row) with the active system's hint below.
             CommonUi.SectionLabel(strings.calendarSystem)
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                val entries = listOf(
-                    CalendarSystem.GREGORIAN to strings.systemGregorian,
-                    CalendarSystem.JALALI to strings.systemJalali,
-                    CalendarSystem.IMPERIAL to strings.systemImperial,
-                )
-                entries.forEachIndexed { i, (sys, label) ->
-                    SegmentedButton(
-                        selected = settings.system == sys,
-                        onClick = { viewModel.setSystem(sys) },
-                        shape = SegmentedButtonDefaults.itemShape(i, entries.size),
-                    ) { Text(label, maxLines = 1) }
+            val systemPairs = listOf(
+                CalendarSystem.GREGORIAN to CalendarSystem.JALALI,
+                CalendarSystem.IMPERIAL to CalendarSystem.IMPERIAL_SOLAR,
+                CalendarSystem.ANCIENT to null,
+            )
+            Column(
+                Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                systemPairs.forEach { (first, second) ->
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        SystemChip(
+                            selected = settings.system == first,
+                            label = systemLabel(strings, first),
+                            modifier = Modifier.weight(1f),
+                            onClick = { viewModel.setSystem(first) },
+                        )
+                        if (second != null) {
+                            SystemChip(
+                                selected = settings.system == second,
+                                label = systemLabel(strings, second),
+                                modifier = Modifier.weight(1f),
+                                onClick = { viewModel.setSystem(second) },
+                            )
+                        }
+                    }
                 }
             }
-            if (settings.system == CalendarSystem.IMPERIAL) {
-                Text(
-                    strings.systemImperialHint,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
+            Text(
+                systemHint(strings, settings.system),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
 
             // ---------------------------------------------------- language
             CommonUi.SectionLabel(strings.language)
@@ -204,6 +223,50 @@ fun SettingsSheet(
                         }
                     }
                 }
+            }
+
+            // --------------------------------- weekly day off (round 14)
+            // 5 options as chips, two per row (same pattern as the systems).
+            CommonUi.SectionLabel(strings.weekendDayLabel)
+            val weekendPairs = listOf(
+                WeekendDay.AUTO to WeekendDay.NONE,
+                WeekendDay.FRIDAY to WeekendDay.SATURDAY,
+                WeekendDay.SUNDAY to null,
+            )
+            Column(
+                Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                weekendPairs.forEach { (first, second) ->
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        HeaderThemeChip(
+                            selected = settings.weekendDay == first,
+                            label = strings.weekendDayName(first),
+                            modifier = Modifier.weight(1f),
+                            onClick = { viewModel.setWeekendDay(first) },
+                        )
+                        if (second != null) {
+                            HeaderThemeChip(
+                                selected = settings.weekendDay == second,
+                                label = strings.weekendDayName(second),
+                                modifier = Modifier.weight(1f),
+                                onClick = { viewModel.setWeekendDay(second) },
+                            )
+                        }
+                    }
+                }
+            }
+
+            // --------------------------------- royal month names (round 14)
+            ToggleRow(
+                strings.royalMonthNames,
+                settings.royalMonthNames,
+                subtitle = strings.royalMonthNamesHint,
+            ) { on ->
+                viewModel.setRoyalMonthNames(on)
             }
 
             // --------------------------------- Hijri year / daily horoscope
@@ -518,6 +581,38 @@ private fun HeaderThemeChip(
         label = { Text(label, maxLines = 1) },
         modifier = modifier,
     )
+}
+
+@Composable
+private fun SystemChip(
+    selected: Boolean,
+    label: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label, maxLines = 2) },
+        modifier = modifier,
+    )
+}
+
+/** Localized name of a calendar system (all five, round 14). */
+private fun systemLabel(strings: LocalStrings, system: CalendarSystem): String = when (system) {
+    CalendarSystem.GREGORIAN -> strings.systemGregorian
+    CalendarSystem.JALALI -> strings.systemJalali
+    CalendarSystem.IMPERIAL -> strings.systemImperial
+    CalendarSystem.IMPERIAL_SOLAR -> strings.systemImperialSolar
+    CalendarSystem.ANCIENT -> strings.systemAncient
+}
+
+/** Hint text of a calendar system ("" for gregorian/jalali — none exists). */
+private fun systemHint(strings: LocalStrings, system: CalendarSystem): String = when (system) {
+    CalendarSystem.IMPERIAL -> strings.systemImperialHint
+    CalendarSystem.IMPERIAL_SOLAR -> strings.systemImperialSolarHint
+    CalendarSystem.ANCIENT -> strings.systemAncientHint
+    else -> ""
 }
 
 @Composable

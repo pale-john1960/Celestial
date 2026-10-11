@@ -10,6 +10,7 @@ import com.celestial.calendar.data.AppDatabase
 import com.celestial.calendar.data.ImportedEvent
 import com.celestial.calendar.data.Settings
 import com.celestial.calendar.data.SettingsDataStore
+import com.celestial.calendar.data.SunLocation
 import com.celestial.calendar.data.ThemeMode
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarFacade
@@ -18,6 +19,7 @@ import com.celestial.calendar.engine.JalaliEngine
 import com.celestial.calendar.engine.Jdn
 import com.celestial.calendar.engine.SimpleDate
 import com.celestial.calendar.engine.WeekStart
+import com.celestial.calendar.engine.WeekendDay
 import com.celestial.calendar.events.EventInstance
 import com.celestial.calendar.widgets.WidgetUpdater
 import com.celestial.calendar.events.EventRepository
@@ -272,6 +274,14 @@ class CelestialViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setHeaderTheme(v: com.celestial.calendar.data.HeaderTheme) =
         viewModelScope.launch { store.setHeaderTheme(v) }
+
+    fun setWeekendDay(v: WeekendDay) = viewModelScope.launch { store.setWeekendDay(v) }
+
+    fun setRoyalMonthNames(v: Boolean) = viewModelScope.launch { store.setRoyalMonthNames(v) }
+
+    fun setSunLocation(v: SunLocation) = viewModelScope.launch { store.setSunLocation(v) }
+
+    fun setWorldClockZones(v: List<String>) = viewModelScope.launch { store.setWorldClockZones(v) }
 
     fun setSource(transform: (SourceSettings) -> SourceSettings) =
         viewModelScope.launch { store.setSource(transform) }

@@ -8,10 +8,13 @@
 
 ## Features
 
-- **Three calendar systems**
+- **Five calendar systems** (web + Android)
   - **Gregorian** (CE)
   - **Shamsi / Jalali** (Solar Hijri, ه.ش) — pure engine validated 432/432 against ICU across 1930–2090
   - **Persian Imperial** (optional) — the ancient royal calendar on the Shahanshahi era of Cyrus the Great (559 BCE; year = Jalali + 1180 — today 2585): 12 fixed 30-day months + 5 *Andarjah* epagomenal days (6 in leap years), each day carrying its Zoroastrian devotional name (Ormazd, Bahman, …)
+  - **Shahanshahi year, Shamsi months** (optional) — the Imperial year (today 2585) on the standard Jalali month/day structure, for those who want the royal era with familiar months
+  - **Ancient / Fasli** (optional) — the 30-day Zoroastrian structure with the *ancient* month names (امرداد Amordad, اسپندارمذ Spandarmad, …) and Andarjah
+  - **Royal month names** — a settings toggle swaps the Imperial calendars' month names to their ancient Zoroastrian forms (مرداد → امرداد, اسفند → اسپندارمذ)
   - **Hijri** (AH) shown alongside for religious dates
 - **Three languages**: English, 日本語, فارسی (full RTL + Persian digits ۱۴۰۵) — every event name & description is translated
 - **Events & holidays**
@@ -40,12 +43,18 @@
 - **iOS install hint** — iPhone/iPad users get a footer "Share → Add to Home Screen" chip (dismissable) since iOS Safari never offers the standard install prompt
 - **Header artwork themes** (web + Android) — 7 selectable hero themes: Seasonal (fresh spring/summer artwork), Celestial (Milky Way night skies), Magical (enchanted forest & aurora), Shahanshahi (Persepolis & royal gardens), Japanese (ukiyo-e Fuji & torii), Korean (moonlit hanok & palace), Chinese (shan shui ink wash & lanterns); natural wind-driven particle animation (tumbling leaves with gusts, swaying petals, wandering fireflies, twinkling stars, golden dust) — no more zoom-pan; all motion off under `prefers-reduced-motion`
 - **Shahanshahi era** — the Imperial calendar now uses the correct epoch: year 1 = Cyrus the Great's coronation, 559 BCE (year = Jalali + 1180 → today 2585), per the 1976 Pahlavi reform (Wikipedia: *Shahanshahi calendar*)
-- **Iranian Friday** — in the Persian locale every Friday is styled as the weekly day off (red date + holiday tint), as it is in Iran
+- **Configurable weekly day off** — auto (Friday in the Persian locale, none elsewhere) or force Friday / Saturday / Sunday / none; day-off styling + agenda badges + next-day-off countdown all respect it
 - **World observances** — 22 additional international days (World Food Day, Human Rights Day, World Health Day, International Day of Education, …), all trilingual
 - **Daily horoscope** (web + Android, toggleable) — deterministic per-day-and-sign horoscope card in Day view: mood, lucky number, lucky color and advice, in all three languages
 - **Hijri year toggle** — hide the AH year line (hero + day/week rows + event dialogs) from settings
 - **Flag icons** — US/JP/IR flags and a globe render as crisp SVGs everywhere (Windows shows flag *emoji* as the letters "US"/"JP" — SVGs fix that)
 - **Wide-screen frame** — on ≥1280px the app sits in a centered 1440px rounded card over a quiet backdrop instead of stretching edge-to-edge; month cells got white tile borders for clarity
+- **Locale-aware date formats** — Persian shows day-before-month («۲۹ مهر ۱۴۰۵») with FULL weekday names (چهارشنبه, not چهار) outside the month grid; Japanese uses 年月日 ordering with weekday in parens (10月29日（水曜日）)
+- **Sun times** ☀️ (web + Android) — dawn / sunrise / solar noon / sunset / dusk for any displayed day at your chosen city (10 presets or auto), computed by a zero-dependency NOAA engine (astronomical twilight, polar night & midnight-sun aware), rendered in the city's timezone
+- **World clock** 🌍 (web + Android) — live times in your chosen time zones with next-day/previous-day markers, add/remove cities, updates every 30s
+- **4-image hero pools** — every fixed artwork theme now rotates 4 illustrations across the year, and the Year view month cards follow the ACTIVE theme's pool (central `themeImageSrc`) — 12 new artworks this round
+- **Android APK download** — grab the debug APK straight from the web app (footer chip or Settings → App) at `/celestial-debug.apk`
+- **RTL toggle fix** — switch knobs no longer slide outside the track in Persian
 - **Flexible settings**: week start (Sat/Sun/Mon), theme (light/dark), per-source toggles, online mode
 - **Motion & polish** — Framer Motion view transitions, staggered cell entrances, card hover lifts, structured loading skeletons (week/day/agenda), thin custom scrollbars, print mastheads on Month/Week/Day/Agenda, dark-mode hero starfield + moonlight halo (all motion killed under `prefers-reduced-motion`)
 - Android: home-screen **widgets** (date 4×2 + month grid 4×5), **status-bar date** via persistent notification, **manual events + .ics export**, low-power design (no continuous animations)

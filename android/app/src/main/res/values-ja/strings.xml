@@ -238,4 +238,49 @@
     <string name="horoscope_lucky_number">ラッキーナンバー</string>
     <string name="horoscope_lucky_color">ラッキーカラー</string>
     <string name="horoscope_advice">アドバイス</string>
+
+    <!-- ラウンド14: 追加の暦体系 / 王室（古代）の月名 / 週の休日 -->
+    <string name="system_imperial_solar">シャーハンシャーヒ紀元（太陽暦）</string>
+    <string name="system_imperial_solar_hint">皇帝紀年＋通常の太陽暦（ジャラーリー）の月日</string>
+    <string name="system_ancient">古代（ファスリ）</string>
+    <string name="system_ancient_hint">30日×12か月＋アンダルジャ、古代ゾロアスター教の月名</string>
+    <string name="era_ancient">古代</string>
+    <string name="royal_month_names">王室（古代）の月名</string>
+    <string name="royal_month_names_hint">皇帝暦で古代の月名（アモルダード、スプァンダルマド）を使用</string>
+    <string name="weekend_day">週の休日</string>
+    <string name="weekend_auto">自動（言語に従う）</string>
+    <string name="weekend_none">なし</string>
+    <string name="weekend_friday">金曜日</string>
+    <string name="weekend_saturday">土曜日</string>
+    <string name="weekend_sunday">日曜日</string>
+
+    <!-- ラウンド14: 太陽の時刻 -->
+    <string name="sun_times_title">太陽の時刻</string>
+    <string name="sun_dawn">夜明け</string>
+    <string name="sun_sunrise">日の出</string>
+    <string name="sun_noon">南中</string>
+    <string name="sun_sunset">日の入り</string>
+    <string name="sun_dusk">日暮れ</string>
+    <string name="sun_location">場所</string>
+    <string name="sun_polar_night">極夜</string>
+    <string name="sun_midnight_sun">白夜</string>
+
+    <!-- ラウンド14: 世界時計 -->
+    <string name="world_clock_title">世界時計</string>
+    <string name="world_clock_add">都市を追加</string>
+    <string name="world_clock_empty">タイムゾーンを追加して、世界の時刻を比べてみましょう。</string>
+    <string name="world_clock_tomorrow">翌日</string>
+    <string name="world_clock_yesterday">前日</string>
+
+    <!-- ラウンド14: 都市名（太陽の時刻・世界時計） -->
+    <string name="city_tehran">テヘラン</string>
+    <string name="city_tokyo">東京</string>
+    <string name="city_seoul">ソウル</string>
+    <string name="city_beijing">北京</string>
+    <string name="city_new_york">ニューヨーク</string>
+    <string name="city_london">ロンドン</string>
+    <string name="city_paris">パリ</string>
+    <string name="city_dubai">ドバイ</string>
+    <string name="city_sydney">シドニー</string>
+    <string name="city_los_angeles">ロサンゼルス</string>
 </resources>

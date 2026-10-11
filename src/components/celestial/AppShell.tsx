@@ -6,6 +6,7 @@ import { getDict } from "@/lib/i18n";
 import { useSettings } from "@/store/settings";
 import { useNtpSync } from "@/lib/client/api";
 import { HeroHeader } from "./HeroHeader";
+import { ApkChip } from "./ApkChip";
 import { InstallChip } from "./InstallChip";
 import { IosInstallChip } from "./IosInstallChip";
 import { OfflineChip } from "./OfflineChip";
@@ -85,6 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <InstallChip />
               <IosInstallChip />
               <OfflineChip />
+              <ApkChip />
             </div>
           </div>
           <div className="h-[env(safe-area-inset-bottom)]" aria-hidden />

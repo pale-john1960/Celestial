@@ -93,6 +93,62 @@ export const ja: LocaleDict = {
   weekNumCol: '週',
   weekNumLabel: '第{n}週',
 
+  // ラウンド14: 追加の暦体系
+  systemImperialSolar: 'シャーハンシャーヒ紀元（太陽暦）',
+  systemImperialSolarHint: '皇帝紀年＋通常の太陽暦（ジャラーリー）の月日',
+  systemAncient: '古代（ファスリ）',
+  systemAncientHint: '30日×12か月＋アンダルジャ、古代ゾロアスター教の月名',
+  eraAncient: '古代',
+
+  // ラウンド14: 王室（古代）の月名
+  royalMonthNames: '王室（古代）の月名',
+  royalMonthNamesHint: '皇帝暦で古代の月名（アモルダード、スプァンダルマド）を使用',
+
+  // ラウンド14: 週の休日
+  weekendDay: '週の休日',
+  weekendAuto: '自動（言語に従う）',
+  weekendNone: 'なし',
+  weekendFriday: '金曜日',
+  weekendSaturday: '土曜日',
+  weekendSunday: '日曜日',
+
+  // ラウンド14: 太陽の時刻
+  sunTimesTitle: '太陽の時刻',
+  sunDawn: '夜明け',
+  sunSunrise: '日の出',
+  sunNoon: '南中',
+  sunSunset: '日の入り',
+  sunDusk: '日暮れ',
+  sunLocation: '場所',
+  sunUseMyLocation: '現在地を使用',
+  sunLocating: '取得中…',
+  sunLocError: '位置情報を利用できません',
+  sunPolarNight: '極夜',
+  sunMidnightSun: '白夜',
+
+  // ラウンド14: 世界時計
+  worldClockTitle: '世界時計',
+  worldClockAdd: '都市を追加',
+  worldClockEmpty: 'タイムゾーンを追加して、世界の時刻を比べてみましょう。',
+  worldClockTomorrow: '翌日',
+  worldClockYesterday: '前日',
+
+  // ラウンド14: 都市名（太陽の時刻・世界時計）
+  cityTehran: 'テヘラン',
+  cityTokyo: '東京',
+  citySeoul: 'ソウル',
+  cityBeijing: '北京',
+  cityNewYork: 'ニューヨーク',
+  cityLondon: 'ロンドン',
+  cityParis: 'パリ',
+  cityDubai: 'ドバイ',
+  citySydney: 'シドニー',
+  cityLosAngeles: 'ロサンゼルス',
+
+  // ラウンド14: APKダウンロード
+  apkDownload: 'Androidアプリ（APK）を入手',
+  apkHint: 'Android版をダウンロードしてスマートフォンにインストール。',
+
   eventSources: 'イベント・祝日のソース',
   srcInternational: '国際的なイベント',
   srcUs: 'アメリカ合衆国の祝日',

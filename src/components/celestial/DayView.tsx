@@ -14,9 +14,12 @@ import { motion } from "framer-motion";
 import {
   buildDayCell,
   gregorianToJalali,
+  hasAndarjah,
   imperialDayName,
   isoDate,
   parseIso,
+  systemDateOf,
+  systemMonthName,
   todayGregorian,
 } from "@/lib/calendar";
 import { zodiacOf, zodiacName } from "@/lib/calendar/zodiac";
@@ -30,8 +33,6 @@ import {
 } from "@/lib/calendar/solstice";
 import {
   getDict,
-  gregorianMonthName,
-  jalaliMonthName,
   num,
   weekdayLong,
 } from "@/lib/i18n";
@@ -50,10 +51,12 @@ import {
 } from "./CategoryLegend";
 import { EmptyState } from "./EmptyState";
 import { EventGlyph, FlagIcon } from "./FlagIcon";
+import { SunTimesCard } from "./SunTimesCard";
+import { WorldClockCard } from "./WorldClockCard";
 import {
+  activeDateText,
   formatGregorianDate,
   formatHijriDate,
-  formatImperialDate,
   formatJalaliDate,
 } from "./HeroHeader";
 
@@ -63,6 +66,7 @@ export function DayView() {
   const sources = useSettings((s) => s.sources);
   const showHijri = useSettings((s) => s.showHijri);
   const showHoroscope = useSettings((s) => s.showHoroscope);
+  const royal = useSettings((s) => s.royalMonthNames);
   const dict = getDict(locale);
 
   const selectedIso = useUi((s) => s.selectedIso);
@@ -101,24 +105,19 @@ export function DayView() {
       )
     : "";
 
-  const activeDateText =
-    system === "gregorian"
-      ? formatGregorianDate(locale, cell.gregorian, dict)
-      : system === "jalali"
-        ? formatJalaliDate(locale, cell.jalali, dict)
-        : formatImperialDate(locale, cell.imperial, dict);
+  const dateText = activeDateText(system, locale, cell, dict, royal);
 
   // Persian zodiac chip (MonthView parity): the sign of THIS day's underlying
   // Jalali month — the day itself is the sample, no middle-day sampling. The
-  // label's month name is the displayed month in the ACTIVE system (jalali
-  // month names double as Imperial's; 13 = Andarjah handled by the facade).
+  // label's month name is the displayed month in the ACTIVE system (month
+  // names follow the royal-names preference; 13 = Andarjah via the facade).
   const zodiac = zodiacOf(gregorianToJalali(g).month);
-  const zodiacMonthLabel =
-    system === "gregorian"
-      ? gregorianMonthName(locale, cell.gregorian.month)
-      : system === "jalali"
-        ? jalaliMonthName(locale, cell.jalali.month)
-        : jalaliMonthName(locale, cell.imperial.month);
+  const zodiacMonthLabel = systemMonthName(
+    system,
+    locale,
+    systemDateOf(system, g).month,
+    royal,
+  );
   const zodiacSign = zodiac ? zodiacName(dict, zodiac.key) : "";
   const zodiacLabel = zodiac
     ? dict.zodiacChipDesc
@@ -145,7 +144,7 @@ export function DayView() {
           <span className="text-base font-semibold text-muted-foreground">
             {dict.viewDay}{" · "}
           </span>
-          {activeDateText}
+          {dateText}
         </h2>
       </div>
 
@@ -167,7 +166,7 @@ export function DayView() {
               {weekdayLong(locale, cell.weekday)}
             </p>
             <h2 className="mt-0.5 truncate text-xl font-bold tabular-nums sm:text-2xl">
-              {activeDateText}
+              {dateText}
             </h2>
             {/* zodiac chip — visually subordinate to the date, same styling
                 as MonthView's toolbar chip so the two read as siblings */}
@@ -201,7 +200,9 @@ export function DayView() {
           </Button>
         </div>
 
-        {/* the other calendars */}
+        {/* the other calendars — Jalali shows for every non-Jalali system
+            (incl. the imperial family); the devotional day name belongs to
+            the 12×30+Andarjah structures (imperial + ancient) */}
         <div
           className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
           dir="auto"
@@ -209,13 +210,10 @@ export function DayView() {
           {system !== "gregorian" && (
             <span>{formatGregorianDate(locale, cell.gregorian, dict)}</span>
           )}
-          {system !== "jalali" && system !== "imperial" && (
+          {system !== "jalali" && (
             <span>{formatJalaliDate(locale, cell.jalali, dict)}</span>
           )}
-          {system === "imperial" && (
-            <span>{formatJalaliDate(locale, cell.jalali, dict)}</span>
-          )}
-          {system === "imperial" && (
+          {hasAndarjah(system) && (
             <span>
               {dict.dayNameLabel}:{" "}
               {imperialDayName(locale, cell.imperial)}
@@ -321,6 +319,13 @@ export function DayView() {
           </p>
         </div>
       )}
+
+      {/* sun times for the displayed day at the saved location (round 14) —
+          dawn / sunrise / solar noon / sunset / dusk + location picker */}
+      <SunTimesCard date={g} />
+
+      {/* world clock — live time in the user's chosen time zones (round 14) */}
+      <WorldClockCard />
 
       {/* solstice / equinox card (only on event days) */}
       {season && (

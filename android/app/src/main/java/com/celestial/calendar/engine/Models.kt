@@ -44,7 +44,7 @@ data class DayCell(
     val isToday: Boolean,
 )
 
-enum class CalendarSystem { GREGORIAN, JALALI, IMPERIAL }
+enum class CalendarSystem { GREGORIAN, JALALI, IMPERIAL, IMPERIAL_SOLAR, ANCIENT }
 
 enum class AppLocale(val code: String, val isRtl: Boolean) {
     EN("en", false),
@@ -67,30 +67,92 @@ enum class WeekStart(val weekday: Int) {
     }
 }
 
+/** Weekly day-off preference (round 14). AUTO follows the locale
+ *  convention (fa → Friday; en/ja → none); the rest force a weekday. */
+enum class WeekendDay(val code: String) {
+    AUTO("auto"), NONE("none"), FRIDAY("friday"), SATURDAY("saturday"), SUNDAY("sunday");
+
+    companion object {
+        fun fromCode(code: String?): WeekendDay =
+            entries.firstOrNull { it.code == code } ?: AUTO
+    }
+}
+
 /** Position of a date in "system space" — year/month in the ACTIVE system. */
 data class SystemDate(val year: Int, val month: Int)
 
 object CalendarFacade {
 
-    fun systemDateOf(system: CalendarSystem, g: SimpleDate): SystemDate = when (system) {
-        CalendarSystem.GREGORIAN -> SystemDate(g.year, g.month)
-        CalendarSystem.JALALI -> {
-            val j = JalaliEngine.gregorianToJalali(g)
-            SystemDate(j.year, j.month)
-        }
-        CalendarSystem.IMPERIAL -> {
-            val imp = ImperialEngine.gregorianToImperial(g)
-            SystemDate(imp.year, imp.month)
+    fun systemDateOf(system: CalendarSystem, g: SimpleDate): SystemDate {
+        val j = JalaliEngine.gregorianToJalali(g)
+        return when (system) {
+            CalendarSystem.GREGORIAN -> SystemDate(g.year, g.month)
+            CalendarSystem.JALALI -> SystemDate(j.year, j.month)
+            // imperialSolar: Shahanshahi YEAR on the standard Jalali structure
+            CalendarSystem.IMPERIAL_SOLAR ->
+                SystemDate(j.year + ImperialEngine.IMPERIAL_EPOCH_OFFSET, j.month)
+            // imperial + ancient share the 12×30 + Andarjah structure
+            CalendarSystem.IMPERIAL, CalendarSystem.ANCIENT -> {
+                val imp = ImperialEngine.gregorianToImperial(g)
+                SystemDate(imp.year, imp.month)
+            }
         }
     }
 
-    /** Length of a system-space month (13 = Andarjah for imperial). */
+    /** Number of months in a system year (imperial + ancient have Andarjah = 13). */
+    fun systemMonthCount(system: CalendarSystem): Int =
+        if (system == CalendarSystem.IMPERIAL || system == CalendarSystem.ANCIENT) 13 else 12
+
+    /** true for the 12×30+Andarjah Fasli systems (devotional day names). */
+    fun hasAndarjah(system: CalendarSystem): Boolean =
+        system == CalendarSystem.IMPERIAL || system == CalendarSystem.ANCIENT
+
+    /**
+     * Month NAME for the ACTIVE system under the royal-names preference
+     * (round 14 — the ONE month-name helper, web parity):
+     *  - gregorian / jalali: unchanged
+     *  - imperial + imperialSolar: ancient Zoroastrian names iff [royal]
+     *  - ancient: ALWAYS the ancient names
+     * Month 13 (Andarjah) keeps its label in every mode.
+     */
+    fun systemMonthName(system: CalendarSystem, locale: AppLocale, month: Int, royal: Boolean): String {
+        if (system == CalendarSystem.GREGORIAN) return I18n.gregorianMonthName(locale, month)
+        val useAncient = system == CalendarSystem.ANCIENT ||
+                ((system == CalendarSystem.IMPERIAL || system == CalendarSystem.IMPERIAL_SOLAR) && royal)
+        if (useAncient && month in 1..12) return I18n.ancientMonthName(locale, month)
+        return I18n.jalaliMonthName(locale, month) // 13 → Andarjah label
+    }
+
+    /**
+     * (year, month, day) of a day in the ACTIVE system — the display triple
+     * for big day numbers / month-first markers. imperial + ancient share the
+     * 12×30+Andarjah structure; imperialSolar rides the Jalali structure with
+     * a Shahanshahi year number.
+     */
+    fun systemTripleOf(system: CalendarSystem, date: CelestialDate): SimpleDate = when (system) {
+        CalendarSystem.GREGORIAN -> date.gregorian
+        CalendarSystem.JALALI -> date.jalali
+        CalendarSystem.IMPERIAL_SOLAR -> SimpleDate(
+            date.jalali.year + ImperialEngine.IMPERIAL_EPOCH_OFFSET,
+            date.jalali.month,
+            date.jalali.day,
+        )
+        CalendarSystem.IMPERIAL, CalendarSystem.ANCIENT -> SimpleDate(
+            date.imperial.year, date.imperial.month, date.imperial.day,
+        )
+    }
+
+    /** Length of a system-space month (13 = Andarjah for imperial/ancient). */
     fun systemMonthLength(system: CalendarSystem, y: Int, m: Int): Int = when (system) {
         CalendarSystem.GREGORIAN -> Jdn.daysInMonth(y, m)
+        // imperialSolar: standard Jalali month lengths (year is Shahanshahi → y-1180)
+        CalendarSystem.IMPERIAL_SOLAR ->
+            if (m == 13) 0 else JalaliEngine.jalaliMonthLength(y - ImperialEngine.IMPERIAL_EPOCH_OFFSET, m)
         CalendarSystem.JALALI -> if (m == 13) 0 else JalaliEngine.jalaliMonthLength(y, m)
-        CalendarSystem.IMPERIAL -> if (m == 13) {
-            // y is a SHAHANSHAI year — the Andarjah leap test runs on the
-            // UNDERLYING Jalali year (y - 1180): Shahanshahi = Jalali + 1180.
+        // imperial + ancient: months 1-12 = 30 days; 13 = 5 (6 in Jalali leap
+        // years). y is a SHAHANSHAI year — the Andarjah leap test runs on the
+        // UNDERLYING Jalali year (y - 1180): Shahanshahi = Jalali + 1180.
+        CalendarSystem.IMPERIAL, CalendarSystem.ANCIENT -> if (m == 13) {
             if (JalaliEngine.isJalaliLeap(y - ImperialEngine.IMPERIAL_EPOCH_OFFSET)) 6 else 5
         } else 30
     }
@@ -99,7 +161,12 @@ object CalendarFacade {
     fun systemToGregorian(system: CalendarSystem, y: Int, m: Int, d: Int): SimpleDate = when (system) {
         CalendarSystem.GREGORIAN -> SimpleDate(y, m, d)
         CalendarSystem.JALALI -> JalaliEngine.jalaliToGregorian(SimpleDate(y, m, d))
-        CalendarSystem.IMPERIAL -> ImperialEngine.imperialToGregorian(ImperialDate(y, m, d))
+        // imperialSolar: Shahanshahi year on the standard Jalali structure
+        CalendarSystem.IMPERIAL_SOLAR ->
+            JalaliEngine.jalaliToGregorian(SimpleDate(y - ImperialEngine.IMPERIAL_EPOCH_OFFSET, m, d))
+        // imperial + ancient share the conversion
+        CalendarSystem.IMPERIAL, CalendarSystem.ANCIENT ->
+            ImperialEngine.imperialToGregorian(ImperialDate(y, m, d))
     }
 
     /** Build the full [CelestialDate] for a Gregorian day. */
@@ -155,10 +222,12 @@ object CalendarFacade {
     fun shiftMonth(system: CalendarSystem, y: Int, m: Int, delta: Int): SystemDate {
         var year = y
         var month = m
+        val count = systemMonthCount(system) // 13 for imperial + ancient, else 12
         val step = if (delta > 0) 1 else -1
         var remaining = kotlin.math.abs(delta)
         while (remaining-- > 0) {
-            if (system == CalendarSystem.IMPERIAL && month == 13) {
+            if (month == 13) {
+                // after Andarjah comes next year's month 1 (13-month systems only)
                 if (step > 0) {
                     year++; month = 1
                 } else {
@@ -166,14 +235,13 @@ object CalendarFacade {
                 }
             } else if (step > 0) {
                 month++
-                if (month > (if (system == CalendarSystem.IMPERIAL) 13 else 12)) {
+                if (month > count) {
                     month = 1; year++
                 }
             } else {
                 month--
                 if (month < 1) {
-                    month = if (system == CalendarSystem.IMPERIAL) 13 else 12
-                    year--
+                    month = count; year--
                 }
             }
         }
@@ -182,7 +250,7 @@ object CalendarFacade {
 
     /** The 12(13) months of a system year, as (index, first Gregorian day). */
     fun yearMonths(system: CalendarSystem, year: Int): List<Pair<Int, SimpleDate>> {
-        val count = if (system == CalendarSystem.IMPERIAL) 13 else 12
+        val count = systemMonthCount(system)
         return (1..count).map { m -> m to systemToGregorian(system, year, m, 1) }
     }
 
@@ -203,4 +271,18 @@ object CalendarFacade {
         val idx = imp.dayNameIndex ?: (imp.day - 1)
         return I18n.imperialDayName(locale, idx)
     }
+
+    /**
+     * Weekly day-off resolution (round 14 — Kotlin port of the web's
+     * lib/calendar/weekend.ts). AUTO follows the locale convention
+     * (Persian → Friday; en/ja → none); the other codes force a weekday.
+     */
+    fun isWeeklyDayOff(weekendDay: WeekendDay, locale: AppLocale, weekday: Int): Boolean =
+        when (weekendDay) {
+            WeekendDay.FRIDAY -> weekday == 5
+            WeekendDay.SATURDAY -> weekday == 6
+            WeekendDay.SUNDAY -> weekday == 0
+            WeekendDay.NONE -> false
+            WeekendDay.AUTO -> locale == AppLocale.FA && weekday == 5
+        }
 }

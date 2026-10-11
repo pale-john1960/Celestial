@@ -16,7 +16,10 @@ import { ArrowLeftRight, CalendarCheck, CalendarDays } from "lucide-react";
 import {
   gregorianToImperial,
   gregorianToJalali,
+  IMPERIAL_EPOCH_OFFSET,
   isoDate,
+  systemMonthCount,
+  systemMonthName,
   systemMonthLength,
   systemToGregorian,
   todayGregorian,
@@ -32,7 +35,6 @@ import {
 import { zodiacOf, zodiacName } from "@/lib/calendar/zodiac";
 import {
   getDict,
-  gregorianMonthName,
   jalaliMonthName,
   num,
   weekdayLong,
@@ -61,8 +63,14 @@ import {
 const MIN_YEAR = 1;
 const MAX_YEAR = 3000;
 
-/** systems shown as rows, in display order */
-const SYSTEMS: CalendarSystem[] = ["gregorian", "jalali", "imperial"];
+/** systems shown as rows, in display order (round 14: + imperialSolar + ancient) */
+const SYSTEMS: CalendarSystem[] = [
+  "gregorian",
+  "jalali",
+  "imperial",
+  "imperialSolar",
+  "ancient",
+];
 
 /** one converter row's editable state (text so intermediate input is kept) */
 interface RowState {
@@ -93,7 +101,7 @@ function parseDigits(raw: string): number | null {
   return Number.isSafeInteger(n) ? n : null;
 }
 
-/** all three rows derived from a Gregorian date */
+/** all five rows derived from a Gregorian date */
 function rowsOf(g: SimpleDate): Rows {
   const j = gregorianToJalali(g);
   const imp = gregorianToImperial(g);
@@ -101,21 +109,31 @@ function rowsOf(g: SimpleDate): Rows {
     gregorian: { year: String(g.year), month: g.month, day: String(g.day) },
     jalali: { year: String(j.year), month: j.month, day: String(j.day) },
     imperial: { year: String(imp.year), month: imp.month, day: String(imp.day) },
+    // Shahanshahi year on the standard Jalali structure
+    imperialSolar: {
+      year: String(j.year + IMPERIAL_EPOCH_OFFSET),
+      month: j.month,
+      day: String(j.day),
+    },
+    // identical math to imperial (names differ — display concern only)
+    ancient: { year: String(imp.year), month: imp.month, day: String(imp.day) },
   };
 }
 
-/** month count per system (imperial has Andarjah as month 13) */
+/** month count per system (imperial + ancient have Andarjah as month 13) */
 function monthCount(system: CalendarSystem): number {
-  return system === "imperial" ? 13 : 12;
+  return systemMonthCount(system);
 }
 
 function monthName(
   locale: LocaleCode,
   system: CalendarSystem,
   month: number,
+  royal: boolean,
 ): string {
-  if (system === "gregorian") return gregorianMonthName(locale, month);
-  return jalaliMonthName(locale, month); // handles 13 = Andarjah
+  // gregorian/jalali unchanged; imperial/imperialSolar follow the royal
+  // setting; ancient always uses the ancient names; 13 = Andarjah
+  return systemMonthName(system, locale, month, royal);
 }
 
 export function DateConverterDialog() {
@@ -144,6 +162,7 @@ export function DateConverterDialog() {
 
 function ConverterBody() {
   const locale = useSettings((s) => s.locale);
+  const royal = useSettings((s) => s.royalMonthNames);
   const dict = getDict(locale);
   const gotoDay = useUi((s) => s.gotoDay);
 
@@ -205,7 +224,11 @@ function ConverterBody() {
       ? dict.systemGregorian
       : system === "jalali"
         ? dict.systemJalali
-        : dict.systemImperial;
+        : system === "imperial"
+          ? dict.systemImperial
+          : system === "imperialSolar"
+            ? dict.systemImperialSolar
+            : dict.systemAncient;
 
   return (
     <>
@@ -259,7 +282,7 @@ function ConverterBody() {
                       (_, i) => i + 1,
                     ).map((m) => (
                       <SelectItem key={m} value={String(m)}>
-                        {monthName(locale, system, m)}
+                        {monthName(locale, system, m, royal)}
                       </SelectItem>
                     ))}
                   </SelectContent>

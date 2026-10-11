@@ -54,6 +54,29 @@ object ImperialEngine {
         AppLocale.FA to "اندارج",
     )
 
+    /**
+     * Ancient Zoroastrian (royal) month names — the "reformed" modern
+     * spellings differ: امرداد vs مرداد (Amordad), اسپندارمذ vs اسفند
+     * (Spandarmad). Used by the ANCIENT system (always) and by
+     * IMPERIAL/IMPERIAL_SOLAR when the royalMonthNames setting is ON.
+     * Month 13 (Andarjah) keeps its own label. (Round 14 — verbatim from the
+     * web's ANCIENT_MONTH_NAMES in src/lib/calendar/imperial.ts.)
+     */
+    val ANCIENT_MONTH_NAMES: Map<AppLocale, List<String>> = mapOf(
+        AppLocale.EN to listOf(
+            "Farvardin", "Ardibehesht", "Khordad", "Tir", "Amordad", "Shahrivar",
+            "Mehr", "Aban", "Azar", "Dey", "Bahman", "Spandarmad",
+        ),
+        AppLocale.JA to listOf(
+            "ファルヴァルディーン", "アルディーベヘシュト", "ホルダード", "ティール", "アモルダード", "シャフリヴァール",
+            "メフル", "アーバーン", "アーザル", "デイ", "バフマン", "スプァンダルマド",
+        ),
+        AppLocale.FA to listOf(
+            "فروردین", "اردیبهشت", "خرداد", "تیر", "امرداد", "شهریور",
+            "مهر", "آبان", "آذر", "دی", "بهمن", "اسپندارمذ",
+        ),
+    )
+
     private val EPOCH_JDN = Jdn.g2d(2007, 3, 21) // Farvardin 1, 1386 AP
 
     /** Convert a Gregorian date to the Imperial calendar date. */
