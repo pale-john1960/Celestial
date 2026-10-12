@@ -32,18 +32,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.celestial.calendar.data.HeaderTheme
 import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CalendarSystem
-import com.celestial.calendar.engine.CelestialDate
 import com.celestial.calendar.engine.DateFormats
-import com.celestial.calendar.engine.DayCell
 import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.WeekStart
 import com.celestial.calendar.events.EventInstance
@@ -74,6 +74,10 @@ fun YearView(
     val today = remember(todayIso) { CalendarFacade.todayGregorian() }
     val months = remember(system, navYear) { CalendarFacade.yearMonths(system, navYear) }
     val order = remember(weekStart) { CalendarFacade.weekdayOrder(weekStart) }
+    // round 15: mirror the arrows in RTL (HeroHeader pattern) — in RTL the
+    // Row itself reverses, so BOTH icons must flip or they point inward ("‹year›"
+    // became ">year<" in Persian)
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
 
     Column(Modifier.fillMaxWidth()) {
         // year switcher (‹ 1405 ›) — mirrors the web year stepper
@@ -85,7 +89,10 @@ fun YearView(
             horizontalArrangement = Arrangement.Center,
         ) {
             IconButton(onClick = { onShiftYear(-1) }) {
-                Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = strings.prevYear)
+                Icon(
+                    if (rtl) Icons.Filled.KeyboardArrowRight else Icons.Filled.KeyboardArrowLeft,
+                    contentDescription = strings.prevYear,
+                )
             }
             Text(
                 I18n.num(locale, navYear),
@@ -95,7 +102,10 @@ fun YearView(
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
             IconButton(onClick = { onShiftYear(1) }) {
-                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = strings.nextYear)
+                Icon(
+                    if (rtl) Icons.Filled.KeyboardArrowLeft else Icons.Filled.KeyboardArrowRight,
+                    contentDescription = strings.nextYear,
+                )
             }
         }
 
@@ -107,7 +117,9 @@ fun YearView(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            items(months) { (monthIndex, firstG) ->
+            // stable keys (round 15 perf) — month index; avoids full-grid
+            // re-layout/recompose on scroll
+            items(months, key = { it.first }) { (monthIndex, firstG) ->
                 MiniMonthCard(
                     monthIndex = monthIndex,
                     firstG = firstG,
@@ -126,6 +138,19 @@ fun YearView(
     }
 }
 
+/**
+ * Precomputed display data for one mini-grid cell (round 15 perf): the
+ * composition loop reads only these plain values — no per-cell engine
+ * calls, event-map lookups or color derivations during scroll.
+ */
+private data class MiniCell(
+    val dayNum: Int,
+    val isToday: Boolean,
+    val inMonth: Boolean,
+    val isHoliday: Boolean,
+    val dotColor: Color?,
+)
+
 @Composable
 private fun MiniMonthCard(
     monthIndex: Int,
@@ -140,17 +165,40 @@ private fun MiniMonthCard(
     royalMonthNames: Boolean,
     onOpenMonth: () -> Unit,
 ) {
-    val year = remember(firstG) {
+    val year = remember(system, firstG) {
         CalendarFacade.systemDateOf(system, firstG).year
     }
-    val cells: List<DayCell> = remember(system, year, monthIndex, weekStart, today) {
-        CalendarFacade.monthGrid(system, year, monthIndex, weekStart, today)
+    // mini-grid display data computed ONCE per card (round 15 perf): day
+    // numbers in the ACTIVE system, holiday flags and per-event dot colors
+    // are all derived here — the composition loop below only reads these
+    // precomputed plain values, so scrolling/recomposition never re-runs the
+    // engine, event lookups or color derivations per cell
+    val cells: List<MiniCell> = remember(system, year, monthIndex, weekStart, today, eventsByIso) {
+        CalendarFacade.monthGrid(system, year, monthIndex, weekStart, today).map { cell ->
+            val events = eventsByIso[cell.date.iso]
+            MiniCell(
+                dayNum = CalendarFacade.systemTripleOf(system, cell.date).day,
+                isToday = cell.isToday,
+                inMonth = cell.inMonth,
+                isHoliday = events?.any { it.isHoliday || it.holidayOnly } == true,
+                // per-event color override (Task 9) or the category default
+                dotColor = events
+                    ?.filter { !it.holidayOnly }
+                    ?.map { eventColor(it) }
+                    ?.distinct()
+                    ?.firstOrNull(),
+            )
+        }
     }
     // month name in the ACTIVE system (royal names for the imperial family)
     val monthName = DateFormats.monthNameOf(system, locale, year, monthIndex, royalMonthNames)
     // artwork banner from the ACTIVE theme's pool (central image source —
-    // the same heroArtworkRes the header uses; rotates by Gregorian month)
+    // the same heroArtworkRes the header uses; rotates by Gregorian month).
+    // Round 15 perf: decoded ONCE, power-of-2 downsampled to ~256 px via
+    // ArtCache (was full-res 1344×768 painterResource per card → scroll lag)
+    val context = LocalContext.current
     val artwork = remember(headerTheme, firstG) { heroArtworkRes(headerTheme, firstG.month) }
+    val banner = remember(artwork) { ArtCache.decode(context, artwork, 256) }
 
     Surface(
         shape = RoundedCornerShape(14.dp),
@@ -165,7 +213,7 @@ private fun MiniMonthCard(
         Column {
             // theme artwork banner (round 14 — year view follows the theme)
             Image(
-                painter = painterResource(artwork),
+                bitmap = banner,
                 contentDescription = null, // decorative banner
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -200,11 +248,6 @@ private fun MiniMonthCard(
                 cells.chunked(7).forEach { week ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(1.dp)) {
                         week.forEach { cell ->
-                            val events = eventsByIso[cell.date.iso]
-                            val isToday = cell.isToday
-                            val isHoliday = events?.any { it.isHoliday || it.holidayOnly } == true
-                            // day number in the ACTIVE system (all 5)
-                            val day = CalendarFacade.systemTripleOf(system, cell.date).day
                             Column(
                                 Modifier.weight(1f),
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -213,7 +256,7 @@ private fun MiniMonthCard(
                                     Modifier
                                         .size(14.dp)
                                         .then(
-                                            if (isToday) {
+                                            if (cell.isToday) {
                                                 Modifier
                                                     .clip(CircleShape)
                                                     .background(MaterialTheme.colorScheme.primary)
@@ -227,26 +270,23 @@ private fun MiniMonthCard(
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
-                                        I18n.num(locale, day),
+                                        I18n.num(locale, cell.dayNum),
                                         fontSize = 8.sp,
                                         textAlign = TextAlign.Center,
                                         color = when {
-                                            isToday -> Color.White
+                                            cell.isToday -> Color.White
                                             !cell.inMonth -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
-                                            isHoliday -> MaterialTheme.colorScheme.error
+                                            cell.isHoliday -> MaterialTheme.colorScheme.error
                                             else -> MaterialTheme.colorScheme.onSurface
                                         },
-                                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                                        fontWeight = if (cell.isToday) FontWeight.Bold else FontWeight.Normal,
                                     )
                                 }
-                                // per-event color override (Task 9) or the category default
-                                val dots = events?.filter { !it.holidayOnly }
-                                    ?.map { eventColor(it) }?.distinct()
-                                if (!dots.isNullOrEmpty()) {
+                                if (cell.dotColor != null) {
                                     Box(
                                         Modifier
                                             .size(3.dp)
-                                            .background(dots.first(), CircleShape)
+                                            .background(cell.dotColor, CircleShape)
                                     )
                                 } else {
                                     Box(Modifier.size(3.dp))

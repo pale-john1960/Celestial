@@ -50,10 +50,13 @@ import com.celestial.calendar.events.EventInstance
  * Celestial — week view: the 7 days (starting at the user's weekStart) of the
  * week containing the selected day, one card per day in a vertical list
  * (mobile-first, lowest power). Each card shows the weekday, the day number
- * in the active system (+ secondary system and — behind the showHijri
- * setting — the Hijri date, tiny), holiday styling, the end-corner glyph
- * cluster (moon phase + season marker) and the day's events in the same card
- * style as the Day view.
+ * + MONTH NAME in the active system (round 15: "Saturday 29 Mehr" — the
+ * month used to be missing from the day-of-week line), the secondary system
+ * and — behind the showHijri setting — the Hijri date (tiny), holiday
+ * styling, the end-corner glyph cluster (moon phase + season marker) and the
+ * day's events in the same card style as the Day view. The week label is
+ * LOCALE-ORDERED via [DateFormats.weekRangeLabel] (round 15 — Persian needs
+ * the day range BEFORE the month name: "۱۸–۲۴ مهر ۱۴۰۵").
  */
 @Composable
 fun WeekView(
@@ -65,6 +68,7 @@ fun WeekView(
     eventsByIso: Map<String, List<EventInstance>>,
     showHijri: Boolean,
     weekendDay: WeekendDay,
+    royalMonthNames: Boolean,
     strings: LocalStrings,
     onPrevWeek: () -> Unit,
     onNextWeek: () -> Unit,
@@ -78,8 +82,8 @@ fun WeekView(
         val startJdn = anchorJdn - offset
         (0 until 7).map { CalendarFacade.buildCelestialDate(Jdn.d2g(startJdn + it)) }
     }
-    val weekLabel = remember(days, system, locale) {
-        weekLabelOf(system, locale, days.first(), days.last())
+    val weekLabel = remember(days, system, locale, royalMonthNames) {
+        DateFormats.weekRangeLabel(system, locale, days.first(), days.last(), royalMonthNames)
     }
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
 
@@ -135,6 +139,7 @@ fun WeekView(
                 isToday = date.iso == todayIso,
                 showHijri = showHijri,
                 weekendDay = weekendDay,
+                royalMonthNames = royalMonthNames,
                 events = eventsByIso[date.iso] ?: emptyList(),
                 strings = strings,
                 onOpenDay = { onOpenDay(date.iso) },
@@ -153,6 +158,7 @@ private fun WeekDayCard(
     isToday: Boolean,
     showHijri: Boolean,
     weekendDay: WeekendDay,
+    royalMonthNames: Boolean,
     events: List<EventInstance>,
     strings: LocalStrings,
     onOpenDay: () -> Unit,
@@ -165,6 +171,12 @@ private fun WeekDayCard(
     // weekly day off (round 14, user-configurable) — soft red weekday label
     // (the full holiday treatment stays event-driven below)
     val weeklyDayOff = CalendarFacade.isWeeklyDayOff(weekendDay, locale, date.weekday)
+    // round 15: THIS date's month name in the active system (royal-aware) —
+    // the day line used to read "Saturday 29" with no month
+    val monthName = remember(date.iso, system, locale, royalMonthNames) {
+        val t = CalendarFacade.systemTripleOf(system, date)
+        DateFormats.monthNameOf(system, locale, t.year, t.month, royalMonthNames)
+    }
 
     Surface(
         shape = RoundedCornerShape(14.dp),
@@ -214,6 +226,14 @@ private fun WeekDayCard(
                                 isHoliday -> MaterialTheme.colorScheme.error
                                 else -> MaterialTheme.colorScheme.onSurface
                             },
+                        )
+                        // round 15: the month belongs on the day line too —
+                        // "Saturday 29 Mehr" / (RTL) "شنبه ۲۹ مهر"
+                        Text(
+                            monthName,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 2.dp),
                         )
                         if (isHoliday) {
                             Text("🌙", fontSize = 12.sp)
@@ -302,31 +322,4 @@ private fun secondaryLine(
     if (!showHijri) return secondary
     val hijri = "${I18n.num(locale, date.hijri.day)} ${I18n.hijriMonthName(locale, date.hijri.month)}"
     return "$secondary · $hijri"
-}
-
-/** (year, month) of a day in the ACTIVE system (works for all 5). */
-private fun systemYearMonth(system: CalendarSystem, date: CelestialDate): Pair<Int, Int> {
-    val t = CalendarFacade.systemTripleOf(system, date)
-    return t.year to t.month
-}
-
-/** Week label in the active system, e.g. "Mehr 24 – 30, 1405". */
-private fun weekLabelOf(
-    system: CalendarSystem,
-    locale: AppLocale,
-    first: CelestialDate,
-    last: CelestialDate,
-): String {
-    val (y1, m1) = systemYearMonth(system, first)
-    val (y2, m2) = systemYearMonth(system, last)
-    val name1 = DateFormats.monthNameOf(system, locale, y1, m1)
-    val name2 = DateFormats.monthNameOf(system, locale, y2, m2)
-    val d1 = DateFormats.dayNumber(system, locale, first)
-    val d2 = DateFormats.dayNumber(system, locale, last)
-    val year = I18n.num(locale, y2)
-    return if (m1 == m2 && y1 == y2) {
-        "$name1 $d1 – $d2, $year"
-    } else {
-        "$name1 $d1 – $name2 $d2, $year"
-    }
 }

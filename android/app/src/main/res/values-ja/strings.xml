@@ -106,6 +106,8 @@
     <!-- Widgets -->
     <string name="widget_date_desc">今日（Celestial）</string>
     <string name="widget_month_desc">今月（Celestial）</string>
+    <string name="widget_today_label">セレッシャル 今日</string>
+    <string name="widget_today_desc">曜日・日・月がひと目で分かるコンパクトな今日の日付</string>
 
     <!-- Footer / misc -->
     <string name="footer_note">Celestial — グレゴリオ暦・シャムス暦・ペルシア帝国暦。すべての暦に敬意を込めて。</string>

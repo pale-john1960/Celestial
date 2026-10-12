@@ -46,6 +46,19 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.maxHeapSize = "1100m"
+                // Roborazzi recording mode (no gradle plugin — plain test runs
+                // capture only when this flag is on) + output dir for the
+                // README screenshot generator (ScreenshotsTest).
+                it.systemProperty("roborazzi.test.record", "true")
+                it.systemProperty("roborazzi.output.dir", "/tmp/celestial-shots")
+            }
+        }
+    }
 }
 
 dependencies {
@@ -73,4 +86,14 @@ dependencies {
     // Background
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.kotlinx.coroutines.android)
+
+    // Screenshot tests (Roborazzi + Robolectric + Compose test rule)
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.ui.test.manifest)
+    testImplementation(libs.androidx.test.ext.junit)
 }

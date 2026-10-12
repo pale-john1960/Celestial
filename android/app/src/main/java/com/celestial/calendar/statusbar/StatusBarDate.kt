@@ -15,7 +15,6 @@ import androidx.core.content.ContextCompat
 import com.celestial.calendar.MainActivity
 import com.celestial.calendar.R
 import com.celestial.calendar.data.Settings
-import com.celestial.calendar.engine.AppLocale
 import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.CalendarSystem
 import com.celestial.calendar.engine.DateFormats
@@ -25,9 +24,11 @@ import com.celestial.calendar.engine.DateFormats
  *
  * An ongoing low-importance notification (channel "celestial_date", no sound,
  * no vibration) that always shows today's date in the active calendar system,
- * e.g. "Mehr 1405 SH · October 2026 CE". It is refreshed at midnight by the
- * WorkManager job (see [com.celestial.calendar.work.RefreshWorker]) and on
- * every settings change.
+ * e.g. "چهارشنبه · ۲۹ مهر ۱۴۰۵ هجری شمسی · October 2026 CE". The title is
+ * the FULL localized date — weekday + day + month + year + era, locale-
+ * ordered (round 15; it used to be "Month Year Era" with no weekday/day).
+ * It is refreshed at midnight by the WorkManager job (see
+ * [com.celestial.calendar.work.RefreshWorker]) and on every settings change.
  */
 object StatusBarDate {
 
@@ -55,18 +56,19 @@ object StatusBarDate {
                     context, Manifest.permission.POST_NOTIFICATIONS,
                 ) == PackageManager.PERMISSION_GRANTED
 
-    /** The two-line content of the status-bar date for [today]. */
+    /** The two-line content of the status-bar date for [today]: the FULL
+     *  localized date (weekday + day + month + year + era — round 15) as the
+     *  title, the other systems as the secondary line. */
     fun buildContent(settings: Settings, today: com.celestial.calendar.engine.CelestialDate): Pair<String, String> {
         val locale = settings.locale
-        val title = when (settings.system) {
-            CalendarSystem.GREGORIAN -> DateFormats.gregorianMonthYearEra(locale, today)
-            CalendarSystem.JALALI -> DateFormats.jalaliMonthYearEra(locale, today)
-            CalendarSystem.IMPERIAL -> DateFormats.imperialMonthYearEra(locale, today)
-            // round 14: imperialSolar rides the Jalali structure (Shahanshahi
-            // year); ancient shares the Imperial structure with the ancient era
-            CalendarSystem.IMPERIAL_SOLAR, CalendarSystem.ANCIENT ->
-                DateFormats.systemMonthYearEra(settings.system, locale, today, settings.royalMonthNames)
-        }
+        // round 15: full rich localized date incl. weekday + day (all 5
+        // systems handled by fullSystemDate; the day used to be missing —
+        // the title read "Month Year Era"). Era comes from fullSystemDate.
+        val title = DateFormats.weekdayDateText(
+            locale,
+            today.weekday,
+            DateFormats.fullSystemDate(settings.system, locale, today, settings.royalMonthNames),
+        )
         val secondary = when (settings.system) {
             CalendarSystem.GREGORIAN ->
                 DateFormats.jalaliMonthYearEra(locale, today) + " · " + DateFormats.hijriMonthYearEra(locale, today)
@@ -104,6 +106,8 @@ object StatusBarDate {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
+            // round 15: no clock time next to the rich date in the shade
+            .setShowWhen(false)
             .setCategory(Notification.CATEGORY_STATUS)
             .setContentIntent(contentIntent)
             .build()

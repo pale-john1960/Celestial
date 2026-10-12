@@ -106,6 +106,8 @@
     <!-- Widgets -->
     <string name="widget_date_desc">امروز (سلستیش)</string>
     <string name="widget_month_desc">این ماه (سلستیش)</string>
+    <string name="widget_today_label">سلستیال امروز</string>
+    <string name="widget_today_desc">تاریخ امروز به‌صورت فشرده — روز هفته، روز و ماه در یک نگاه</string>
 
     <!-- Footer / misc -->
     <string name="footer_note">سلستیش — میلادی · شمسی · شاهنشاهی؛ با عشق برای همهٔ گاه‌شماری‌ها.</string>

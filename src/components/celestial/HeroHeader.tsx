@@ -4,8 +4,10 @@
 // system, static imagery (no kenburns), optional Hijri year line.
 // Round 14: locale-ordered date formats (en "Month D, Y" / ja "Y年M月D日" /
 // fa day-first), full weekday names + locale-aware weekday·date composition,
-// activeDateText for all 5 systems, 4-image fixed-theme pools + themeImageSrc
+// activeDateText for all 5 systems, 12-per-month theme pools + themeImageSrc
 // (shared with the YearView month cards).
+// Round 15: every theme now has 12 unique pieces (one per Gregorian month;
+// seasonal = 3 per season) — no month shares artwork in any theme.
 "use client";
 
 import { useState } from "react";
@@ -269,31 +271,35 @@ const SEASON_TINT: Record<Season, string> = {
   winter: "bg-muted-foreground/15",
 };
 
-/* ---------------- hero artwork themes (round 13; pools of 4 in round 14) ---------------- */
+/* ------------- hero artwork themes (round 13; 12-per-month pools, round 15) ------------- */
 
-/** seasonal hero pool — NEW spring/summer artwork (round 13); autumn/winter
- *  keep the original pieces (still in /seasonal/) */
+/** seasonal hero pool — THREE pieces per season, one per month-in-season
+ *  (round 15: k0 = first month of the season … k2 = third — no two months in
+ *  a season share artwork). spring/summer -3/-4 keep the round-13 pieces and
+ *  -5 is new; autumn/winter -1/-2 keep the originals from /seasonal/ */
 const SEASONAL_HERO_POOL: Record<Season, readonly string[]> = {
-  spring: ["/hero/seasonal-spring-3.jpg", "/hero/seasonal-spring-4.jpg"],
-  summer: ["/hero/seasonal-summer-3.jpg", "/hero/seasonal-summer-4.jpg"],
-  autumn: ["/seasonal/autumn-1.jpg", "/seasonal/autumn-2.jpg"],
-  winter: ["/seasonal/winter-1.jpg", "/seasonal/winter-2.jpg"],
+  spring: ["/hero/seasonal-spring-3.jpg", "/hero/seasonal-spring-4.jpg", "/hero/seasonal-spring-5.jpg"],
+  summer: ["/hero/seasonal-summer-3.jpg", "/hero/seasonal-summer-4.jpg", "/hero/seasonal-summer-5.jpg"],
+  autumn: ["/seasonal/autumn-1.jpg", "/seasonal/autumn-2.jpg", "/hero/seasonal-autumn-3.jpg"],
+  winter: ["/seasonal/winter-1.jpg", "/seasonal/winter-2.jpg", "/hero/seasonal-winter-3.jpg"],
 };
 
-/** fixed-theme pools — /hero/{theme}-{1..4}.jpg (round 14: 4 variants per
- *  theme; the -3/-4 artwork lands with task 14-c — HeroImage's onError
- *  gradient fallback covers the gap until the files exist) */
+/** fixed-theme pools — /hero/{theme}-{1..12}.jpg (round 15: TWELVE pieces per
+ *  theme, one per Gregorian month — a full year of unique artwork; 1-4 are the
+ *  round-13/14 pieces, 5-12 are season-aware within each theme's style).
+ *  HeroImage's onError gradient fallback covers any file not yet present */
 const FIXED_HERO_POOL: Record<Exclude<HeaderThemeCode, "seasonal">, readonly string[]> = {
-  celestial: ["/hero/celestial-1.jpg", "/hero/celestial-2.jpg", "/hero/celestial-3.jpg", "/hero/celestial-4.jpg"],
-  magical: ["/hero/magical-1.jpg", "/hero/magical-2.jpg", "/hero/magical-3.jpg", "/hero/magical-4.jpg"],
-  shahanshahi: ["/hero/shahanshahi-1.jpg", "/hero/shahanshahi-2.jpg", "/hero/shahanshahi-3.jpg", "/hero/shahanshahi-4.jpg"],
-  japanese: ["/hero/japanese-1.jpg", "/hero/japanese-2.jpg", "/hero/japanese-3.jpg", "/hero/japanese-4.jpg"],
-  korean: ["/hero/korean-1.jpg", "/hero/korean-2.jpg", "/hero/korean-3.jpg", "/hero/korean-4.jpg"],
-  chinese: ["/hero/chinese-1.jpg", "/hero/chinese-2.jpg", "/hero/chinese-3.jpg", "/hero/chinese-4.jpg"],
+  celestial: ["/hero/celestial-1.jpg", "/hero/celestial-2.jpg", "/hero/celestial-3.jpg", "/hero/celestial-4.jpg", "/hero/celestial-5.jpg", "/hero/celestial-6.jpg", "/hero/celestial-7.jpg", "/hero/celestial-8.jpg", "/hero/celestial-9.jpg", "/hero/celestial-10.jpg", "/hero/celestial-11.jpg", "/hero/celestial-12.jpg"],
+  magical: ["/hero/magical-1.jpg", "/hero/magical-2.jpg", "/hero/magical-3.jpg", "/hero/magical-4.jpg", "/hero/magical-5.jpg", "/hero/magical-6.jpg", "/hero/magical-7.jpg", "/hero/magical-8.jpg", "/hero/magical-9.jpg", "/hero/magical-10.jpg", "/hero/magical-11.jpg", "/hero/magical-12.jpg"],
+  shahanshahi: ["/hero/shahanshahi-1.jpg", "/hero/shahanshahi-2.jpg", "/hero/shahanshahi-3.jpg", "/hero/shahanshahi-4.jpg", "/hero/shahanshahi-5.jpg", "/hero/shahanshahi-6.jpg", "/hero/shahanshahi-7.jpg", "/hero/shahanshahi-8.jpg", "/hero/shahanshahi-9.jpg", "/hero/shahanshahi-10.jpg", "/hero/shahanshahi-11.jpg", "/hero/shahanshahi-12.jpg"],
+  japanese: ["/hero/japanese-1.jpg", "/hero/japanese-2.jpg", "/hero/japanese-3.jpg", "/hero/japanese-4.jpg", "/hero/japanese-5.jpg", "/hero/japanese-6.jpg", "/hero/japanese-7.jpg", "/hero/japanese-8.jpg", "/hero/japanese-9.jpg", "/hero/japanese-10.jpg", "/hero/japanese-11.jpg", "/hero/japanese-12.jpg"],
+  korean: ["/hero/korean-1.jpg", "/hero/korean-2.jpg", "/hero/korean-3.jpg", "/hero/korean-4.jpg", "/hero/korean-5.jpg", "/hero/korean-6.jpg", "/hero/korean-7.jpg", "/hero/korean-8.jpg", "/hero/korean-9.jpg", "/hero/korean-10.jpg", "/hero/korean-11.jpg", "/hero/korean-12.jpg"],
+  chinese: ["/hero/chinese-1.jpg", "/hero/chinese-2.jpg", "/hero/chinese-3.jpg", "/hero/chinese-4.jpg", "/hero/chinese-5.jpg", "/hero/chinese-6.jpg", "/hero/chinese-7.jpg", "/hero/chinese-8.jpg", "/hero/chinese-9.jpg", "/hero/chinese-10.jpg", "/hero/chinese-11.jpg", "/hero/chinese-12.jpg"],
 };
 
-/** active pool for the theme + Gregorian month (seasonal keeps 2 variants
- *  per season, alternating; fixed themes rotate their 4 images by month) */
+/** active pool for the theme + Gregorian month (round 15: seasonal uses the
+ *  month-in-season piece out of 3; fixed themes use the month's OWN piece out
+ *  of 12 — every month is unique in every theme, hero and YearView agree) */
 function heroPool(
   headerTheme: HeaderThemeCode,
   gMonth: number,
@@ -304,10 +310,10 @@ function heroPool(
     return {
       key: `seasonal-${season}`,
       urls: SEASONAL_HERO_POOL[season],
-      index: idxInSeason % 2,
+      index: Math.min(idxInSeason, 2),
     };
   }
-  return { key: headerTheme, urls: FIXED_HERO_POOL[headerTheme], index: gMonth % 4 };
+  return { key: headerTheme, urls: FIXED_HERO_POOL[headerTheme], index: (gMonth + 11) % 12 };
 }
 
 /**

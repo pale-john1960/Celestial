@@ -9,16 +9,17 @@ import com.celestial.calendar.data.AppDatabase
 import com.celestial.calendar.engine.CalendarFacade
 import com.celestial.calendar.engine.I18n
 import com.celestial.calendar.engine.Jdn
-import com.celestial.calendar.engine.WeekStart
 import com.celestial.calendar.events.EventRepository
 import kotlinx.coroutines.runBlocking
 
 /**
  * Celestial — RemoteViewsService feeding the month widget's GridView.
  *
- * The adapter renders 49 cells: 7 weekday header labels followed by the
- * 42-cell month grid (active system + week-start, today highlighted with the
- * #C2185B accent circle, holiday days tinted red, out-of-month days dimmed).
+ * The adapter renders the 42-cell month grid (active system + week-start,
+ * today highlighted with the #C2185B accent circle, holiday days tinted red,
+ * out-of-month days dimmed). Round 15: the 7 weekday header labels moved out
+ * of the grid into the widget layout's dedicated header row (widget_wd_0..6,
+ * set by MonthWidget) — the grid is now a clean 6-week block.
  */
 class MonthWidgetService : RemoteViewsService() {
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory =
@@ -69,12 +70,8 @@ private class MonthFactory(private val context: android.content.Context) :
                 emptySet()
             }
 
-            val out = ArrayList<Cell>(49)
-            // weekday header row (positions 0-6)
-            for (w in CalendarFacade.weekdayOrder(weekStart)) {
-                out.add(Cell(I18n.weekdayShort(locale, w), Color.parseColor("#B39D9E")))
-            }
-            // day cells
+            val out = ArrayList<Cell>(42)
+            // day cells (weekday letters live in the widget layout now)
             for (cell in grid) {
                 // day number in the ACTIVE system (imperialSolar rides the
                 // Jalali structure; ancient shares the Imperial structure)

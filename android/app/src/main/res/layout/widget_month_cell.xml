@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Celestial — month widget grid cell -->
+<!-- Celestial — month widget grid cell.
+     Round 15: taller rows (26dp) + 12sp text so the grid breathes; today's
+     cell keeps its magenta circle + white bold number (MonthWidgetService). -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -9,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:minHeight="18dp"
+        android:minHeight="26dp"
         android:textColor="#F6EFEF"
-        android:textSize="11sp" />
+        android:textSize="12sp" />
 </FrameLayout>

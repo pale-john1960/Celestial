@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Celestial — 4x2 date widget: dark translucent card, #C2185B accents -->
+<!-- Celestial — 4x2 date widget: translucent charcoal card, magenta accents.
+     Round 15 redesign: header = icon + weekday ONLY (the app-name label was
+     removed — it read as a crammed caption next to the weekday), a clearer
+     hierarchy (30sp date, accent era line, dimmed secondary) and a hairline
+     divider above the next-event footer. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
@@ -17,7 +21,7 @@
         <ImageView
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:contentDescription="@string/app_name"
+            android:contentDescription="@null"
             android:src="@drawable/ic_celestial_white" />
 
         <TextView
@@ -27,24 +31,17 @@
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:textColor="@color/widget_accent"
-            android:textSize="12sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textColor="#99FFFFFF"
-            android:textSize="10sp" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/widget_date_big"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="8dp"
         android:textColor="#FFFFFFFF"
-        android:textSize="26sp"
+        android:textSize="30sp"
         android:textStyle="bold" />
 
     <TextView
@@ -63,11 +60,20 @@
         android:textColor="#CCFFFFFF"
         android:textSize="12sp" />
 
+    <!-- RemoteViews layouts cannot use a plain View: a 1dp TextView renders
+         the same hairline divider safely. -->
+    <TextView
+        android:id="@+id/widget_date_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:background="#22FFFFFF" />
+
     <TextView
         android:id="@+id/widget_date_next"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="#99FFFFFF"

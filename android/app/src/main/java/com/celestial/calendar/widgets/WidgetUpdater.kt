@@ -29,11 +29,12 @@ object WidgetUpdater {
     fun todayDate(): CelestialDate =
         CalendarFacade.buildCelestialDate(CalendarFacade.todayGregorian())
 
-    /** Refresh the status-bar notification + both widgets. */
+    /** Refresh the status-bar notification + all three widgets. */
     suspend fun updateAll(context: Context, settings: Settings? = null) {
         val s = settings ?: currentSettings(context)
         StatusBarDate.update(context, s)
         DateWidget.refresh(context, s)
+        TodayWidget.refresh(context, s)
         MonthWidget.refresh(context, s)
     }
 

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Celestial — compact widget card background (round 15): same charcoal
+     family as widget_bg but slightly lighter, 20dp corners -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:type="linear"
+        android:angle="270"
+        android:startColor="#F0251D25"
+        android:endColor="#E62D2330" />
+    <corners android:radius="20dp" />
+    <stroke
+        android:width="1dp"
+        android:color="#66C2185B" />
+</shape>

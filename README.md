@@ -35,7 +35,7 @@
 - **Backup & restore** — one-click JSON export of all your events + settings, and restore (replace-all) on any device
 - **Print** 🖨 — `Ctrl+P` or the toolbar printer button prints a clean paper month: print-only masthead, red holidays, colored event dots preserved
 - **Persian zodiac chips** ♎ — month view (zodiac of the month) and Day view (zodiac of the day), all languages incl. RTL
-- **Seasonal artwork** — 2 illustrations per season with gentle CSS animations (spring cherry petals, summer fireflies, autumn leaves, winter snow); respects `prefers-reduced-motion`
+- **Seasonal artwork** — 3 illustrations per season with gentle CSS animations (spring cherry petals, summer fireflies, autumn leaves, winter snow); respects `prefers-reduced-motion`
 - **Views**: Month (dual-date cells: big Shamsi + small Gregorian), **Week** (7 day-cards), Year, Day (all systems at once), Agenda (90 days)
 - **Keyboard navigation** — arrows to move, `T` today, `M/W/Y/D/A` views, `C` date converter, `/` search, `?` shortcut help (works in RTL too)
 - **Date converter** ⭄ — press `C` (or the hero toolbar button) to convert any date between Gregorian, Jalali and Imperial side-by-side, with live weekday / moon-phase / zodiac chips, "use today" and "show in calendar" jumps; accepts Persian digits ۱۴۰۵
@@ -52,12 +52,28 @@
 - **Locale-aware date formats** — Persian shows day-before-month («۲۹ مهر ۱۴۰۵») with FULL weekday names (چهارشنبه, not چهار) outside the month grid; Japanese uses 年月日 ordering with weekday in parens (10月29日（水曜日）)
 - **Sun times** ☀️ (web + Android) — dawn / sunrise / solar noon / sunset / dusk for any displayed day at your chosen city (10 presets or auto), computed by a zero-dependency NOAA engine (astronomical twilight, polar night & midnight-sun aware), rendered in the city's timezone
 - **World clock** 🌍 (web + Android) — live times in your chosen time zones with next-day/previous-day markers, add/remove cities, updates every 30s
-- **4-image hero pools** — every fixed artwork theme now rotates 4 illustrations across the year, and the Year view month cards follow the ACTIVE theme's pool (central `themeImageSrc`) — 12 new artworks this round
+- **12-per-month hero art** — every fixed artwork theme now carries **twelve unique illustrations — one per Gregorian month** (seasonal: 3 per season, one per month-in-season): no two months share artwork in any theme, and the Year view month cards follow the ACTIVE theme's pool (central `themeImageSrc`) — 52 new artworks this round; the header cross-fades when you change months
+- **Header particle animation (web + Android)** — every theme animates: wind-blown autumn leaves with gusts, swaying cherry petals, wandering fireflies, twinkle stars, magic sparkles, Persian gold dust; Compose Canvas port on Android honors the system "remove animations" switch (`prefers-reduced-motion` on web)
 - **Android APK download** — grab the debug APK straight from the web app (footer chip or Settings → App) at `/celestial-debug.apk`
 - **RTL toggle fix** — switch knobs no longer slide outside the track in Persian
+- **RTL round-15 fixes** — Persian settings sheet close button no longer overlaps the title (logical `end` positioning); Android year-view arrows mirror correctly in RTL; the Persian week label reads «۱۸–۲۴ مهر» (range before month); the month-view day strip keeps a constant height with a proper holiday badge
 - **Flexible settings**: week start (Sat/Sun/Mon), theme (light/dark), per-source toggles, online mode
 - **Motion & polish** — Framer Motion view transitions, staggered cell entrances, card hover lifts, structured loading skeletons (week/day/agenda), thin custom scrollbars, print mastheads on Month/Week/Day/Agenda, dark-mode hero starfield + moonlight halo (all motion killed under `prefers-reduced-motion`)
-- Android: home-screen **widgets** (date 4×2 + month grid 4×5), **status-bar date** via persistent notification, **manual events + .ics export**, low-power design (no continuous animations)
+- Android: home-screen **widgets** — compact **Today 2×1** (weekday + big day number), **date 4×2** and **month grid 4×5** with weekday header — plus **status-bar date** via persistent notification (full localized weekday + date), **manual events + .ics export**, low-power design
+
+## Screenshots
+
+**The Android app** — captured from the *real* Compose UI (JVM-rendered via [Roborazzi](https://github.com/takahirom/roborazzi) — no emulator, no mocks: actual layouts, actual trilingual strings, actual artwork):
+
+| Month · English (Japanese art theme) | Month · فارسی (RTL + Jalali) | Week · فارسی |
+|---|---|---|
+| ![Android month view, English](docs/screenshots/android-month-en.png) | ![Android month view, Persian RTL](docs/screenshots/android-month-fa.png) | ![Android week view, Persian](docs/screenshots/android-week-fa.png) |
+
+| Year view (12 unique artworks) | Day view (sun times + world clock) | Home-screen widgets |
+|---|---|---|
+| ![Android year view](docs/screenshots/android-year-en.png) | ![Android day view](docs/screenshots/android-day-en.png) | ![Android widgets](docs/screenshots/android-widgets.png) |
+
+The web app is the same design — open the preview and switch languages / themes / calendar systems to see it live.
 
 ## Repository layout
 

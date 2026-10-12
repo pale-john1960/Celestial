@@ -192,3 +192,38 @@ times, next/previous-day markers, add/remove cities), 4-image hero pools
 (+12 drawables = 32 total, `gMonth % 4` rotation), and Year-view month cards
 that follow the active header theme's artwork pool. Strings: 240 keys ×3
 locales (37 new, byte-identical to the web dictionaries).
+
+Round-15 Android QA round (user device feedback, all fixed):
+- **Widget suite** — NEW compact **Today 2×1** widget (accent bar + weekday +
+  huge day number + month/year), redesigned 4×2 date widget (header row is now
+  icon + weekday only — the app-name label that crowded it is gone; hairline
+  divider above the next-event footer), month widget with a localized weekday
+  header row + full-date footer + magenta today pill, and new gradient card
+  backgrounds (24dp corners, magenta hairline). `WidgetUpdater` refreshes all
+  three at midnight/settings change.
+- **Hero header overhaul** — the banner/season/particles now follow the
+  DISPLAYED month (was: today's month — the header never changed while
+  navigating); 400 ms cross-fade between artworks; **Compose Canvas particle
+  systems** ported 1:1 from the web (petals/leaves/snow/fireflies/stars/
+  sparkles/gold dust per theme — deterministic mulberry32 layout, honors the
+  system "remove animations" switch); the zodiac chip moved to the secondary
+  line so long Persian month names can no longer push it out of order.
+- **12 artworks per theme** — every fixed theme maps Gregorian month 1:1 to
+  its own drawable (72 fixed + 12 seasonal = 84 total in `drawable-nodpi/`);
+  the Year view's month-card banners are all unique within a year.
+- **Year view** — RTL year-switcher arrows mirror correctly (was `><` in
+  Persian), and scroll lag fixed (LruCache + two-pass downsampled banner
+  decode at ~256px, stable grid keys, precomputed per-cell day models).
+- **Week view** — the week label is locale-ordered («۱۸–۲۴ مهر ۱۴۰۵» in
+  Persian, `Mehr 18–24, 1405` in English), and each day card shows its month
+  name next to the big number («شنبه ۲۹ مهر»).
+- **Month view day strip** — constant height (date line never wraps;
+  single-line ellipsis), holiday indicator is a self-contained badge.
+- **Status-bar notification** — full localized date (weekday + day + month +
+  year + era, e.g. «پنجشنبه · ۷ آبان ۱۴۰۵ هجری شمسی») instead of month-year
+  only; the shade's clock time is hidden.
+- **Screenshot tests** — `ScreenshotsTest.kt` (Robolectric NATIVE graphics +
+  Roborazzi) renders the real Compose screens to PNGs for the root README —
+  run `gradle :app:testDebugUnitTest --tests "*.ScreenshotsTest"` (outputs to
+  the module dir; requires `roborazzi.test.record`, wired in
+  `testOptions.unitTests`). Strings: 242 ×3 locales.

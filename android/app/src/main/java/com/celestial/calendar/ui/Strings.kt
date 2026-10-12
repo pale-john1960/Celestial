@@ -364,18 +364,24 @@ enum class Season {
 
 /**
  * Hero banner artwork resource for the active header theme (round 13;
- * 4-image fixed pools in round 14).
+ * 4-image fixed pools in round 14; round 15: 12 unique pieces per fixed
+ * theme — every Gregorian month gets its OWN artwork, nothing is
+ * duplicated across months).
  *
- * THE CENTRAL theme image source on Android (web parity with themeImageSrc):
- * the hero header AND the YearView month-card artwork both resolve through
- * this one function, so they always stay in sync.
+ * THE CENTRAL theme image source on Android (web parity with themeImageSrc)
+ * shared with YearView: the hero header AND the YearView month-card artwork
+ * both resolve through this one function, so they always stay in sync.
  *
- * SEASONAL: the spring/summer pools + the original autumn/winter pieces;
- * the two variants alternate with the months. Fixed themes: FOUR pieces per
- * theme (/hero/{theme}-{1..4}.jpg) rotating by Gregorian month — index
- * gMonth % 4 (Jan → piece 2, Feb → 3, Mar → 4, Apr → 1 — exactly the web's
- * FIXED_HERO_POOL + gMonth % 4 rule). All assets are the generated
- * 1344x768 jpgs in `res/drawable-nodpi/`. Static imagery only.
+ * Fixed themes: the Gregorian month maps DIRECTLY to the piece index —
+ * hero_{theme}_{gMonth} (Jan → 1 … Dec → 12; 6 themes × 12 = 72 explicit
+ * branches — verbose but compile-safe; no resources.getIdentifier, which
+ * breaks resource shrinking). Seasonal: 3 pieces per season, one per
+ * month-in-season — SPRING(Mar, Apr, May) → spring_{3,4,5}, SUMMER(Jun,
+ * Jul, Aug) → summer_{3,4,5}, AUTUMN(Sep, Oct, Nov) → autumn_{1,2,3},
+ * WINTER(Dec, Jan, Feb) → winter_{1,2,3}; k = (gMonth − seasonStart + 12)
+ * % 12 (0 = first month of the season). All assets are the generated
+ * 1344x768 jpgs in `res/drawable-nodpi/`. Static imagery — the animated
+ * particle overlay lives in HeroParticles.kt.
  */
 fun heroArtworkRes(theme: com.celestial.calendar.data.HeaderTheme, gMonth: Int): Int {
     if (theme == com.celestial.calendar.data.HeaderTheme.SEASONAL) {
@@ -386,69 +392,119 @@ fun heroArtworkRes(theme: com.celestial.calendar.data.HeaderTheme, gMonth: Int):
             Season.AUTUMN -> 9
             Season.WINTER -> 12
         }
-        val secondVariant = (gMonth - start + 12) % 12 % 2 == 1
+        // 0 = first month of the season, 1 = second, 2 = third
+        val k = (gMonth - start + 12) % 12
         return when (season) {
-            Season.SPRING ->
-                if (secondVariant) R.drawable.hero_seasonal_spring_4 else R.drawable.hero_seasonal_spring_3
-            Season.SUMMER ->
-                if (secondVariant) R.drawable.hero_seasonal_summer_4 else R.drawable.hero_seasonal_summer_3
-            Season.AUTUMN ->
-                if (secondVariant) R.drawable.hero_seasonal_autumn_2 else R.drawable.hero_seasonal_autumn_1
-            Season.WINTER ->
-                if (secondVariant) R.drawable.hero_seasonal_winter_2 else R.drawable.hero_seasonal_winter_1
+            Season.SPRING -> when (k) {
+                0 -> R.drawable.hero_seasonal_spring_3
+                1 -> R.drawable.hero_seasonal_spring_4
+                else -> R.drawable.hero_seasonal_spring_5
+            }
+            Season.SUMMER -> when (k) {
+                0 -> R.drawable.hero_seasonal_summer_3
+                1 -> R.drawable.hero_seasonal_summer_4
+                else -> R.drawable.hero_seasonal_summer_5
+            }
+            Season.AUTUMN -> when (k) {
+                0 -> R.drawable.hero_seasonal_autumn_1
+                1 -> R.drawable.hero_seasonal_autumn_2
+                else -> R.drawable.hero_seasonal_autumn_3
+            }
+            Season.WINTER -> when (k) {
+                0 -> R.drawable.hero_seasonal_winter_1
+                1 -> R.drawable.hero_seasonal_winter_2
+                else -> R.drawable.hero_seasonal_winter_3
+            }
         }
     }
-    // fixed themes: 4 pieces rotating by Gregorian month (gMonth % 4)
-    val index = ((gMonth % 4) + 4) % 4 // 0..3 → pieces 1..4
-    val resId = when (index) {
-        0 -> 1
-        1 -> 2
-        2 -> 3
-        else -> 4
-    }
+    // fixed themes: the Gregorian month maps 1:1 onto the piece index
+    // (normalized into 1..12)
+    val m = ((gMonth - 1) % 12 + 12) % 12 + 1
     return when (theme) {
-        com.celestial.calendar.data.HeaderTheme.CELESTIAL ->
-            when (resId) {
-                1 -> R.drawable.hero_celestial_1
-                2 -> R.drawable.hero_celestial_2
-                3 -> R.drawable.hero_celestial_3
-                else -> R.drawable.hero_celestial_4
-            }
-        com.celestial.calendar.data.HeaderTheme.MAGICAL ->
-            when (resId) {
-                1 -> R.drawable.hero_magical_1
-                2 -> R.drawable.hero_magical_2
-                3 -> R.drawable.hero_magical_3
-                else -> R.drawable.hero_magical_4
-            }
-        com.celestial.calendar.data.HeaderTheme.SHAHANSHAHI ->
-            when (resId) {
-                1 -> R.drawable.hero_shahanshahi_1
-                2 -> R.drawable.hero_shahanshahi_2
-                3 -> R.drawable.hero_shahanshahi_3
-                else -> R.drawable.hero_shahanshahi_4
-            }
-        com.celestial.calendar.data.HeaderTheme.JAPANESE ->
-            when (resId) {
-                1 -> R.drawable.hero_japanese_1
-                2 -> R.drawable.hero_japanese_2
-                3 -> R.drawable.hero_japanese_3
-                else -> R.drawable.hero_japanese_4
-            }
-        com.celestial.calendar.data.HeaderTheme.KOREAN ->
-            when (resId) {
-                1 -> R.drawable.hero_korean_1
-                2 -> R.drawable.hero_korean_2
-                3 -> R.drawable.hero_korean_3
-                else -> R.drawable.hero_korean_4
-            }
-        com.celestial.calendar.data.HeaderTheme.CHINESE ->
-            when (resId) {
-                1 -> R.drawable.hero_chinese_1
-                2 -> R.drawable.hero_chinese_2
-                3 -> R.drawable.hero_chinese_3
-                else -> R.drawable.hero_chinese_4
-            }
+        com.celestial.calendar.data.HeaderTheme.CELESTIAL -> when (m) {
+            1 -> R.drawable.hero_celestial_1
+            2 -> R.drawable.hero_celestial_2
+            3 -> R.drawable.hero_celestial_3
+            4 -> R.drawable.hero_celestial_4
+            5 -> R.drawable.hero_celestial_5
+            6 -> R.drawable.hero_celestial_6
+            7 -> R.drawable.hero_celestial_7
+            8 -> R.drawable.hero_celestial_8
+            9 -> R.drawable.hero_celestial_9
+            10 -> R.drawable.hero_celestial_10
+            11 -> R.drawable.hero_celestial_11
+            else -> R.drawable.hero_celestial_12
+        }
+        com.celestial.calendar.data.HeaderTheme.MAGICAL -> when (m) {
+            1 -> R.drawable.hero_magical_1
+            2 -> R.drawable.hero_magical_2
+            3 -> R.drawable.hero_magical_3
+            4 -> R.drawable.hero_magical_4
+            5 -> R.drawable.hero_magical_5
+            6 -> R.drawable.hero_magical_6
+            7 -> R.drawable.hero_magical_7
+            8 -> R.drawable.hero_magical_8
+            9 -> R.drawable.hero_magical_9
+            10 -> R.drawable.hero_magical_10
+            11 -> R.drawable.hero_magical_11
+            else -> R.drawable.hero_magical_12
+        }
+        com.celestial.calendar.data.HeaderTheme.SHAHANSHAHI -> when (m) {
+            1 -> R.drawable.hero_shahanshahi_1
+            2 -> R.drawable.hero_shahanshahi_2
+            3 -> R.drawable.hero_shahanshahi_3
+            4 -> R.drawable.hero_shahanshahi_4
+            5 -> R.drawable.hero_shahanshahi_5
+            6 -> R.drawable.hero_shahanshahi_6
+            7 -> R.drawable.hero_shahanshahi_7
+            8 -> R.drawable.hero_shahanshahi_8
+            9 -> R.drawable.hero_shahanshahi_9
+            10 -> R.drawable.hero_shahanshahi_10
+            11 -> R.drawable.hero_shahanshahi_11
+            else -> R.drawable.hero_shahanshahi_12
+        }
+        com.celestial.calendar.data.HeaderTheme.JAPANESE -> when (m) {
+            1 -> R.drawable.hero_japanese_1
+            2 -> R.drawable.hero_japanese_2
+            3 -> R.drawable.hero_japanese_3
+            4 -> R.drawable.hero_japanese_4
+            5 -> R.drawable.hero_japanese_5
+            6 -> R.drawable.hero_japanese_6
+            7 -> R.drawable.hero_japanese_7
+            8 -> R.drawable.hero_japanese_8
+            9 -> R.drawable.hero_japanese_9
+            10 -> R.drawable.hero_japanese_10
+            11 -> R.drawable.hero_japanese_11
+            else -> R.drawable.hero_japanese_12
+        }
+        com.celestial.calendar.data.HeaderTheme.KOREAN -> when (m) {
+            1 -> R.drawable.hero_korean_1
+            2 -> R.drawable.hero_korean_2
+            3 -> R.drawable.hero_korean_3
+            4 -> R.drawable.hero_korean_4
+            5 -> R.drawable.hero_korean_5
+            6 -> R.drawable.hero_korean_6
+            7 -> R.drawable.hero_korean_7
+            8 -> R.drawable.hero_korean_8
+            9 -> R.drawable.hero_korean_9
+            10 -> R.drawable.hero_korean_10
+            11 -> R.drawable.hero_korean_11
+            else -> R.drawable.hero_korean_12
+        }
+        com.celestial.calendar.data.HeaderTheme.CHINESE -> when (m) {
+            1 -> R.drawable.hero_chinese_1
+            2 -> R.drawable.hero_chinese_2
+            3 -> R.drawable.hero_chinese_3
+            4 -> R.drawable.hero_chinese_4
+            5 -> R.drawable.hero_chinese_5
+            6 -> R.drawable.hero_chinese_6
+            7 -> R.drawable.hero_chinese_7
+            8 -> R.drawable.hero_chinese_8
+            9 -> R.drawable.hero_chinese_9
+            10 -> R.drawable.hero_chinese_10
+            11 -> R.drawable.hero_chinese_11
+            else -> R.drawable.hero_chinese_12
+        }
         com.celestial.calendar.data.HeaderTheme.SEASONAL ->
             R.drawable.hero_seasonal_spring_3 // unreachable (handled above)
     }

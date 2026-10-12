@@ -106,6 +106,8 @@
     <!-- Widgets -->
     <string name="widget_date_desc">Today (Celestial)</string>
     <string name="widget_month_desc">This month (Celestial)</string>
+    <string name="widget_today_label">Celestial Today</string>
+    <string name="widget_today_desc">Compact today date — weekday, day and month at a glance</string>
 
     <!-- Footer / misc -->
     <string name="footer_note">Celestial — Gregorian · Shamsi · Persian Imperial, with love for all calendars.</string>

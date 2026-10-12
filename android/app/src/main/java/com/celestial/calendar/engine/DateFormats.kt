@@ -223,6 +223,64 @@ object DateFormats {
             hijriLabel(locale),
         )
 
+    /**
+     * Week-range label in the ACTIVE system, LOCALE-ORDERED (round 15 — the
+     * week label used to be English-ordered for every locale, so Persian read
+     * "مهر ۱۸ – ۲۴, ۱۴۰۵" with the month BEFORE the range; Persian requires
+     * the day range first, then the month name):
+     *  - same month & year:  en "Mehr 18–24, 1405" · ja "メフル18日–24日、1405年"
+     *                         · fa "۱۸–۲۴ مهر ۱۴۰۵"
+     *  - month split:         en "Mehr 24 – Aban 1, 1405" · ja "メフル24日–アーバーン1日、1405年"
+     *                         · fa "۲۴ مهر – ۱ آبان ۱۴۰۵"
+     *  - year split:          en "Mehr 24 – Aban 1, 1404/1405"
+     *                         · ja "メフル24日（1404年）–アーバーン1日（1405年）"
+     *                         · fa "۲۴ مهر ۱۴۰۴ – ۱ آبان ۱۴۰۵"
+     * Month names honor [royal] (royalMonthNames setting; ANCIENT always
+     * ancient names, month 13 = Andarjah); digits are localized via [I18n.num].
+     */
+    fun weekRangeLabel(
+        system: CalendarSystem,
+        locale: AppLocale,
+        first: CelestialDate,
+        last: CelestialDate,
+        royal: Boolean = false,
+    ): String {
+        val t1 = CalendarFacade.systemTripleOf(system, first)
+        val t2 = CalendarFacade.systemTripleOf(system, last)
+        val name1 = monthNameOf(system, locale, t1.year, t1.month, royal)
+        val name2 = monthNameOf(system, locale, t2.year, t2.month, royal)
+        val d1 = I18n.num(locale, t1.day)
+        val d2 = I18n.num(locale, t2.day)
+        val y1 = I18n.num(locale, t1.year)
+        val y2 = I18n.num(locale, t2.year)
+        return when (locale) {
+            AppLocale.JA -> when {
+                t1.year == t2.year && t1.month == t2.month ->
+                    "${name1}${d1}日–${d2}日、${y2}年"
+                t1.year == t2.year ->
+                    "${name1}${d1}日–${name2}${d2}日、${y2}年"
+                else ->
+                    "${name1}${d1}日（${y1}年）–${name2}${d2}日（${y2}年）"
+            }
+            AppLocale.FA -> when {
+                t1.year == t2.year && t1.month == t2.month ->
+                    "${d1}–${d2} ${name1} ${y2}"
+                t1.year == t2.year ->
+                    "${d1} ${name1} – ${d2} ${name2} ${y2}"
+                else ->
+                    "${d1} ${name1} ${y1} – ${d2} ${name2} ${y2}"
+            }
+            else -> when {
+                t1.year == t2.year && t1.month == t2.month ->
+                    "${name1} ${d1}–${d2}, ${y2}"
+                t1.year == t2.year ->
+                    "${name1} ${d1} – ${name2} ${d2}, ${y2}"
+                else ->
+                    "${name1} ${d1} – ${name2} ${d2}, ${y1}/${y2}"
+            }
+        }
+    }
+
     fun weekdayLong(locale: AppLocale, date: CelestialDate): String =
         I18n.weekdayLong(locale, date.weekday)
 

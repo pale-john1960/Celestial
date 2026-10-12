@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.celestial.calendar.data.Settings
@@ -187,6 +188,7 @@ fun CelestialApp(viewModel: CelestialViewModel) {
                                     eventsByIso = eventsByIso,
                                     showHijri = s.showHijri,
                                     weekendDay = s.weekendDay,
+                                    royalMonthNames = s.royalMonthNames,
                                     strings = strings,
                                     onPrevWeek = { viewModel.shiftWeek(-1) },
                                     onNextWeek = { viewModel.shiftWeek(1) },
@@ -369,31 +371,49 @@ private fun SelectedDayStrip(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // round 14: FULL weekday name + locale-aware composition
-                    // (weekday · date for en/fa; date（weekday） for ja)
-                    Text(
-                        DateFormats.weekdayDateText(
-                            locale,
-                            date.weekday,
-                            DateFormats.fullSystemDate(s.system, locale, date, s.royalMonthNames),
-                        ),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    if (isHoliday) {
-                        Text(
-                            "  🌙 ${strings.dayOff}",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                }
+                // line 1 — the full localized date (round 14 composition:
+                // weekday · date for en/fa; date（weekday） for ja). Round 15:
+                // NEVER wraps (single line + ellipsis) so the strip keeps a
+                // constant height no matter how long the fa date is
                 Text(
-                    strings.eventsCount(visible.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    DateFormats.weekdayDateText(
+                        locale,
+                        date.weekday,
+                        DateFormats.fullSystemDate(s.system, locale, date, s.royalMonthNames),
+                    ),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
+                // line 2 — self-contained holiday BADGE + event count; the
+                // badge is its own pill (round 15: the inline "  🌙 dayOff"
+                // text used to wrap/overflow with long fa dates and inflate
+                // the strip inconsistently on holiday days)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (isHoliday) {
+                        Surface(
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+                        ) {
+                            Text(
+                                "🌙 " + strings.dayOff,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                    Text(
+                        strings.eventsCount(visible.size),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             Button(onClick = onOpenDay) {
                 Text(strings.openDay)

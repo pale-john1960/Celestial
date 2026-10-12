@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Celestial — 3dp magenta accent bar for the compact Today widget
+     (height is set by the ImageView in widget_today.xml) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:type="linear"
+        android:angle="0"
+        android:startColor="#C2185B"
+        android:endColor="#FF7BA9" />
+    <corners android:radius="2dp" />
+</shape>
